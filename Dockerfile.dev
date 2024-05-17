@@ -1,33 +1,30 @@
 # Use the SDK image for building and development
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
+#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-# Copy csproj and restore as distinct layers
-COPY ["IPMS.API/IPMS.API.csproj", "IPMS.API/"]
-RUN dotnet restore "IPMS.API/IPMS.API.csproj"
-
-# Copy everything else and build the app
-COPY . .
-WORKDIR "/src/IPMS.API"
-EXPOSE 80
-
-# Build the application
-RUN dotnet build "IPMS.API.csproj" -c Release -o /app/build
-
-# Publish the application
-FROM build AS publish
-RUN dotnet publish "IPMS.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-# Use the runtime image for the final stage
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 EXPOSE 80
+EXPOSE 443
 
-# Copy the published app to the final runtime image
-COPY --from=publish /app/publish .
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY ["IPMS.API/IPMS.API.csproj", "IPMS.API/"]
+RUN dotnet restore "./IPMS.API/IPMS.API.csproj"
+COPY . .
+WORKDIR "/src/IPMS.API"
+RUN dotnet build "./IPMS.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./IPMS.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Set environment variable to run in development mode
 ENV ASPNETCORE_ENVIRONMENT=Development
 
-# Run the application
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "IPMS.API.dll"]
+
+
