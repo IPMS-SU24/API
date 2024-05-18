@@ -3,10 +3,10 @@ os: linux
 files:
 hooks:
   BeforeInstall:
-    - location: scripts/pull_docker_image.sh
+    - location: ./pull_docker_image.sh
       timeout: 300
       runas: root
   ApplicationStart:
-    - location: scripts/start_docker_image.sh
+    - location: ./start_docker_image.sh
       timeout: 300
       runas: root
