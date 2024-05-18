@@ -1,4 +1,7 @@
 #!/bin/bash
+AWS_REGION="ap-southeast-1"
+AWS_ACCOUNT_ID="905418022082"
+REPOSITORY_NAME="ipmg_api"
 
 # Thực hiện start Docker container từ Docker image đã được pull và map cổng 80 trên máy host với cổng 300 trên container
 
