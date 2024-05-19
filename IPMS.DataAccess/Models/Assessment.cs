@@ -1,4 +1,4 @@
-﻿using IPMS.DataAccess.CommonModels;
+﻿using IPMS.DataAccess.Common.Models;
 
 namespace IPMS.DataAccess.Models
 {
@@ -8,9 +8,9 @@ namespace IPMS.DataAccess.Models
         public string Description { get; set; }
         public int Order { get; set; }
         public decimal Percentage { get; set; }
-        public Guid SyllabusId { get; set; }
-        public virtual Syllabus Syllabus { get; set; }
-        public virtual ICollection<SubmissionModule> Submissions { get; set; } = new List<SubmissionModule>();
+        public Guid? SyllabusId { get; set; }
+        public virtual Syllabus? Syllabus { get; set; }
+        public virtual ICollection<SubmissionModule> Modules { get; set; } = new List<SubmissionModule>();
 
     }
 }

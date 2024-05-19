@@ -1,4 +1,4 @@
-﻿using IPMS.DataAccess.CommonModels;
+﻿using IPMS.DataAccess.Common.Models;
 
 namespace IPMS.DataAccess.Models
 {
@@ -11,3 +11,4 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
     }
 }
+    

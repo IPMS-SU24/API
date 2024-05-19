@@ -1,4 +1,5 @@
-﻿using IPMS.DataAccess.CommonModels;
+﻿using IPMS.DataAccess.Common.Models;
+using System.Runtime.InteropServices;
 
 namespace IPMS.DataAccess.Models
 {
@@ -7,11 +8,11 @@ namespace IPMS.DataAccess.Models
         public string GroupName { get; set; }
         public bool IsPublished { get; set; }
         public decimal Grade { get; set; }
-        public Guid OwnerLecturerId { get; set; }
-        public virtual IPMSUser OwnerLecturer { get; set; }
+        public Guid? OwnerId { get; set; }
+        public virtual IPMSUser? Owner { get; set; }
         public virtual ClassTopic? Topic { get; set; }
-        public virtual ICollection<ProjectComponent> Components { get; set; } = new List<ProjectComponent>();
-        public virtual ICollection<MemberProject> MemberProjects {get; set;} = new List<MemberProject>();
+        public virtual ICollection<ComponentsMaster> Components { get; set; } = new List<ComponentsMaster>();
+        public virtual ICollection<Student> Students {get; set;} = new List<Student>();
         public virtual ICollection<ProjectSubmission> Submissions {get; set;} = new List<ProjectSubmission>();
         
     }

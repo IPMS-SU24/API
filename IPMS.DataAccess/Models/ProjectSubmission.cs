@@ -1,4 +1,4 @@
-﻿using IPMS.DataAccess.CommonModels;
+﻿using IPMS.DataAccess.Common.Models;
 
 namespace IPMS.DataAccess.Models
 {
@@ -6,12 +6,12 @@ namespace IPMS.DataAccess.Models
     {
         public string SubmissionLink { get; set; }
         public DateTime SubmissionDate { get; set; }
-        public decimal Grade { get; set; }
-        public Guid ProjectId { get; set; }
-        public Guid SubmissionModuleId { get; set; }
-        public virtual Project Project { get; set; }
-        public virtual SubmissionModule SubmissionModule { get; set; }
-        public virtual ICollection<LecturerGrade> LecturerGrades {get; set;} = new List<LecturerGrade>();
+        public decimal FinalGrade { get; set; }
+        public Guid? ProjectId { get; set; }
+        public Guid? SubmissionModuleId { get; set; }
+        public virtual Project? Project { get; set; }
+        public virtual SubmissionModule? SubmissionModule { get; set; }
+        public virtual ICollection<LecturerGrade> Grades {get; set;} = new List<LecturerGrade>();
         
     }
 }

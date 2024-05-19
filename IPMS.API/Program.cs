@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using System;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +34,7 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.AddDI();
+builder.Services.AddDbContext<IPMSDbContext>();
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 //TODO Config Add DbContext connection
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());

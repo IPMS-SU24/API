@@ -2,44 +2,53 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Reflection.Emit;
 
 namespace IPMS.DataAccess
 {
     public class IPMSDbContext : IdentityDbContext<IPMSUser, IdentityRole<Guid>, Guid>
     {
+        public virtual DbSet<Assessment> Assessments { get; set; }
+        public virtual DbSet<Student> Students { get; set; }
+        public virtual DbSet<ClassTopic> ClassTopics { get; set; }
+        public virtual DbSet<Committee> Committees { get; set; }
+        public virtual DbSet<Favorite> Favorites { get; set; }
+        public virtual DbSet<IoTComponent> IoTComponents { get; set; }
+        public virtual DbSet<IPMSClass> IPMSClasses { get; set; }
+        public virtual DbSet<IPMSUser> IPMSUsers { get; set; }
+        public virtual DbSet<LecturerGrade> LecturerGrades { get; set; }
+        public virtual DbSet<MemberHistory> MemberHistories { get; set; }
+        public virtual DbSet<Project> Projects { get; set; }
+        public virtual DbSet<ProjectSubmission> ProjectSubmissions { get; set; }
+        public virtual DbSet<Report> Reports { get; set; }
+        public virtual DbSet<Semester> Semesters { get; set; }
+        public virtual DbSet<SubmissionModule> SubmissionModules { get; set; }
+        public virtual DbSet<Syllabus> Syllabuses { get; set; }
+        public virtual DbSet<Topic> Topics { get; set; }
+        public virtual DbSet<ComponentsMaster> ComponentsMasters { get; set; }
+        public virtual DbSet<TopicFavorite> TopicFavorites { get; set; }
+
         public IPMSDbContext(DbContextOptions options) : base(options)
         {
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer(GetConnectionString());
+        private string GetConnectionString()
         {
-            base.OnConfiguring(optionsBuilder);
+            
+            IConfigurationRoot configuration = new ConfigurationBuilder()
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("appsettings.json")
+                .Build();
+            return configuration["ConnectionStrings:IPMS"];
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
-            base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<AccountComponent>(entity =>
-            {
-                entity
-                    .ToTable("AccountComponent")
-                    .HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
-
-                entity.HasOne(e => e.Component)
-                    .WithMany(p => p.Lecturers)
-                    .HasForeignKey("ComponentId")
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasOne(e => e.Lecturer)
-                    .WithMany(p => p.BorrowedComponents)
-                    .HasForeignKey("LecturerId")
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
+            base.OnModelCreating(modelBuilder); 
 
             modelBuilder.Entity<Assessment>(entity =>
             {
@@ -47,32 +56,34 @@ namespace IPMS.DataAccess
                     .ToTable("Assessment")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
-
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Assessments)
                     .HasForeignKey("SyllabusId")
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            modelBuilder.Entity<ClassMember>(entity =>
+            modelBuilder.Entity<Student>(entity =>
             {
                 entity
-                    .ToTable("ClassMember")
+                    .ToTable("Student")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
-                entity.HasOne(e => e.Student)
-                    .WithMany(p => p.ClassMembers)
-                    .HasForeignKey("StudentId")
+                entity.HasOne(e => e.Information)
+                    .WithMany(p => p.Students)
+                    .HasForeignKey("InformationId")
                     .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasOne(e => e.Class)
-                    .WithMany(p => p.ClassMembers)
+                    .WithMany(p => p.Students)
                     .HasForeignKey("ClassId")
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.Project)
+                    .WithMany(p => p.Students)
+                    .HasForeignKey("ProjectId")
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -82,8 +93,8 @@ namespace IPMS.DataAccess
                     .ToTable("ClassTopic")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Topics)
@@ -103,8 +114,8 @@ namespace IPMS.DataAccess
                     .ToTable("Committee")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Committees)
@@ -121,10 +132,7 @@ namespace IPMS.DataAccess
             {
                 entity
                     .ToTable("Favorite")
-                    .HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+                    .HasKey(e => e.Id); 
 
                 entity.HasOne(e => e.Lecturer)
                     .WithMany(p => p.Favorites)
@@ -138,38 +146,30 @@ namespace IPMS.DataAccess
                     .ToTable("IoTComponent")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
             });
 
             modelBuilder.Entity<IPMSClass>(entity =>
             {
                 entity
                     .ToTable("IPMSClass")
-                    .HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+                    .HasKey(e => e.Id);    
 
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("SemesterId")
                     .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasOne(e => e.Lecturer)
-                    .WithMany(p => p.Classes)
-                    .HasForeignKey("LecturerId")
-                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<IPMSUser>(entity =>
             {
-                entity
+               /* entity
                     .ToTable("IPMSUser")
-                    .HasKey(e => e.Id);
+                    .HasKey(e => e.Id);*/
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+
+
             });
 
             modelBuilder.Entity<LecturerGrade>(entity =>
@@ -178,12 +178,17 @@ namespace IPMS.DataAccess
                     .ToTable("LecturerGrade")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Committee)
                     .WithMany(p => p.Grades)
                     .HasForeignKey("CommitteeId")
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.Submission)
+                    .WithMany(p => p.Grades)
+                    .HasForeignKey("SubmissionId")
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -193,48 +198,23 @@ namespace IPMS.DataAccess
                     .ToTable("MemberHistory")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
             });
 
-            //hoi lu
-
-            modelBuilder.Entity<MemberProject>(entity =>
-            {
-                entity
-                    .ToTable("MemberProject")
-                    .HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
-
-                entity.HasOne(e => e.Project)
-                    .WithMany(p => p.MemberProjects)
-                    .HasForeignKey("ProjectId")
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasOne(e => e.Student)
-                    .WithMany(p => p.MemberProjects)
-                    .HasForeignKey("StudentId")
-                    .OnDelete(DeleteBehavior.SetNull);
-
-
-            });
-
-            //con class topic
             modelBuilder.Entity<Project>(entity =>
             {
                 entity
                     .ToTable("Project")
-                    .HasKey(e => e.Id);
+                    .HasKey(e => e.Id); 
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
-                entity.HasOne(e => e.OwnerLecturer)
+                entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnProjects)
-                    .HasForeignKey("OwnerLecturerId")
+                    .HasForeignKey("OwnerId")
                     .OnDelete(DeleteBehavior.SetNull);
                 
                 entity.HasOne<ClassTopic>(e => e.Topic)
@@ -242,23 +222,18 @@ namespace IPMS.DataAccess
                     .HasForeignKey<ClassTopic>(e => e.ProjectId);
             });
 
-            modelBuilder.Entity<ProjectComponent>(entity =>
+            modelBuilder.Entity<ComponentsMaster>(entity =>
             {
                 entity
-                    .ToTable("ProjectComponent")
+                    .ToTable("ComponentsMaster")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Component)
-                    .WithMany(p => p.Projects)
+                    .WithMany(p => p.ComponentsMasters)
                     .HasForeignKey("ComponentId")
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasOne(e => e.Project)
-                    .WithMany(p => p.Components)
-                    .HasForeignKey("ProjectId")
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -268,8 +243,8 @@ namespace IPMS.DataAccess
                     .ToTable("ProjectSubmission")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Project)
                     .WithMany(p => p.Submissions)
@@ -288,8 +263,8 @@ namespace IPMS.DataAccess
                     .ToTable("Report")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Reporter)
                     .WithMany(p => p.Reports)
@@ -303,8 +278,6 @@ namespace IPMS.DataAccess
                     .ToTable("Semester")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
 
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Semesters)
@@ -318,21 +291,21 @@ namespace IPMS.DataAccess
                     .ToTable("SubmissionModule")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Assessment)
-                    .WithMany(p => p.Submissions)
+                    .WithMany(p => p.Modules)
                     .HasForeignKey("AssessmentId")
                     .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasOne(e => e.Semester)
-                    .WithMany(p => p.Submissions)
+                    .WithMany(p => p.Modules)
                     .HasForeignKey("SemesterId")
                     .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasOne(e => e.Lecturer)
-                    .WithMany(p => p.SubmissionModules)
+                    .WithMany(p => p.Modules)
                     .HasForeignKey("LectureId")
                     .OnDelete(DeleteBehavior.SetNull);
             });
@@ -343,8 +316,8 @@ namespace IPMS.DataAccess
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
             });
 
@@ -354,32 +327,12 @@ namespace IPMS.DataAccess
                     .ToTable("Topic")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnTopics)
                     .HasForeignKey("OwnerId")
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
-
-            modelBuilder.Entity<TopicComponent>(entity =>
-            {
-                entity
-                    .ToTable("TopicComponent")
-                    .HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
-
-                entity.HasOne(e => e.Component)
-                    .WithMany(p => p.Topics)
-                    .HasForeignKey("ComponentId")
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasOne(e => e.Topic)
-                    .WithMany(p => p.Components)
-                    .HasForeignKey("TopicId")
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -389,8 +342,8 @@ namespace IPMS.DataAccess
                     .ToTable("TopicFavorite")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
-                    .UseIdentityColumn(1, 1);
+             
+          
 
                 entity.HasOne(e => e.Topic)
                     .WithMany(p => p.Favorites)

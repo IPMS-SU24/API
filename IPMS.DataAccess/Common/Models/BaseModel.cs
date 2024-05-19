@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IPMS.DataAccess.CommonModels
+namespace IPMS.DataAccess.Common.Models
 {
     public class BaseModel
     {

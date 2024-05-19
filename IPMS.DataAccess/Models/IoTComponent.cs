@@ -1,4 +1,4 @@
-﻿using IPMS.DataAccess.CommonModels;
+﻿using IPMS.DataAccess.Common.Models;
 
 namespace IPMS.DataAccess.Models
 {
@@ -7,8 +7,6 @@ namespace IPMS.DataAccess.Models
         public string Name { get; set; }
         public string Description { get; set; }
         public string ImageLink { get; set; }
-        public virtual ICollection<ProjectComponent> Projects { get; set; } = new List<ProjectComponent>();
-        public virtual ICollection<TopicComponent> Topics { get; set; } = new List<TopicComponent>();
-        public virtual ICollection<AccountComponent> Lecturers { get; set; } = new List<AccountComponent>();
+        public virtual ICollection<ComponentsMaster> ComponentsMasters { get; set; } = new List<ComponentsMaster>();
     }
 }
