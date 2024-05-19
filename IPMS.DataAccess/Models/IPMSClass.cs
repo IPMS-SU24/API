@@ -1,7 +1,9 @@
 ﻿
+using IPMS.DataAccess.CommonModels;
+
 namespace IPMS.DataAccess.Models
 {
-    public class IPMSClass
+    public class IPMSClass : BaseModel
     {
         public string Name { get; set; }
         public string Description { get; set; }
@@ -14,5 +16,6 @@ namespace IPMS.DataAccess.Models
         public virtual IPMSUser Lecturer { get; set; }
         public virtual ICollection<Committee> Committees {get; set;} = new List<Committee>();
         public virtual ICollection<ClassMember> ClassMembers {get; set;} = new List<ClassMember>();
+        public virtual ICollection<ClassTopic> Topics {get; set;} = new List<ClassTopic>();
     }
 }

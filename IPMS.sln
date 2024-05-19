@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPMS.API", "IPMS.API\IPMS.A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPMS.DataAccess", "IPMS.DataAccess\IPMS.DataAccess.csproj", "{6707A0BE-CC50-468E-9423-7A6A2E50B88F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPMS.Business", "IPMS.Business\IPMS.Business.csproj", "{8E2D6EE2-254B-401C-B3E5-563EB00862F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPMS.Business", "IPMS.Business\IPMS.Business.csproj", "{8E2D6EE2-254B-401C-B3E5-563EB00862F0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPMS.UnitTests", "IPMS.UnitTests\IPMS.UnitTests.csproj", "{BF071077-18FC-4BE3-8A70-977439BB6AEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPMS.UnitTests", "IPMS.UnitTests\IPMS.UnitTests.csproj", "{BF071077-18FC-4BE3-8A70-977439BB6AEE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

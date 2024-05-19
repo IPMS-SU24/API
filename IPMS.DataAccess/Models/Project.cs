@@ -8,12 +8,11 @@ namespace IPMS.DataAccess.Models
         public bool IsPublished { get; set; }
         public decimal Grade { get; set; }
         public Guid OwnerLecturerId { get; set; }
-        public Guid? ClassTopicId { get; set; }
         public virtual IPMSUser OwnerLecturer { get; set; }
-        public virtual ClassTopic? ClassTopic { get; set; }
-        public virtual ICollection<ProjectComponent> ProjectComponents { get; set; } = new List<ProjectComponent>();
+        public virtual ClassTopic? Topic { get; set; }
+        public virtual ICollection<ProjectComponent> Components { get; set; } = new List<ProjectComponent>();
         public virtual ICollection<MemberProject> MemberProjects {get; set;} = new List<MemberProject>();
-        public virtual ICollection<ProjectSubmission> ProjectSubmissions {get; set;} = new List<ProjectSubmission>();
+        public virtual ICollection<ProjectSubmission> Submissions {get; set;} = new List<ProjectSubmission>();
         
     }
 }
