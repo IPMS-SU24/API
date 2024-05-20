@@ -10,7 +10,7 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<Student> Students { get; set; } = new List<Student>();
         public virtual ICollection<Committee> Committees { get; set; } = new List<Committee>();
         public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
-        public virtual ICollection<IoTComponent> IoTComponents { get; set; } = new List<IoTComponent>();
+        //public virtual ICollection<IoTComponent> IoTComponents { get; set; } = new List<IoTComponent>();
         public virtual ICollection<Project> OwnProjects { get; set; } = new List<Project>();
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual ICollection<SubmissionModule> Modules { get; set; } = new List<SubmissionModule>();

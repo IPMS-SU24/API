@@ -6,7 +6,7 @@ namespace IPMS.DataAccess.Models
     {
         public string SubmissionLink { get; set; }
         public DateTime SubmissionDate { get; set; }
-        public decimal FinalGrade { get; set; }
+        public decimal? FinalGrade { get; set; }
         public Guid? ProjectId { get; set; }
         public Guid? SubmissionModuleId { get; set; }
         public virtual Project? Project { get; set; }

@@ -150,9 +150,6 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("IoTComponent")
                     .HasKey(e => e.Id);
-
-
-
             });
 
             modelBuilder.Entity<IPMSClass>(entity =>
@@ -232,9 +229,6 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("ComponentsMaster")
                     .HasKey(e => e.Id);
-
-
-
 
                 entity.HasOne(e => e.Component)
                     .WithMany(p => p.ComponentsMasters)
@@ -331,9 +325,6 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Topic")
                     .HasKey(e => e.Id);
-
-
-
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnTopics)

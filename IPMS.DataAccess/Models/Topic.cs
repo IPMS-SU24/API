@@ -9,7 +9,7 @@ namespace IPMS.DataAccess.Models
         public string Description { get; set; }
         public Guid? OwnerId { get; set; }
         public virtual IPMSUser? Owner { get; set; }
-        public virtual ICollection<ComponentsMaster> Components { get; set; } = new List<ComponentsMaster>();
+       // public virtual ICollection<ComponentsMaster> Components { get; set; } = new List<ComponentsMaster>();
         public virtual ICollection<TopicFavorite> Favorites { get; set; } = new List<TopicFavorite>();
         public virtual ICollection<ClassTopic> Classes { get; set; } = new List<ClassTopic>();
 
