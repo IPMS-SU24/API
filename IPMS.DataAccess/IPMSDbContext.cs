@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace IPMS.DataAccess
@@ -29,26 +30,30 @@ namespace IPMS.DataAccess
         public virtual DbSet<ComponentsMaster> ComponentsMasters { get; set; }
         public virtual DbSet<TopicFavorite> TopicFavorites { get; set; }
 
-        public IPMSDbContext(DbContextOptions options) : base(options)
+        public IPMSDbContext(DbContextOptions<IPMSDbContext> options) : base(options)
         {
         }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
-        private string GetConnectionString()
+        public IPMSDbContext()
         {
             
+        }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseNpgsql(GetConnectionString());
+        private string GetConnectionString()
+        {
+
             IConfigurationRoot configuration = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.json")
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddUserSecrets(Assembly.GetExecutingAssembly())
+                .AddJsonFile("appsettings.json", true, true)
                 .Build();
-            return configuration["ConnectionStrings:IPMS"];
+            return configuration.GetConnectionString("IPMS");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
-            base.OnModelCreating(modelBuilder); 
+            base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Assessment>(entity =>
             {
@@ -68,8 +73,8 @@ namespace IPMS.DataAccess
                     .ToTable("Student")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Information)
                     .WithMany(p => p.Students)
@@ -93,8 +98,8 @@ namespace IPMS.DataAccess
                     .ToTable("ClassTopic")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Topics)
@@ -114,8 +119,8 @@ namespace IPMS.DataAccess
                     .ToTable("Committee")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Committees)
@@ -132,7 +137,7 @@ namespace IPMS.DataAccess
             {
                 entity
                     .ToTable("Favorite")
-                    .HasKey(e => e.Id); 
+                    .HasKey(e => e.Id);
 
                 entity.HasOne(e => e.Lecturer)
                     .WithMany(p => p.Favorites)
@@ -146,15 +151,15 @@ namespace IPMS.DataAccess
                     .ToTable("IoTComponent")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
             });
 
             modelBuilder.Entity<IPMSClass>(entity =>
             {
                 entity
                     .ToTable("IPMSClass")
-                    .HasKey(e => e.Id);    
+                    .HasKey(e => e.Id);
 
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
@@ -164,9 +169,9 @@ namespace IPMS.DataAccess
 
             modelBuilder.Entity<IPMSUser>(entity =>
             {
-               /* entity
-                    .ToTable("IPMSUser")
-                    .HasKey(e => e.Id);*/
+                /* entity
+                     .ToTable("IPMSUser")
+                     .HasKey(e => e.Id);*/
 
 
 
@@ -178,8 +183,8 @@ namespace IPMS.DataAccess
                     .ToTable("LecturerGrade")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Committee)
                     .WithMany(p => p.Grades)
@@ -198,8 +203,8 @@ namespace IPMS.DataAccess
                     .ToTable("MemberHistory")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
             });
 
@@ -207,16 +212,16 @@ namespace IPMS.DataAccess
             {
                 entity
                     .ToTable("Project")
-                    .HasKey(e => e.Id); 
+                    .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnProjects)
                     .HasForeignKey("OwnerId")
                     .OnDelete(DeleteBehavior.SetNull);
-                
+
                 entity.HasOne<ClassTopic>(e => e.Topic)
                     .WithOne(e => e.Project)
                     .HasForeignKey<ClassTopic>(e => e.ProjectId);
@@ -228,8 +233,8 @@ namespace IPMS.DataAccess
                     .ToTable("ComponentsMaster")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Component)
                     .WithMany(p => p.ComponentsMasters)
@@ -243,8 +248,8 @@ namespace IPMS.DataAccess
                     .ToTable("ProjectSubmission")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Project)
                     .WithMany(p => p.Submissions)
@@ -263,8 +268,8 @@ namespace IPMS.DataAccess
                     .ToTable("Report")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Reporter)
                     .WithMany(p => p.Reports)
@@ -291,8 +296,8 @@ namespace IPMS.DataAccess
                     .ToTable("SubmissionModule")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Assessment)
                     .WithMany(p => p.Modules)
@@ -316,8 +321,8 @@ namespace IPMS.DataAccess
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
             });
 
@@ -327,8 +332,8 @@ namespace IPMS.DataAccess
                     .ToTable("Topic")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnTopics)
@@ -342,8 +347,8 @@ namespace IPMS.DataAccess
                     .ToTable("TopicFavorite")
                     .HasKey(e => e.Id);
 
-             
-          
+
+
 
                 entity.HasOne(e => e.Topic)
                     .WithMany(p => p.Favorites)
