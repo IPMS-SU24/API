@@ -5,10 +5,12 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Filters;
 using IPMS.DataAccess;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using System;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +35,7 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.AddDI();
+builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b=>b.MigrationsAssembly("IPMS.DataAccess")));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 //TODO Config Add DbContext connection
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
