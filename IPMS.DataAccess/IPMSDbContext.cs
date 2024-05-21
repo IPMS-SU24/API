@@ -29,6 +29,7 @@ namespace IPMS.DataAccess
         public virtual DbSet<Topic> Topics { get; set; }
         public virtual DbSet<ComponentsMaster> ComponentsMasters { get; set; }
         public virtual DbSet<TopicFavorite> TopicFavorites { get; set; }
+        public virtual DbSet<ReportType> ReportTypes { get; set; }
 
         public IPMSDbContext(DbContextOptions<IPMSDbContext> options) : base(options)
         {
@@ -64,7 +65,7 @@ namespace IPMS.DataAccess
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Assessments)
                     .HasForeignKey("SyllabusId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Student>(entity =>
@@ -73,23 +74,20 @@ namespace IPMS.DataAccess
                     .ToTable("Student")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Information)
                     .WithMany(p => p.Students)
                     .HasForeignKey("InformationId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Students)
                     .HasForeignKey("ClassId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Project)
                     .WithMany(p => p.Students)
                     .HasForeignKey("ProjectId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<ClassTopic>(entity =>
@@ -98,18 +96,15 @@ namespace IPMS.DataAccess
                     .ToTable("ClassTopic")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Topics)
                     .HasForeignKey("ClassId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Topic)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("TopicId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
             });
 
@@ -119,18 +114,15 @@ namespace IPMS.DataAccess
                     .ToTable("Committee")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Committees)
                     .HasForeignKey("ClassId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Lecturer)
                     .WithMany(p => p.Committees)
                     .HasForeignKey("LecturerId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Favorite>(entity =>
@@ -142,7 +134,7 @@ namespace IPMS.DataAccess
                 entity.HasOne(e => e.Lecturer)
                     .WithMany(p => p.Favorites)
                     .HasForeignKey("LecturerId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<IoTComponent>(entity =>
@@ -161,16 +153,11 @@ namespace IPMS.DataAccess
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("SemesterId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<IPMSUser>(entity =>
             {
-                /* entity
-                     .ToTable("IPMSUser")
-                     .HasKey(e => e.Id);*/
-
-
 
             });
 
@@ -180,18 +167,15 @@ namespace IPMS.DataAccess
                     .ToTable("LecturerGrade")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Committee)
                     .WithMany(p => p.Grades)
                     .HasForeignKey("CommitteeId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Submission)
                     .WithMany(p => p.Grades)
                     .HasForeignKey("SubmissionId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<MemberHistory>(entity =>
@@ -199,9 +183,6 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("MemberHistory")
                     .HasKey(e => e.Id);
-
-
-
 
             });
 
@@ -211,13 +192,10 @@ namespace IPMS.DataAccess
                     .ToTable("Project")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnProjects)
                     .HasForeignKey("OwnerId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne<ClassTopic>(e => e.Topic)
                     .WithOne(e => e.Project)
@@ -233,7 +211,7 @@ namespace IPMS.DataAccess
                 entity.HasOne(e => e.Component)
                     .WithMany(p => p.ComponentsMasters)
                     .HasForeignKey("ComponentId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<ProjectSubmission>(entity =>
@@ -242,18 +220,15 @@ namespace IPMS.DataAccess
                     .ToTable("ProjectSubmission")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Project)
                     .WithMany(p => p.Submissions)
                     .HasForeignKey("ProjectId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.SubmissionModule)
                     .WithMany(p => p.ProjectSubmissions)
                     .HasForeignKey("SubmissionModuleId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Report>(entity =>
@@ -262,26 +237,32 @@ namespace IPMS.DataAccess
                     .ToTable("Report")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Reporter)
                     .WithMany(p => p.Reports)
                     .HasForeignKey("ReporterId")
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
+                    .OnDelete(DeleteBehavior.Cascade);
 
+                entity.HasOne(e => e.ReportType)
+                    .WithMany(p => p.Reports)
+                    .HasForeignKey("ReportTypeId")
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<ReportType>(entity =>
+            {
+                entity
+                    .ToTable("ReportType")
+                    .HasKey(e => e.Id);
+            });
             modelBuilder.Entity<Semester>(entity =>
             {
                 entity
                     .ToTable("Semester")
                     .HasKey(e => e.Id);
 
-
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Semesters)
                     .HasForeignKey("SyllabusId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<SubmissionModule>(entity =>
@@ -290,23 +271,20 @@ namespace IPMS.DataAccess
                     .ToTable("SubmissionModule")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Assessment)
                     .WithMany(p => p.Modules)
                     .HasForeignKey("AssessmentId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Modules)
                     .HasForeignKey("SemesterId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Lecturer)
                     .WithMany(p => p.Modules)
                     .HasForeignKey("LectureId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Syllabus>(entity =>
@@ -314,9 +292,6 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
-
-
-
 
             });
 
@@ -329,7 +304,7 @@ namespace IPMS.DataAccess
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnTopics)
                     .HasForeignKey("OwnerId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<TopicFavorite>(entity =>
@@ -338,18 +313,15 @@ namespace IPMS.DataAccess
                     .ToTable("TopicFavorite")
                     .HasKey(e => e.Id);
 
-
-
-
                 entity.HasOne(e => e.Topic)
                     .WithMany(p => p.Favorites)
                     .HasForeignKey("TopicId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Favorite)
                     .WithMany(p => p.Topics)
                     .HasForeignKey("FavoriteId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         }
