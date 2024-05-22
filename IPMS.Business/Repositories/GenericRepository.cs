@@ -1,4 +1,4 @@
-﻿using IPMS.Business.Interfaces;
+﻿using IPMS.Business.Interfaces.Repositories;
 using IPMS.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;

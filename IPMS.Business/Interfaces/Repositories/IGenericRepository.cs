@@ -1,4 +1,4 @@
-﻿namespace IPMS.Business.Interfaces
+﻿namespace IPMS.Business.Interfaces.Repositories
 {
     public interface IGenericRepository<TEntity>
     {
