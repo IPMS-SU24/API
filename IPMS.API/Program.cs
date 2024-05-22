@@ -1,3 +1,4 @@
+using Amazon.SQS;
 using AutoFilterer.Swagger;
 using AutoMapper.Internal;
 using FluentValidation;
@@ -16,7 +17,8 @@ using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.Converters.Add(new StringEnumConverter());
@@ -47,6 +49,8 @@ builder.Services.AddSwaggerGen(options =>
     options.UseAutoFiltererParameters();
 });
 builder.Services.AddSwaggerGenNewtonsoftSupport();
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonSQS>();
 //TODO in Sprint 3
 //Config JWT
 //Add Identity Type
