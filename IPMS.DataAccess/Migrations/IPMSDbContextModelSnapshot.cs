@@ -17,7 +17,7 @@ namespace IPMS.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.30")
+                .HasAnnotation("ProductVersion", "6.0.29")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -119,6 +119,7 @@ namespace IPMS.DataAccess.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Comment")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<Guid?>("ComponentId")
@@ -133,15 +134,25 @@ namespace IPMS.DataAccess.Migrations
                     b.Property<int>("MasterType")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ComponentId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TopicId");
 
                     b.ToTable("ComponentsMaster", (string)null);
                 });
@@ -179,6 +190,9 @@ namespace IPMS.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("IPMSUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ImageLink")
                         .IsRequired()
                         .HasColumnType("text");
@@ -191,6 +205,8 @@ namespace IPMS.DataAccess.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IPMSUserId");
 
                     b.ToTable("IoTComponent", (string)null);
                 });
@@ -308,7 +324,7 @@ namespace IPMS.DataAccess.Migrations
                     b.Property<Guid?>("CommitteeId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal?>("Grade")
+                    b.Property<decimal>("Grade")
                         .HasColumnType("numeric");
 
                     b.Property<bool>("IsDeleted")
@@ -335,9 +351,6 @@ namespace IPMS.DataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsMemberSwapApproved")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsProjectFromApproved")
                         .HasColumnType("boolean");
 
@@ -351,7 +364,7 @@ namespace IPMS.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ProjectFromId")
+                    b.Property<Guid?>("ProjectFromId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("ProjectToComment")
@@ -361,7 +374,7 @@ namespace IPMS.DataAccess.Migrations
                     b.Property<Guid?>("ProjectToId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ReporterId")
+                    b.Property<Guid?>("ReporterId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -375,7 +388,7 @@ namespace IPMS.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal?>("Grade")
+                    b.Property<decimal>("Grade")
                         .HasColumnType("numeric");
 
                     b.Property<string>("GroupName")
@@ -404,7 +417,7 @@ namespace IPMS.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal?>("FinalGrade")
+                    b.Property<decimal>("FinalGrade")
                         .HasColumnType("numeric");
 
                     b.Property<bool>("IsDeleted")
@@ -442,14 +455,8 @@ namespace IPMS.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("FileLink")
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<Guid?>("ReportTypeId")
-                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("ReporterId")
                         .HasColumnType("uuid");
@@ -467,29 +474,9 @@ namespace IPMS.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ReportTypeId");
-
                     b.HasIndex("ReporterId");
 
                     b.ToTable("Report", (string)null);
-                });
-
-            modelBuilder.Entity("IPMS.DataAccess.Models.ReportType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ReportType", (string)null);
                 });
 
             modelBuilder.Entity("IPMS.DataAccess.Models.Semester", b =>
@@ -823,7 +810,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Syllabus", "Syllabus")
                         .WithMany("Assessments")
                         .HasForeignKey("SyllabusId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Syllabus");
                 });
@@ -833,7 +820,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSClass", "Class")
                         .WithMany("Topics")
                         .HasForeignKey("ClassId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.Project", "Project")
                         .WithOne("Topic")
@@ -842,7 +829,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Topic", "Topic")
                         .WithMany("Classes")
                         .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Class");
 
@@ -856,12 +843,12 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSClass", "Class")
                         .WithMany("Committees")
                         .HasForeignKey("ClassId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Lecturer")
                         .WithMany("Committees")
                         .HasForeignKey("LecturerId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Class");
 
@@ -873,7 +860,15 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IoTComponent", "Component")
                         .WithMany("ComponentsMasters")
                         .HasForeignKey("ComponentId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("IPMS.DataAccess.Models.Project", null)
+                        .WithMany("Components")
+                        .HasForeignKey("ProjectId");
+
+                    b.HasOne("IPMS.DataAccess.Models.Topic", null)
+                        .WithMany("Components")
+                        .HasForeignKey("TopicId");
 
                     b.Navigation("Component");
                 });
@@ -883,9 +878,16 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Lecturer")
                         .WithMany("Favorites")
                         .HasForeignKey("LecturerId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Lecturer");
+                });
+
+            modelBuilder.Entity("IPMS.DataAccess.Models.IoTComponent", b =>
+                {
+                    b.HasOne("IPMS.DataAccess.Models.IPMSUser", null)
+                        .WithMany("IoTComponents")
+                        .HasForeignKey("IPMSUserId");
                 });
 
             modelBuilder.Entity("IPMS.DataAccess.Models.IPMSClass", b =>
@@ -893,7 +895,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Semester", "Semester")
                         .WithMany("Classes")
                         .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Semester");
                 });
@@ -903,12 +905,12 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Committee", "Committee")
                         .WithMany("Grades")
                         .HasForeignKey("CommitteeId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.ProjectSubmission", "Submission")
                         .WithMany("Grades")
                         .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Committee");
 
@@ -920,7 +922,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Owner")
                         .WithMany("OwnProjects")
                         .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Owner");
                 });
@@ -930,12 +932,12 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Project", "Project")
                         .WithMany("Submissions")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.SubmissionModule", "SubmissionModule")
                         .WithMany("ProjectSubmissions")
                         .HasForeignKey("SubmissionModuleId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Project");
 
@@ -944,17 +946,10 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.Report", b =>
                 {
-                    b.HasOne("IPMS.DataAccess.Models.ReportType", "ReportType")
-                        .WithMany("Reports")
-                        .HasForeignKey("ReportTypeId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Reporter")
                         .WithMany("Reports")
                         .HasForeignKey("ReporterId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("ReportType");
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Reporter");
                 });
@@ -964,7 +959,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Syllabus", "Syllabus")
                         .WithMany("Semesters")
                         .HasForeignKey("SyllabusId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Syllabus");
                 });
@@ -974,17 +969,17 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSClass", "Class")
                         .WithMany("Students")
                         .HasForeignKey("ClassId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Information")
                         .WithMany("Students")
                         .HasForeignKey("InformationId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.Project", "Project")
                         .WithMany("Students")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Class");
 
@@ -998,17 +993,17 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Assessment", "Assessment")
                         .WithMany("Modules")
                         .HasForeignKey("AssessmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Lecturer")
                         .WithMany("Modules")
                         .HasForeignKey("LectureId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.Semester", "Semester")
                         .WithMany("Modules")
                         .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Assessment");
 
@@ -1022,7 +1017,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Owner")
                         .WithMany("OwnTopics")
                         .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Owner");
                 });
@@ -1032,12 +1027,12 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.Favorite", "Favorite")
                         .WithMany("Topics")
                         .HasForeignKey("FavoriteId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("IPMS.DataAccess.Models.Topic", "Topic")
                         .WithMany("Favorites")
                         .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Favorite");
 
@@ -1130,6 +1125,8 @@ namespace IPMS.DataAccess.Migrations
 
                     b.Navigation("Favorites");
 
+                    b.Navigation("IoTComponents");
+
                     b.Navigation("Modules");
 
                     b.Navigation("OwnProjects");
@@ -1143,6 +1140,8 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.Project", b =>
                 {
+                    b.Navigation("Components");
+
                     b.Navigation("Students");
 
                     b.Navigation("Submissions");
@@ -1153,11 +1152,6 @@ namespace IPMS.DataAccess.Migrations
             modelBuilder.Entity("IPMS.DataAccess.Models.ProjectSubmission", b =>
                 {
                     b.Navigation("Grades");
-                });
-
-            modelBuilder.Entity("IPMS.DataAccess.Models.ReportType", b =>
-                {
-                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("IPMS.DataAccess.Models.Semester", b =>
@@ -1182,6 +1176,8 @@ namespace IPMS.DataAccess.Migrations
             modelBuilder.Entity("IPMS.DataAccess.Models.Topic", b =>
                 {
                     b.Navigation("Classes");
+
+                    b.Navigation("Components");
 
                     b.Navigation("Favorites");
                 });

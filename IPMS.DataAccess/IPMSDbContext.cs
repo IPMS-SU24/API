@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 
 namespace IPMS.DataAccess
 {
-    public class IPMSDbContext : IdentityDbContext<IPMSUser, IdentityRole<Guid>, Guid>
+    public class IPMSDbContext : DbContext
     {
         public virtual DbSet<Assessment> Assessments { get; set; }
         public virtual DbSet<Student> Students { get; set; }
@@ -61,6 +61,10 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Assessment")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Assessments)
@@ -131,6 +135,8 @@ namespace IPMS.DataAccess
                     .ToTable("Favorite")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Name).HasMaxLength(50);
+
                 entity.HasOne(e => e.Lecturer)
                     .WithMany(p => p.Favorites)
                     .HasForeignKey("LecturerId")
@@ -142,6 +148,10 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("IoTComponent")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
             });
 
             modelBuilder.Entity<IPMSClass>(entity =>
@@ -150,16 +160,20 @@ namespace IPMS.DataAccess
                     .ToTable("IPMSClass")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("SemesterId")
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            modelBuilder.Entity<IPMSUser>(entity =>
+         /*   modelBuilder.Entity<IPMSUser>(entity =>
             {
 
-            });
+            });*/
 
             modelBuilder.Entity<LecturerGrade>(entity =>
             {
@@ -191,6 +205,8 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Project")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.GroupName).HasMaxLength(50);
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnProjects)
@@ -252,12 +268,19 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("ReportType")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
             });
             modelBuilder.Entity<Semester>(entity =>
             {
                 entity
                     .ToTable("Semester")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+                entity.Property(e => e.ShortName).HasMaxLength(50);
 
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Semesters)
@@ -270,6 +293,10 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("SubmissionModule")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.HasOne(e => e.Assessment)
                     .WithMany(p => p.Modules)
@@ -293,6 +320,11 @@ namespace IPMS.DataAccess
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.ShortName).HasMaxLength(50);
             });
 
             modelBuilder.Entity<Topic>(entity =>
@@ -300,6 +332,12 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Topic")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.ShortName).HasMaxLength(50);
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnTopics)
@@ -323,6 +361,97 @@ namespace IPMS.DataAccess
                     .HasForeignKey("FavoriteId")
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            //AspNetUser Handle
+            modelBuilder.Entity<IdentityRoleClaim<Guid>>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                entity.ToTable("RoleClaims");
+            });
+
+            modelBuilder.Entity<IdentityUserRole<Guid>>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.RoleId });
+
+                entity.ToTable("AccountRole");
+            });
+            modelBuilder.Ignore<IdentityUserLogin<Guid>>(); //Ignore UserLogin
+
+            modelBuilder.Entity<IdentityUser<Guid>>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                entity.ToTable("Account");
+                // ignore
+                entity.Ignore(u => u.NormalizedUserName);
+                entity.Ignore(u => u.NormalizedEmail);
+                entity.Ignore(u => u.TwoFactorEnabled);
+                entity.Ignore(u => u.LockoutEnabled);
+                entity.Ignore(u => u.LockoutEnd);
+
+                // A concurrency token for use with the optimistic concurrency checking
+                entity.Property(u => u.ConcurrencyStamp).IsConcurrencyToken();
+
+                // Limit the size of columns to use efficient database types
+                entity.Property(u => u.UserName).HasMaxLength(256);
+                entity.Property(u => u.Email).HasMaxLength(256);
+                // The relationships between User and other entity types
+                // Note that these relationships are configured with no navigation properties
+
+                // Each User can have many UserClaims
+                entity.HasMany<IdentityUserClaim<Guid>>().WithOne().HasForeignKey(uc => uc.UserId).IsRequired();
+
+                // Each User can have many UserTokens
+                entity.HasMany<IdentityUserToken<Guid>>().WithOne().HasForeignKey(ut => ut.UserId).IsRequired();
+
+                // Each User can have many entries in the UserRole join table
+                entity.HasMany<IdentityUserRole<Guid>>().WithOne().HasForeignKey(ur => ur.UserId).IsRequired();
+            });
+
+            modelBuilder.Entity<IdentityUserClaim<Guid>>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                entity.ToTable("AccountClaims");
+            });
+
+
+            modelBuilder.Entity<IdentityUserToken<Guid>>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
+
+                entity.ToTable("AccountTokens");
+
+                // Limit the size of the composite key columns due to common DB restrictions
+                entity.Property(t => t.LoginProvider).HasMaxLength(10000);
+                entity.Property(t => t.Name).HasMaxLength(10000);
+
+            });
+
+            modelBuilder.Entity<IdentityRole<Guid>>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                // Index for "normalized" role name to allow efficient lookups
+                entity.Ignore(r => r.NormalizedName);
+
+                entity.ToTable("Role");
+
+                // A concurrency token for use with the optimistic concurrency checking
+                entity.Property(r => r.ConcurrencyStamp).IsConcurrencyToken();
+
+                // Limit the size of columns to use efficient database types
+                entity.Property(u => u.Name).HasMaxLength(256);
+                entity.Ignore(u => u.NormalizedName);
+
+                // The relationships between Role and other entity types
+                // Note that these relationships are configured with no navigation properties
+
+                // Each Role can have many entries in the UserRole join table
+                entity.HasMany<IdentityUserRole<Guid>>().WithOne().HasForeignKey(ur => ur.RoleId).IsRequired();
+
+                // Each Role can have many associated RoleClaims
+                entity.HasMany<IdentityRoleClaim<Guid>>().WithOne().HasForeignKey(rc => rc.RoleId).IsRequired();
+            });
+
+          
 
         }
     }
