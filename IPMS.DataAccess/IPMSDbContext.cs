@@ -17,7 +17,7 @@ namespace IPMS.DataAccess
         public virtual DbSet<Favorite> Favorites { get; set; }
         public virtual DbSet<IoTComponent> IoTComponents { get; set; }
         public virtual DbSet<IPMSClass> IPMSClasses { get; set; }
-        public virtual DbSet<IPMSUser> IPMSUsers { get; set; }
+     
         public virtual DbSet<LecturerGrade> LecturerGrades { get; set; }
         public virtual DbSet<MemberHistory> MemberHistories { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
@@ -30,7 +30,7 @@ namespace IPMS.DataAccess
         public virtual DbSet<ComponentsMaster> ComponentsMasters { get; set; }
         public virtual DbSet<TopicFavorite> TopicFavorites { get; set; }
         public virtual DbSet<ReportType> ReportTypes { get; set; }
-
+       
         public IPMSDbContext(DbContextOptions<IPMSDbContext> options) : base(options)
         {
         }
@@ -66,6 +66,8 @@ namespace IPMS.DataAccess
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
+                entity.Property(e => e.Percentage).HasPrecision(3, 0);
+
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Assessments)
                     .HasForeignKey("SyllabusId")
@@ -77,6 +79,11 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Student")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.ContributePercentage).HasPrecision(3, 0);
+
+                entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
+
 
                 entity.HasOne(e => e.Information)
                     .WithMany(p => p.Students)
@@ -117,6 +124,8 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Committee")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Percentage).HasPrecision(3, 0);
 
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Committees)
@@ -170,7 +179,7 @@ namespace IPMS.DataAccess
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-         /*   modelBuilder.Entity<IPMSUser>(entity =>
+         /*   modelBuilder.Entity<IdentityUser<Guid>>(entity =>
             {
 
             });*/
@@ -180,6 +189,9 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("LecturerGrade")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Grade).HasPrecision(4, 2);
+
 
                 entity.HasOne(e => e.Committee)
                     .WithMany(p => p.Grades)
@@ -208,6 +220,8 @@ namespace IPMS.DataAccess
 
                 entity.Property(e => e.GroupName).HasMaxLength(50);
 
+                entity.Property(e => e.Grade).HasPrecision(4, 2);
+
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnProjects)
                     .HasForeignKey("OwnerId")
@@ -235,6 +249,8 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("ProjectSubmission")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
 
                 entity.HasOne(e => e.Project)
                     .WithMany(p => p.Submissions)
@@ -293,6 +309,8 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("SubmissionModule")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Percentage).HasPrecision(3, 0);
 
                 entity.Property(e => e.Description).HasMaxLength(10000);
 
@@ -363,24 +381,39 @@ namespace IPMS.DataAccess
             });
 
             //AspNetUser Handle
-            modelBuilder.Entity<IdentityRoleClaim<Guid>>(entity =>
+            modelBuilder.Entity<IPMSRoleClaim>(entity =>
             {
-                entity.HasKey(r => r.Id);
+
                 entity.ToTable("RoleClaims");
+
+                entity.HasOne(e => e.Role)
+                   .WithMany(p => p.RoleClaims)
+                   .HasForeignKey("RoleId")
+                   .IsRequired();
             });
 
-            modelBuilder.Entity<IdentityUserRole<Guid>>(entity =>
+            modelBuilder.Entity<IPMSUserRole>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.RoleId });
 
-                entity.ToTable("AccountRole");
+                entity.ToTable("UserRole");
+
+                entity.HasOne(e => e.User)
+                   .WithMany(p => p.UserRoles)
+                   .HasForeignKey("UserId")
+                   .IsRequired();
+
+                entity.HasOne(e => e.Role)
+                  .WithMany(p => p.UserRoles)
+                  .HasForeignKey("RoleId")
+                  .IsRequired();
             });
             modelBuilder.Ignore<IdentityUserLogin<Guid>>(); //Ignore UserLogin
 
             modelBuilder.Entity<IdentityUser<Guid>>(entity =>
             {
-                entity.HasKey(r => r.Id);
-                entity.ToTable("Account");
+
+                entity.ToTable("User");
                 // ignore
                 entity.Ignore(u => u.NormalizedUserName);
                 entity.Ignore(u => u.NormalizedEmail);
@@ -394,31 +427,26 @@ namespace IPMS.DataAccess
                 // Limit the size of columns to use efficient database types
                 entity.Property(u => u.UserName).HasMaxLength(256);
                 entity.Property(u => u.Email).HasMaxLength(256);
-                // The relationships between User and other entity types
-                // Note that these relationships are configured with no navigation properties
-
-                // Each User can have many UserClaims
-                entity.HasMany<IdentityUserClaim<Guid>>().WithOne().HasForeignKey(uc => uc.UserId).IsRequired();
-
-                // Each User can have many UserTokens
-                entity.HasMany<IdentityUserToken<Guid>>().WithOne().HasForeignKey(ut => ut.UserId).IsRequired();
-
-                // Each User can have many entries in the UserRole join table
-                entity.HasMany<IdentityUserRole<Guid>>().WithOne().HasForeignKey(ur => ur.UserId).IsRequired();
+               
             });
 
-            modelBuilder.Entity<IdentityUserClaim<Guid>>(entity =>
+            modelBuilder.Entity<IPMSUserClaim>(entity =>
             {
-                entity.HasKey(r => r.Id);
-                entity.ToTable("AccountClaims");
+                entity.ToTable("UserClaims");
+
+                entity.HasOne(e => e.User)
+                  .WithMany(p => p.Claims)
+                  .HasForeignKey("UserId")
+                  .IsRequired();
+
             });
 
 
-            modelBuilder.Entity<IdentityUserToken<Guid>>(entity =>
+            modelBuilder.Entity<IPMSUserToken>(entity =>
             {
                 entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
 
-                entity.ToTable("AccountTokens");
+                entity.ToTable("UserTokens");
 
                 // Limit the size of the composite key columns due to common DB restrictions
                 entity.Property(t => t.LoginProvider).HasMaxLength(10000);
@@ -428,8 +456,7 @@ namespace IPMS.DataAccess
 
             modelBuilder.Entity<IdentityRole<Guid>>(entity =>
             {
-                entity.HasKey(r => r.Id);
-                // Index for "normalized" role name to allow efficient lookups
+                // ignore
                 entity.Ignore(r => r.NormalizedName);
 
                 entity.ToTable("Role");
@@ -439,19 +466,8 @@ namespace IPMS.DataAccess
 
                 // Limit the size of columns to use efficient database types
                 entity.Property(u => u.Name).HasMaxLength(256);
-                entity.Ignore(u => u.NormalizedName);
 
-                // The relationships between Role and other entity types
-                // Note that these relationships are configured with no navigation properties
-
-                // Each Role can have many entries in the UserRole join table
-                entity.HasMany<IdentityUserRole<Guid>>().WithOne().HasForeignKey(ur => ur.RoleId).IsRequired();
-
-                // Each Role can have many associated RoleClaims
-                entity.HasMany<IdentityRoleClaim<Guid>>().WithOne().HasForeignKey(rc => rc.RoleId).IsRequired();
             });
-
-          
 
         }
     }
