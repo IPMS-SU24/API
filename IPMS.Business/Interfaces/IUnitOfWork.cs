@@ -1,7 +1,10 @@
-﻿namespace IPMS.Business.Interfaces
+﻿using IPMS.Business.Interfaces.Repositories;
+
+namespace IPMS.Business.Interfaces
 {
     public interface IUnitOfWork
     {
-        void SaveChanges();
+        ISemesterRepository SemesterRepository { get; }
+        void SaveChangesAsync();
     }
 }

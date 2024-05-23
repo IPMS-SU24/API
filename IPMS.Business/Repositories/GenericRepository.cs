@@ -16,9 +16,9 @@ namespace IPMS.Business.Repository
             this.dbSet = context.Set<TEntity>();
         }
 
-        public virtual IEnumerable<TEntity> Get()
+        public virtual IQueryable<TEntity> Get()
         {
-            return new List<TEntity>();
+            return dbSet.AsQueryable();
         }
 
         public virtual TEntity GetByID(object id)

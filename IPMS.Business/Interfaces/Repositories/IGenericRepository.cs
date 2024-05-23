@@ -2,7 +2,7 @@
 {
     public interface IGenericRepository<TEntity>
     {
-        IEnumerable<TEntity> Get();
+        IQueryable<TEntity> Get();
         TEntity GetByID(object id);
         void Insert(TEntity entity);
         void Delete(object id);
