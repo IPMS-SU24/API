@@ -17,7 +17,6 @@ namespace IPMS.DataAccess
         public virtual DbSet<Favorite> Favorites { get; set; }
         public virtual DbSet<IoTComponent> IoTComponents { get; set; }
         public virtual DbSet<IPMSClass> IPMSClasses { get; set; }
-        public virtual DbSet<IPMSUser> IPMSUsers { get; set; }
         public virtual DbSet<LecturerGrade> LecturerGrades { get; set; }
         public virtual DbSet<MemberHistory> MemberHistories { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
@@ -55,12 +54,32 @@ namespace IPMS.DataAccess
         {
 
             base.OnModelCreating(modelBuilder);
-
+            //Rename IdentityTables
+            modelBuilder.Entity<IPMSUser>(entity =>
+            {
+                entity.ToTable("Account");
+                entity.Ignore(c => c.AccessFailedCount);
+                entity.Ignore(c => c.LockoutEnabled);
+                entity.Ignore(c => c.LockoutEnd);
+                entity.Ignore(c => c.TwoFactorEnabled);
+            });
+            modelBuilder.Entity<IdentityRole<Guid>>().ToTable("Role");                                      
+            modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("UserRole");
+            modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("UserLogin");
+            modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("UserClaim");
+            modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("RoleClaim");
+            modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("UserToken");
             modelBuilder.Entity<Assessment>(entity =>
             {
                 entity
                     .ToTable("Assessment")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.Percentage).HasPrecision(3, 0);
 
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Assessments)
@@ -73,6 +92,11 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Student")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.ContributePercentage).HasPrecision(3, 0);
+
+                entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
+
 
                 entity.HasOne(e => e.Information)
                     .WithMany(p => p.Students)
@@ -114,6 +138,8 @@ namespace IPMS.DataAccess
                     .ToTable("Committee")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Percentage).HasPrecision(3, 0);
+
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.Committees)
                     .HasForeignKey("ClassId")
@@ -131,6 +157,8 @@ namespace IPMS.DataAccess
                     .ToTable("Favorite")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Name).HasMaxLength(50);
+
                 entity.HasOne(e => e.Lecturer)
                     .WithMany(p => p.Favorites)
                     .HasForeignKey("LecturerId")
@@ -142,6 +170,10 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("IoTComponent")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
             });
 
             modelBuilder.Entity<IPMSClass>(entity =>
@@ -150,15 +182,14 @@ namespace IPMS.DataAccess
                     .ToTable("IPMSClass")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("SemesterId")
                     .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            modelBuilder.Entity<IPMSUser>(entity =>
-            {
-
             });
 
             modelBuilder.Entity<LecturerGrade>(entity =>
@@ -166,6 +197,9 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("LecturerGrade")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Grade).HasPrecision(4, 2);
+
 
                 entity.HasOne(e => e.Committee)
                     .WithMany(p => p.Grades)
@@ -191,6 +225,10 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Project")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.GroupName).HasMaxLength(50);
+
+                entity.Property(e => e.Grade).HasPrecision(4, 2);
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnProjects)
@@ -219,6 +257,8 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("ProjectSubmission")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
 
                 entity.HasOne(e => e.Project)
                     .WithMany(p => p.Submissions)
@@ -252,12 +292,19 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("ReportType")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
             });
             modelBuilder.Entity<Semester>(entity =>
             {
                 entity
                     .ToTable("Semester")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+                entity.Property(e => e.ShortName).HasMaxLength(50);
 
                 entity.HasOne(e => e.Syllabus)
                     .WithMany(p => p.Semesters)
@@ -270,6 +317,12 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("SubmissionModule")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Percentage).HasPrecision(3, 0);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.HasOne(e => e.Assessment)
                     .WithMany(p => p.Modules)
@@ -293,6 +346,11 @@ namespace IPMS.DataAccess
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.ShortName).HasMaxLength(50);
             });
 
             modelBuilder.Entity<Topic>(entity =>
@@ -300,6 +358,12 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Topic")
                     .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description).HasMaxLength(10000);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.ShortName).HasMaxLength(50);
 
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnTopics)

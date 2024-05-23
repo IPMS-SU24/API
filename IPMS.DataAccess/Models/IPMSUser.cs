@@ -15,6 +15,6 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
         public virtual ICollection<SubmissionModule> Modules { get; set; } = new List<SubmissionModule>();
         public virtual ICollection<Topic> OwnTopics { get; set; } = new List<Topic>();
-
+        public string FullName {  get; set; }
     }
 }
