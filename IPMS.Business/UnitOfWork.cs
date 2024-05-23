@@ -9,13 +9,15 @@ namespace IPMS.Business
     {
         private readonly IPMSDbContext _context;
         public ISemesterRepository SemesterRepository { get; }
+        public ITopicRepository TopicRepository { get; }
         //TODO in Sprint 2
         //Add repository
         //Waiting for generate entities
-        public UnitOfWork(IPMSDbContext context, ISemesterRepository semesterRepository)
+        public UnitOfWork(IPMSDbContext context, ISemesterRepository semesterRepository, ITopicRepository topicRepository)
         {
             _context = context;
             SemesterRepository = semesterRepository;
+            TopicRepository = topicRepository;
         }
         public void SaveChangesAsync()
         {

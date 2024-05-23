@@ -12,15 +12,19 @@ namespace IPMS.API.Common.Extensions
     {
         public static void AddDI(this IServiceCollection services)
         {
-            //TODO in Sprint 2
             //Add Depenency Injection
             //Wait for init DB
             services.AddSingleton<IMessageService, MessageService>();
+
+            //Add Repository
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<ISemesterRepository, SemesterRepository>();
+            services.AddScoped<ITopicRepository, TopicRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            //Service
+
+            //Add Service
             services.AddScoped<ISemesterService, SemesterService>();
+            services.AddScoped<ITopicService, TopicService>();
         }
     }
 }
