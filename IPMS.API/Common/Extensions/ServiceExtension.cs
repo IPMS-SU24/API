@@ -11,6 +11,7 @@ namespace IPMS.API.Common.Extensions
             //Add Depenency Injection
             //Wait for init DB
             services.AddSingleton<IMessageService, MessageService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
         }
     }
 }

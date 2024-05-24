@@ -16,5 +16,8 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<SubmissionModule> Modules { get; set; } = new List<SubmissionModule>();
         public virtual ICollection<Topic> OwnTopics { get; set; } = new List<Topic>();
         public string FullName {  get; set; }
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }
