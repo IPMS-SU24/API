@@ -1,11 +1,11 @@
 ﻿using IPMS.Business.Interfaces.Repositories;
 using IPMS.DataAccess;
+using IPMS.DataAccess.Common.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace IPMS.Business.Repository
 {
-    public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : class
+    public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : BaseModel
     {
         internal IPMSDbContext _context;
         internal DbSet<TEntity> dbSet;
@@ -16,25 +16,25 @@ namespace IPMS.Business.Repository
             this.dbSet = context.Set<TEntity>();
         }
 
-        public virtual IEnumerable<TEntity> Get()
+        public virtual IQueryable<TEntity> Get()
         {
-            return new List<TEntity>();
+            return dbSet.AsQueryable();
         }
 
-        public virtual TEntity GetByID(object id)
+        public virtual async Task<TEntity?> GetByID(object id)
         {
-            return dbSet.Find(id);
+            return await dbSet.FindAsync(id);
         }
 
-        public virtual void Insert(TEntity entity)
+        public virtual async Task Insert(TEntity entity)
         {
-            dbSet.Add(entity);
+            await dbSet.AddAsync(entity);
         }
 
-        public virtual void Delete(object id)
+        public virtual void SoftDelete(TEntity deleteEntity)
         {
-            TEntity entityToDelete = dbSet.Find(id);
-            Delete(entityToDelete);
+            deleteEntity.IsDeleted = true;
+            Update(deleteEntity);
         }
 
         public virtual void Delete(TEntity entityToDelete)

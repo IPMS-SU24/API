@@ -1,9 +1,12 @@
-﻿namespace IPMS.DataAccess.Common.Extensions
+﻿using IPMS.DataAccess.Common.Models;
+
+namespace IPMS.DataAccess.Common.Extensions
 {
     public static partial class QueryExtensions
     {
-        //TODO in Sprint 2
-        //Get Active Record(IsDeleted = false)
-        //Wait for init DB
+        public static IQueryable<T> GetQueryActive<T>(this IQueryable<T> source) where T : BaseModel
+        {
+            return source.Where(x => !x.IsDeleted);
+        }
     }
 }
