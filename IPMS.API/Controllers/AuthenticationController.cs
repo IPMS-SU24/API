@@ -41,26 +41,5 @@ namespace IPMS.API.Controllers
             }
             return GetResponse(response);
         }
-        [HttpPost]
-        [Route("register")]
-        public async Task<IActionResult> Register([FromBody] Register request)
-        {
-            var user = new IPMSUser()
-            {
-                Email = request.Email,
-                SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = request.Username,
-                PhoneNumber = request.PhoneNumber,
-                FullName = request.Fullname
-            };
-            var rs = await _userManager.CreateAsync(user, request.Password);
-            if (rs.Succeeded)
-            {
-                if (!await _roleManager.RoleExistsAsync(UserRole.LECTURER.ToString())) await _roleManager.CreateAsync(new IdentityRole<Guid>(UserRole.LECTURER.ToString()));
-                await _userManager.AddToRoleAsync(user, UserRole.LECTURER.ToString());
-            }
-            var response = new IPMSResponse<TokenModel>();
-            return GetResponse(response);
-        }
     }
 }
