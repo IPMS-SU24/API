@@ -5,16 +5,16 @@ namespace IPMS.API.Common.Enums
     public enum ResponseStatus
     {
         [Description("Request Complete Successfully")]
-        Success,
+        Success = 200,
         [Description("Invalid Request")]
-        BadRequest,
+        BadRequest = 400,
         [Description("Not Found Any Data")]
-        DataNotFound,
+        DataNotFound = 404,
         [Description("Unauthenticated")]
-        Unauthorized,
+        Unauthorized = 401,
         [Description("You don't have the permission to do the request")]
-        Forbidden,
+        Forbidden = 403,
         [Description("Somethings wen't wrong")]
-        Fail
+        Fail = 500
     }
 }
