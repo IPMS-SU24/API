@@ -25,6 +25,7 @@ namespace IPMS.API.Common.Extensions
             //Add Service
             services.AddScoped<ISemesterService, SemesterService>();
             services.AddScoped<ITopicService, TopicService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
         }
     }
 }
