@@ -41,7 +41,7 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.AddDI();
-builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b=>b.MigrationsAssembly("IPMS.DataAccess")));
+builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["IPMS"], b=>b.MigrationsAssembly("IPMS.DataAccess")));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -102,9 +102,9 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ClockSkew = TimeSpan.Zero,
-        ValidAudience = builder.Configuration["JWT:ValidAudience"],
-        ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
+        ValidAudience = builder.Configuration["JWT_ValidAudience"],
+        ValidIssuer = builder.Configuration["JWT_ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT_Secret"]))
     };
 });
 

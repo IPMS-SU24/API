@@ -1,7 +1,9 @@
 ﻿
+using IPMS.Business.Pagination;
+
 namespace IPMS.Business.Requests.Topic
 {
-    public class GetTopicRequest : BasePaginationRequest
+    public class GetTopicRequest : BasePaginationAutoFiltererRequest
     {
 
     }
