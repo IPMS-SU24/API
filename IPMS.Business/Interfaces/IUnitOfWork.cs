@@ -6,6 +6,9 @@ namespace IPMS.Business.Interfaces
     {
         ISemesterRepository SemesterRepository { get; }
         ITopicRepository TopicRepository { get; }
+        IClassTopicRepository ClassTopicRepository { get; }
+        IStudentRepository StudentRepository { get; }
+        IIPMSClassRepository IPMSClassRepository { get; }
         void SaveChangesAsync();
     }
 }

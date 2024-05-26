@@ -1,6 +1,5 @@
 ﻿using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Repositories;
-using IPMS.Business.Repository;
 using IPMS.DataAccess;
 
 namespace IPMS.Business
@@ -9,15 +8,24 @@ namespace IPMS.Business
     {
         private readonly IPMSDbContext _context;
         public ISemesterRepository SemesterRepository { get; }
+        public IClassTopicRepository ClassTopicRepository { get; }
         public ITopicRepository TopicRepository { get; }
+        public IStudentRepository StudentRepository { get; }
+        public IIPMSClassRepository IPMSClassRepository { get; }
+
         //TODO in Sprint 2
         //Add repository
         //Waiting for generate entities
-        public UnitOfWork(IPMSDbContext context, ISemesterRepository semesterRepository, ITopicRepository topicRepository)
+        public UnitOfWork(IPMSDbContext context, ISemesterRepository semesterRepository, ITopicRepository topicRepository, 
+                    IClassTopicRepository classTopicRepository, 
+                    IStudentRepository studentRepository, IIPMSClassRepository iPMSClassRepository)
         {
             _context = context;
             SemesterRepository = semesterRepository;
             TopicRepository = topicRepository;
+            ClassTopicRepository = classTopicRepository;
+            StudentRepository = studentRepository;
+            IPMSClassRepository = iPMSClassRepository;
         }
         public void SaveChangesAsync()
         {

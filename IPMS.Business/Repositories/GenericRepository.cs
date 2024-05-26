@@ -18,6 +18,7 @@ namespace IPMS.Business.Repository
 
         public virtual IQueryable<TEntity> Get()
         {
+            var k = dbSet.AsQueryable().ToList();
             return dbSet.AsQueryable();
         }
 

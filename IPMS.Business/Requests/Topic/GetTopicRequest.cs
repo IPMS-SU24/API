@@ -1,5 +1,4 @@
-﻿
-using IPMS.Business.Pagination;
+﻿using IPMS.Business.Pagination;
 
 namespace IPMS.Business.Requests.Topic
 {

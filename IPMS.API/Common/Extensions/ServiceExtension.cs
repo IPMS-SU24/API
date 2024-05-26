@@ -20,12 +20,16 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<ISemesterRepository, SemesterRepository>();
             services.AddScoped<ITopicRepository, TopicRepository>();
+            services.AddScoped<IClassTopicRepository, ClassTopicRepository>();
+            services.AddScoped<IIPMSClassRepository, IPMSClassRepository>();
+            services.AddScoped<IStudentRepository, StudentRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Service
             services.AddScoped<ISemesterService, SemesterService>();
             services.AddScoped<ITopicService, TopicService>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IClassTopicService, ClassTopicService>();
         }
     }
 }
