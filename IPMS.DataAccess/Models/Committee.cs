@@ -1,5 +1,5 @@
 ﻿using IPMS.DataAccess.Common.Models;
-using System;
+
 namespace IPMS.DataAccess.Models
 {
     public class Committee : BaseModel

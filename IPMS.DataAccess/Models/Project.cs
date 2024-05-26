@@ -1,5 +1,4 @@
 ﻿using IPMS.DataAccess.Common.Models;
-using System.Runtime.InteropServices;
 
 namespace IPMS.DataAccess.Models
 {
