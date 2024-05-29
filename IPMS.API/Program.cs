@@ -111,7 +111,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAutoMapper(cfg => cfg.Internal().MethodMappingEnabled = false, Assembly.GetExecutingAssembly());
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var app = builder.Build();
-
+app.UseGlobalExceptionHandling();
 // Configure the HTTP request pipeline.
  app.UseSwagger();
  app.UseSwaggerUI();
