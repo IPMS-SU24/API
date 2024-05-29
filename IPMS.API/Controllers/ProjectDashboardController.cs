@@ -11,10 +11,10 @@ using System.Security.Claims;
 
 namespace IPMS.API.Controllers
 {
-    public class DashboardController : ApiControllerBase
+    public class ProjectDashboardController : ApiControllerBase
     {
         private readonly IProjectDashboardService _projectDashboardService;
-        public DashboardController(IProjectDashboardService projectDashboardService)
+        public ProjectDashboardController(IProjectDashboardService projectDashboardService)
         {
             _projectDashboardService = projectDashboardService;
         }
