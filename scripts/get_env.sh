@@ -9,8 +9,6 @@ SECRET_VALUE=$(aws secretsmanager get-secret-value --region $AWS_REGION --secret
 
 echo "SECRET_VALUE: $SECRET_VALUE"
 
-source ~/.bash_profile
-
 # Save key-value pairs to .env file
 echo "$SECRET_VALUE" | jq -r 'to_entries[] | "\(.key)=\(.value)"' > ~/.env
 
