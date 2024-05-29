@@ -9,6 +9,8 @@ namespace IPMS.Business.Interfaces
         IClassTopicRepository ClassTopicRepository { get; }
         IStudentRepository StudentRepository { get; }
         IIPMSClassRepository IPMSClassRepository { get; }
+        IComponentsMasterRepository ComponentsMasterRepository { get; }
+        IIoTComponentRepository IoTComponentRepository { get; }
         void SaveChangesAsync();
     }
 }

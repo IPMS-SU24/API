@@ -2,7 +2,7 @@
 
 namespace IPMS.DataAccess.Models
 {
-    public class IPMSClass : BaseModel
+    public partial class IPMSClass : BaseModel
     {
         public string Name { get; set; }
         public string Description { get; set; }

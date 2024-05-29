@@ -5,6 +5,9 @@ using IPMS.DataAccess.Models;
 using AutoFilterer.Extensions;
 using Microsoft.EntityFrameworkCore;
 
+using IPMS.Business.Responses.Topic;
+using IPMS.DataAccess.Common.Enums;
+
 namespace IPMS.Business.Services
 {
     public class ClassTopicService : IClassTopicService
@@ -19,26 +22,55 @@ namespace IPMS.Business.Services
             return _unitOfWork.ClassTopicRepository.Get().ApplyFilter(request).AsNoTracking();
         }
 
-        public IQueryable<ClassTopic> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
+        public IQueryable<TopicIotComponentReponse> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
         {
             // Get current Semester
             var currentSemesterId = new Guid("54316eff-6077-425c-9c21-51ed06f615d8");
+  
+            
+            var studyIn = _unitOfWork.StudentRepository.Get() // Find Student from current User 
+                .Where(s => s.InformationId.Equals(currentUserId))
+                .Select(s => s.ClassId);
 
-            // Find Student from current User -> Class repo -> Class Service 
-            var listLearns = _unitOfWork.StudentRepository.Get().Where(s => s.InformationId.Equals(currentUserId)).Select(l => l.ClassId); //get list id of learned
-
-            if (listLearns.Count() == 0 || listLearns == null)
+            if (studyIn.Count() == 0 || studyIn == null)
                 return null;
 
-            //get class that student learned and find in current semester
-            IPMSClass? currentClass = _unitOfWork.IPMSClassRepository.Get().Where(c => listLearns.Contains(c.Id) && c.SemesterId.Equals(currentSemesterId)).FirstOrDefault();
+            var currentClassId = _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
+                .Where(c => studyIn.Contains(c.Id) 
+                && c.SemesterId.Equals(currentSemesterId))
+                .Select(c => c.Id).FirstOrDefault();
 
-            if (currentClass == null)
+            // Check null current user did not enrolled any class this semsester
+            if (currentClassId == null)
                 return null;
-       
 
-            // Find ClassTopics are available
-            return _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(currentClass.Id) && ct.ProjectId == null);
+           
+            var availableClassTopics = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopics are available and include Topic
+                    .Where(ct => ct.ClassId.Equals(currentClassId) 
+                    && ct.ProjectId == null).Include(ct => ct.Topic);  
+
+            /*
+                In TopicIotComponentReponse have ComponentsMaster can query base on MasterType = Topic && MasterId == currentTopicId but we not need to specific these 
+                -> Just see that any ComponentMaster Exist 
+                -> have IoTComponent -> Get Name + Description
+
+             */
+            
+            var componentsOfTopic = _unitOfWork.ComponentsMasterRepository.Get() // Get component that just for topic
+                .Where(cm => cm.MasterType == ComponentsMasterType.Topic);
+
+            var responses = availableClassTopics.Select(ct => new TopicIotComponentReponse
+            {
+                TopicName = ct.Topic.Name,
+                Description = ct.Topic.Description,
+                IotComponentName = componentsOfTopic
+                        .Where(cm => cm.MasterId.Equals(ct.TopicId))
+                        .Select(cm => cm.Component.Name).ToList()
+
+            });
+
+         
+            return responses;
         }
 
     }

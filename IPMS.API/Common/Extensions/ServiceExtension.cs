@@ -23,6 +23,8 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IClassTopicRepository, ClassTopicRepository>();
             services.AddScoped<IIPMSClassRepository, IPMSClassRepository>();
             services.AddScoped<IStudentRepository, StudentRepository>();
+            services.AddScoped<IComponentsMasterRepository, ComponentsMasterRepository>();
+            services.AddScoped<IIoTComponentRepository, IoTComponentRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Service

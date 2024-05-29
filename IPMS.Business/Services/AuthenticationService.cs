@@ -75,7 +75,7 @@ namespace IPMS.Business.Services
         public async Task<TokenModel?> Login(LoginRequest loginModel)
         {
             var user = await _userManager.FindByNameAsync(loginModel.Username);
-            if (user != null /*&& !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password)*/)
+            if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
 

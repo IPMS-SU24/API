@@ -1,0 +1,18 @@
+﻿using AutoFilterer.Types;
+using IPMS.DataAccess.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace IPMS.Business.Responses.Topic
+{
+    public class TopicIotComponentReponse
+    {
+        public string TopicName { get; set; }
+        public string Description { get; set; }
+        public virtual ICollection<string> IotComponentName { get; set; }  = new List<string>();
+        
+    }
+}
