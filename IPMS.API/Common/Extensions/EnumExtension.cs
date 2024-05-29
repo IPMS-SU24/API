@@ -5,7 +5,7 @@ namespace IPMS.API.Common.Extensions
 {
     public static class EnumExtension
     {
-        public static string GetResponseMessage(this ResponseStatus responseStatus)
+        public static string GetEnumDescription(this Enum responseStatus)
         {
             DescriptionAttribute[] attributes = (DescriptionAttribute[])responseStatus
            .GetType()

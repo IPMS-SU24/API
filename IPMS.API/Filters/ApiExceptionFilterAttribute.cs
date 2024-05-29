@@ -1,9 +1,9 @@
-﻿using IPMS.API.Common.Exceptions;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+﻿using IPMS.API.Common.Enums;
 using IPMS.API.Responses;
-using IPMS.API.Common.Enums;
+using IPMS.Business.Common.Exceptions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using System.Diagnostics;
 
 namespace IPMS.API.Filters
 {
@@ -38,7 +38,6 @@ namespace IPMS.API.Filters
         public override void OnException(ExceptionContext context)
         {
             HandleException(context);
-
             base.OnException(context);
         }
 

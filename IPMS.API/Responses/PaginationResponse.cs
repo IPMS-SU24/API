@@ -2,8 +2,8 @@
 {
     public class PaginationResponse<TData> : IPMSResponse<TData> where TData : class
     {
-        public int TotalPage = 1;
-        public int CurrentPage = 1;
-        public int PageSize = 10;
+        public int TotalPage { get; set; } = 1;
+        public int CurrentPage { get; set; } = 1;
+        public int PageSize { get; set; } =  10;
     }
 }
