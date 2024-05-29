@@ -41,7 +41,6 @@ namespace IPMS.API.Common.Extensions
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, IPMSAuthorizationMiddlewareResultHandler>();
 
             //Add Service
-            services.AddScoped<ISemesterService, SemesterService>();
             services.AddScoped<ITopicService, TopicService>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IProjectDashboardService, ProjectDashboardService>();
