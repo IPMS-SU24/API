@@ -4,8 +4,10 @@ using IPMS.Business.Common.Singleton;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Responses;
+using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.DataAccess.Common.Extensions;
+using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
 
@@ -18,6 +20,30 @@ namespace IPMS.Business.Services
         {
             _unitOfWork = unitOfWork;
         }
+
+        public async Task<NearSubmissionDeadlineData> GetNearSubmissionDeadlines(Guid studentId)
+        {
+            var currentStudent = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(x => x.InformationId == studentId) ?? throw new DataNotFoundException();
+            var currentSemester = await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork);
+            //Get all modules of semester
+            var modules = currentSemester?.CurrentSemester?.Syllabus?.Assessments
+                                                           .SelectMany(x => x.Modules).Where(x => x.EndDate > DateTime.Now).ToList();
+            var projectSubmissions = await _unitOfWork.ProjectSubmissionRepository.Get()
+                                                      .Where(x => x.ProjectId == currentStudent.ProjectId && x.SubmissionLink != null)
+                                                      .Select(x => x.SubmissionModuleId).ToListAsync();
+            var nearDeadlineSubmissions = modules.SkipWhile(x => projectSubmissions.Contains(x.Id)).Select(x=>new NearDealineSubmission
+            {
+                AssessmentId = x.AssessmentId.ToString()!,
+                EndDate = x.EndDate,
+                Name = x.Name,
+                SubmissionModuleId = x.Id.ToString()
+            });
+            return new NearSubmissionDeadlineData
+            {
+                Submissions = nearDeadlineSubmissions.ToList()
+            };
+        }
+
         public async Task<GetProjectDetailData> GetProjectDetail(Guid studentId)
         {
             var currentStudent = await _unitOfWork.StudentRepository.Get().Where(x => x.InformationId == studentId && x.ProjectId != null)
