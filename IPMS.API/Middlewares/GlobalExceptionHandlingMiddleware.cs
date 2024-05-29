@@ -1,7 +1,5 @@
 ﻿using IPMS.API.Common.Enums;
 using IPMS.API.Responses;
-using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace IPMS.API.Middlewares
 {
@@ -21,6 +19,9 @@ namespace IPMS.API.Middlewares
             try
             {
                 await _next(context);
+                _logger.LogInformation("test");
+                _logger.LogInformation("test");
+                _logger.LogInformation("test");
             }
             catch (Exception ex)
             {

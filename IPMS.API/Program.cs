@@ -4,6 +4,7 @@ using AutoMapper.Internal;
 using FluentValidation;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Filters;
+using IPMS.API.Middlewares;
 using IPMS.DataAccess;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -111,15 +112,11 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAutoMapper(cfg => cfg.Internal().MethodMappingEnabled = false, Assembly.GetExecutingAssembly());
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var app = builder.Build();
-app.UseGlobalExceptionHandling();
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 // Configure the HTTP request pipeline.
  app.UseSwagger();
  app.UseSwaggerUI();
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }

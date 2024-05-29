@@ -3,7 +3,6 @@ using IPMS.API.Responses;
 using IPMS.Business.Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System.Diagnostics;
 
 namespace IPMS.API.Filters
 {
@@ -22,9 +21,6 @@ namespace IPMS.API.Filters
 
         private void HandleUnknownException(ExceptionContext context)
         {
-#if DEBUG
-            Debug.WriteLine(context.Exception.Message);
-#endif
             var details = new IPMSResponse<object>()
             {
                 Status = ResponseStatus.Fail
@@ -54,8 +50,6 @@ namespace IPMS.API.Filters
                 HandleInvalidModelStateException(context);
                 return;
             }
-            HandleUnknownException(context);
-            return;
         }
 
         private void HandleValidationException(ExceptionContext context)
