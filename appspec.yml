@@ -8,6 +8,7 @@ hooks:
       runas: root
     - location: scripts/get_env.sh
       timeout: 300
+      runas: root
   ApplicationStart:
     - location: scripts/start_docker_image.sh
       timeout: 300

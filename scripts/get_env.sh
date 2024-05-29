@@ -20,3 +20,9 @@ while IFS="=" read -r key value; do
 done < <(echo "$SECRET_VALUE" | jq -r 'to_entries[] | "\(.key)=\(.value)"')
 
 source ~/.bash_profile
+
+# Save key-value pairs to .env file
+echo "$SECRET_VALUE" | jq -r 'to_entries[] | "\(.key)=\(.value)"' > ~/.env
+
+# Load environment variables from .env file
+source ~/.env
