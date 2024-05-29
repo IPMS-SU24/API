@@ -2,11 +2,7 @@
 using IPMS.Business.Repository;
 using IPMS.DataAccess.Models;
 using IPMS.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using IPMS.DataAccess.Models;
 
 namespace IPMS.Business.Repositories
 {

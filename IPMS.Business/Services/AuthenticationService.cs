@@ -95,7 +95,7 @@ namespace IPMS.Business.Services
                 var accessToken = GenerateAccessToken(authClaims);
                 var refreshToken = GenerateRefreshToken();
 
-                _ = int.TryParse(_configuration["JWT_RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
+                _ = int.TryParse(_configuration["JWTRefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
 
                 user.RefreshToken = refreshToken;
                 user.RefreshTokenExpiryTime = DateTime.Now.AddDays(refreshTokenValidityInDays);

@@ -41,11 +41,20 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.AddDI();
-builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["IPMS"], b=>b.MigrationsAssembly("IPMS.DataAccess")));
+builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["ConnectionStrings_IPMS"], b=>b.MigrationsAssembly("IPMS.DataAccess")));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
+{
+    config.SignIn.RequireConfirmedEmail = false;
+    config.SignIn.RequireConfirmedPhoneNumber = false;
+}).AddEntityFrameworkStores<IPMSDbContext>()
+            .AddDefaultTokenProviders();
+builder.Services.AddSwaggerGenNewtonsoftSupport();
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddSwaggerGen(options =>
 {
     options.DescribeAllParametersInCamelCase();
@@ -74,15 +83,6 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
-{
-    config.SignIn.RequireConfirmedEmail = false;
-    config.SignIn.RequireConfirmedPhoneNumber = false;
-}).AddEntityFrameworkStores<IPMSDbContext>()
-            .AddDefaultTokenProviders();
-builder.Services.AddSwaggerGenNewtonsoftSupport();
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
-builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -126,7 +126,6 @@ else
 app.UseHttpsRedirection();
 
 app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-
 app.UseAuthentication();
 app.UseAuthorization();
 

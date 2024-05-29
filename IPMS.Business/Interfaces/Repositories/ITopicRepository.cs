@@ -4,6 +4,5 @@ namespace IPMS.Business.Interfaces.Repositories
 {
     public interface ITopicRepository : IGenericRepository<Topic>
     {
-
     }
 }

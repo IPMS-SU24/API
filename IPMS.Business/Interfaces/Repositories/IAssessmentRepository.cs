@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace IPMS.Business.Interfaces.Repositories
 {
-    public interface IIPMSClassRepository : IGenericRepository<IPMSClass>
+    public interface IAssessmentRepository : IGenericRepository<Assessment>
     {
     }
 }

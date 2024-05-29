@@ -13,6 +13,6 @@ namespace IPMS.Business.Interfaces.Services
     public interface IClassTopicService
     {
         IQueryable<ClassTopic> GetClassTopics(GetClassTopicRequest request);
-        IQueryable<TopicIotComponentReponse> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request);
+        Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request);
     }
 }

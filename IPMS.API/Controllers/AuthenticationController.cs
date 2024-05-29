@@ -13,13 +13,9 @@ namespace IPMS.API.Controllers
     public class AuthenticationController : ApiControllerBase
     {
         private readonly IAuthenticationService _authenticationService;
-        private readonly UserManager<IPMSUser> _userManager;
-        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-        public AuthenticationController(IAuthenticationService authenticationService, UserManager<IPMSUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
+        public AuthenticationController(IAuthenticationService authenticationService)
         {
             _authenticationService = authenticationService;
-            _userManager = userManager;
-            _roleManager = roleManager;
 
         }
         [HttpPost]
@@ -31,15 +27,11 @@ namespace IPMS.API.Controllers
             {
                 Data = userResult
             };
-            if (userResult != null)
-            {
-                response.Status = ResponseStatus.Success;
-            }
-            else
+            if(userResult == null)
             {
                 response.Status = ResponseStatus.Unauthorized;
             }
-            return GetResponse(response);
+            return GetActionResponse(response);
         }
     }
 }

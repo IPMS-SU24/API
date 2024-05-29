@@ -2,7 +2,8 @@
 
 namespace IPMS.Business.Interfaces.Repositories
 {
-    public interface ISemesterRepository : IGenericRepository<Semester>
+    public interface IProjectSubmissionRepository: IGenericRepository<ProjectSubmission>
     {
+
     }
 }
