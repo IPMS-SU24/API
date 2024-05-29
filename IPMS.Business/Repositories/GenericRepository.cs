@@ -1,5 +1,6 @@
 ﻿using IPMS.Business.Interfaces.Repositories;
 using IPMS.DataAccess;
+using IPMS.DataAccess.Common.Extensions;
 using IPMS.DataAccess.Common.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,9 +21,15 @@ namespace IPMS.Business.Repository
         {
             return dbSet.AsNoTracking();
         }
+        public virtual IQueryable<TEntity> GetContainsDeleted()
+        {
+            return dbSet.GetQueryActive().AsNoTracking();
+        }
 
         public virtual async Task<TEntity?> GetByID(object id)
         {
+            var result =  await dbSet.FindAsync(id);
+            if (result != null && result.IsDeleted) return null;
             return await dbSet.FindAsync(id);
         }
 
@@ -31,13 +38,13 @@ namespace IPMS.Business.Repository
             await dbSet.AddAsync(entity);
         }
 
-        public virtual void SoftDelete(TEntity deleteEntity)
+        public virtual void Delete(TEntity deleteEntity)
         {
             deleteEntity.IsDeleted = true;
             Update(deleteEntity);
         }
 
-        public virtual void Delete(TEntity entityToDelete)
+        public virtual void HardDelete(TEntity entityToDelete)
         {
             if (_context.Entry(entityToDelete).State == EntityState.Detached)
             {

@@ -5,7 +5,7 @@ using IPMS.API.Responses;
 using IPMS.Business.Common.Singleton;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Responses;
+using IPMS.Business.Responses.ProjectDashboard;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +28,17 @@ namespace IPMS.API.Controllers
             var response = new IPMSResponse<GetProjectDetailData>
             {
                 Data = await _projectDashboardService.GetProjectDetail(userId)
+            };
+            return GetActionResponse(response);
+        }
+        [EnumAuthorize(UserRole.Student)]
+        [HttpGet("near-deadlines")]
+        public async Task<IActionResult> GetNearDealines()
+        {
+            var userId = Guid.Parse(HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value);
+            var response = new IPMSResponse<NearSubmissionDeadlineData>
+            {
+                Data = await _projectDashboardService.GetNearSubmissionDeadlines(userId)
             };
             return GetActionResponse(response);
         }
