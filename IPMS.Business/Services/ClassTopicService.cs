@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using IPMS.Business.Responses.Topic;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.Business.Common.Utils;
+using System.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -26,7 +27,7 @@ namespace IPMS.Business.Services
         public async Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
         {
             // Get current Semester
-            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            Guid? currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
             
             var studyIn = _unitOfWork.StudentRepository.Get() // Find Student from current User 
                 .Where(s => s.InformationId.Equals(currentUserId))
@@ -35,7 +36,7 @@ namespace IPMS.Business.Services
             if (studyIn.Count() == 0 || studyIn == null)
                 return null;
 
-            var currentClassId = _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
+            Guid? currentClassId = _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
                 .Where(c => studyIn.Contains(c.Id) 
                 && c.SemesterId.Equals(currentSemesterId))
                 .Select(c => c.Id).FirstOrDefault();
@@ -72,6 +73,47 @@ namespace IPMS.Business.Services
          
             return responses;
         }
+        public async Task<bool> PickTopicForProject(Guid currentUserId, Guid topicId)
+        {
+            // Get current Semester
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+
+            var studyIn = _unitOfWork.StudentRepository.Get() // Find Student from current User 
+                .Where(s => s.InformationId.Equals(currentUserId));
+
+            if (studyIn.Count() == 0 || studyIn == null)
+                return false;
+
+            Guid? currentClassId = _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
+                .Where(c => studyIn.Select(s => s.ClassId).Contains(c.Id)
+                && c.SemesterId.Equals(currentSemesterId))
+                .Select(c => c.Id).FirstOrDefault();
+
+            // Check null current user did not enrolled any class this semester
+            if (currentClassId == null)
+                return false;
+
+            ClassTopic? pickedTopicAvailable = _unitOfWork.ClassTopicRepository.Get() // Is Picked Topic available
+                    .FirstOrDefault(ct => ct.ClassId.Equals(currentClassId)
+                    && ct.ProjectId == null && ct.TopicId.Equals(topicId));
+
+            if (pickedTopicAvailable == null)
+                return false;
+
+            var currentStudyIn = studyIn.FirstOrDefault(s => s.ClassId.Equals(currentClassId));
+
+            if (currentStudyIn == null)
+                return false;
+
+            //Set that group pick topic
+            pickedTopicAvailable.ProjectId = currentStudyIn.ProjectId;
+
+            // Update DB
+            _unitOfWork.ClassTopicRepository.Update(pickedTopicAvailable);
+
+            return true;
+        }
 
     }
+
 }
