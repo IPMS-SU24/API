@@ -1,11 +1,11 @@
-﻿namespace IPMS.Business.Responses
+﻿namespace IPMS.Business.Responses.ProjectDashboard
 {
     public class GetProjectDetailData
     {
         public Guid ProjectId { get; set; }
         public string TopicName { get; set; } = null!;
         public List<AssessmentDetail> Assessements { get; set; } = new List<AssessmentDetail>();
-        public SubmissionCount Submission {  get; set; } = new();
+        public SubmissionCount Submission { get; set; } = new();
     }
     public class SubmissionCount
     {
@@ -14,7 +14,7 @@
     }
     public class AssessmentDetail
     {
-        public  Guid AssessmentId { get; set; }
+        public Guid AssessmentId { get; set; }
         public string AssessmentName { get; set; } = null!;
         public string Status { get; set; } = null!;
     }
