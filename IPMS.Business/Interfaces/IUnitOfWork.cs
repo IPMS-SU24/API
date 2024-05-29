@@ -15,5 +15,7 @@ namespace IPMS.Business.Interfaces
         IAssessmentRepository AssessmentRepository { get; }
         ITopicRepository TopicRepository { get; }
         Task SaveChangesAsync();
+        IComponentsMasterRepository ComponentsMasterRepository { get; }
+        IIoTComponentRepository IoTComponentRepository { get; }
     }
 }

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
-using System.Reflection.Emit;
 
 namespace IPMS.DataAccess
 {
@@ -360,6 +359,7 @@ namespace IPMS.DataAccess
                     .HasKey(e => e.Id);
 
                 entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Detail).HasMaxLength(10000);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 

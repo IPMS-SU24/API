@@ -22,7 +22,7 @@ namespace IPMS.DataAccess
                 .AddUserSecrets(Assembly.GetExecutingAssembly())
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
-            return configuration.GetConnectionString("IPMS");
+            return configuration["ConnectionStrings_IPMS"];
         }
     }
 

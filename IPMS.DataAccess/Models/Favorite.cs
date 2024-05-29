@@ -1,5 +1,4 @@
-﻿using System;
-using IPMS.DataAccess.Common.Models;
+﻿using IPMS.DataAccess.Common.Models;
 
 namespace IPMS.DataAccess.Models
 {

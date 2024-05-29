@@ -8,36 +8,28 @@ namespace IPMS.Business
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly IPMSDbContext _context;
-
-        public IProjectRepository ProjectRepository { get; }
-
+        public ISemesterRepository SemesterRepository { get; }
+        public IClassTopicRepository ClassTopicRepository { get; }
+        public ITopicRepository TopicRepository { get; }
         public IStudentRepository StudentRepository { get; }
-
-        public IClassTopicRepository ClassTopicRepository {  get; }
-
+        public IIPMSClassRepository IPMSClassRepository { get; }
+        public IComponentsMasterRepository ComponentsMasterRepository { get; }
+        public IIoTComponentRepository IoTComponentRepository { get; }
+        public IProjectRepository ProjectRepository { get; }
         public IProjectSubmissionRepository ProjectSubmissionRepository { get; }
         public ISubmissionModuleRepository SubmissionModuleRepository { get; }
-        public IIPMSClassRepository IPMSClassRepository { get; }
-
-        public ISemesterRepository SemesterRepository { get; }
-
         public ISyllabusRepository SyllabusRepository { get; }
-
         public IAssessmentRepository AssessmentRepository { get; }
-
-        public ITopicRepository TopicRepository { get; }
-
-        public UnitOfWork(IPMSDbContext context,
-            IProjectRepository projectRepository,
-            IStudentRepository studentRepository,
-            IClassTopicRepository classTopicRepository,
-            ISubmissionModuleRepository submissionModuleRepository,
-            IIPMSClassRepository iPMSClassRepository,
-            ISemesterRepository semesterRepository,
-            ISyllabusRepository syllabusRepository,
-            IAssessmentRepository assessmentRepository,
-            ITopicRepository topicRepository,
-            IProjectSubmissionRepository projectSubmissionRepository)
+        //TODO in Sprint 2
+        //Add repository
+        //Waiting for generate entities
+        public UnitOfWork(IPMSDbContext context, ISemesterRepository semesterRepository, ITopicRepository topicRepository,
+                    IClassTopicRepository classTopicRepository,
+                    IStudentRepository studentRepository, IIPMSClassRepository iPMSClassRepository,
+                    IComponentsMasterRepository componentsMasterRepository, IIoTComponentRepository ioTComponentRepository,
+                    IProjectRepository projectRepository, IProjectSubmissionRepository projectSubmissionRepository,
+                    ISubmissionModuleRepository submissionModuleRepository, ISyllabusRepository syllabusRepository,
+                    IAssessmentRepository assessmentRepository)
         {
             _context = context;
             ProjectRepository = projectRepository;
@@ -50,6 +42,13 @@ namespace IPMS.Business
             AssessmentRepository = assessmentRepository;
             TopicRepository = topicRepository;
             ProjectSubmissionRepository = projectSubmissionRepository;
+            SemesterRepository = semesterRepository;
+            TopicRepository = topicRepository;
+            ClassTopicRepository = classTopicRepository;
+            StudentRepository = studentRepository;
+            IPMSClassRepository = iPMSClassRepository;
+            ComponentsMasterRepository = componentsMasterRepository;
+            IoTComponentRepository = ioTComponentRepository;
         }
         public async Task SaveChangesAsync()
         {

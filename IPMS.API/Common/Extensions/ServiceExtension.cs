@@ -1,11 +1,16 @@
 ﻿using IPMS.Business.Common.Singleton;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Repositories;
+using IPMS.Business.Interfaces;
+using IPMS.Business.Interfaces.Repositories;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Repository;
+using IPMS.Business.Repositories;
 using IPMS.Business.Repository;
 using IPMS.Business.Services;
 using IPMS.Business;
 using IPMS.Business.Repositories;
+using IPMS.Business;
 
 namespace IPMS.API.Common.Extensions
 {
@@ -13,8 +18,10 @@ namespace IPMS.API.Common.Extensions
     {
         public static void AddDI(this IServiceCollection services)
         {
+            //Add Repository
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
+            services.AddScoped<IComponentsMasterRepository, ComponentsMasterRepository>();
+            services.AddScoped<IIoTComponentRepository, IoTComponentRepository>();
             services.AddScoped<IClassTopicRepository, ClassTopicRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IProjectSubmissionRepository, ProjectSubmissionRepository>();
@@ -26,9 +33,16 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IAssessmentRepository, AssessmentRepository>();
             services.AddScoped<ITopicRepository, TopicRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            //Add Depenency Injection
             services.AddSingleton<IMessageService, MessageService>();
+
+            //Add Service
+            services.AddScoped<ISemesterService, SemesterService>();
+            services.AddScoped<ITopicService, TopicService>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IProjectDashboardService, ProjectDashboardService>();
+            services.AddScoped<IClassTopicService, ClassTopicService>();
         }
     }
 }
