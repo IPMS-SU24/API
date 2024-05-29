@@ -1,6 +1,4 @@
-﻿using IPMS.API.Common.Attributes;
-using IPMS.API.Common.Enums;
-using IPMS.API.Filters;
+﻿using IPMS.API.Filters;
 using IPMS.API.Responses;
 using IPMS.Business.Common.Singleton;
 using IPMS.Business.Interfaces;
@@ -13,14 +11,14 @@ using System.Security.Claims;
 
 namespace IPMS.API.Controllers
 {
-    public class ProjectDashboardController : ApiControllerBase
+    public class DashboardController : ApiControllerBase
     {
         private readonly IProjectDashboardService _projectDashboardService;
-        public ProjectDashboardController(IProjectDashboardService projectDashboardService)
+        public DashboardController(IProjectDashboardService projectDashboardService)
         {
             _projectDashboardService = projectDashboardService;
         }
-        [EnumAuthorize(UserRole.Student)]
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Get()
         {
