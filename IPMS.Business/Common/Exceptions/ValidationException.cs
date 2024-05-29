@@ -1,6 +1,6 @@
 ﻿using FluentValidation.Results;
 
-namespace IPMS.API.Common.Exceptions
+namespace IPMS.Business.Common.Exceptions
 {
     public class ValidationException : Exception
     {
