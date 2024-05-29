@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
 {
-    [ApiExceptionFilterAttribute]
+    [ApiExceptionFilter]
     [ValidateModelState]
     [ApiController]
     [Route("api/v1/[controller]s/")]
