@@ -46,7 +46,7 @@ namespace IPMS.DataAccess
                 .AddUserSecrets(Assembly.GetExecutingAssembly())
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
-            return configuration["IPMS"];
+            return configuration["ConnectionStrings_IPMS"];
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -359,6 +359,7 @@ namespace IPMS.DataAccess
                     .HasKey(e => e.Id);
 
                 entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Detail).HasMaxLength(10000);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 

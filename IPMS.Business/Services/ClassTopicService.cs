@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 using IPMS.Business.Responses.Topic;
 using IPMS.DataAccess.Common.Enums;
+using IPMS.Business.Common.Utils;
 
 namespace IPMS.Business.Services
 {
@@ -22,11 +23,10 @@ namespace IPMS.Business.Services
             return _unitOfWork.ClassTopicRepository.Get().ApplyFilter(request).AsNoTracking();
         }
 
-        public IQueryable<TopicIotComponentReponse> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
+        public async Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
         {
             // Get current Semester
-            var currentSemesterId = new Guid("54316eff-6077-425c-9c21-51ed06f615d8");
-  
+            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
             
             var studyIn = _unitOfWork.StudentRepository.Get() // Find Student from current User 
                 .Where(s => s.InformationId.Equals(currentUserId))
@@ -47,7 +47,7 @@ namespace IPMS.Business.Services
            
             var availableClassTopics = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopics are available and include Topic
                     .Where(ct => ct.ClassId.Equals(currentClassId) 
-                    && ct.ProjectId == null).Include(ct => ct.Topic);  
+                    && ct.ProjectId == null).Include(ct => ct.Topic);
 
             /*
                 In TopicIotComponentReponse have ComponentsMaster can query base on MasterType = Topic && MasterId == currentTopicId but we not need to specific these 
@@ -64,12 +64,11 @@ namespace IPMS.Business.Services
                 Id = ct.Topic.Id,
                 TopicName = ct.Topic.Name,
                 Description = ct.Topic.Description,
+                Detail = ct.Topic.Detail,
                 IotComponents = componentsOfTopic
                         .Where(cm => cm.MasterId.Equals(ct.TopicId))
                         .Select(cm => cm.Component.Name).ToList()
-
             });
-
          
             return responses;
         }

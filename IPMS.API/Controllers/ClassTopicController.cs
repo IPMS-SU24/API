@@ -11,7 +11,7 @@ namespace IPMS.API.Controllers
     public class ClassTopicController : ApiControllerBase
     {
         private readonly IClassTopicService _classTopicService;
-     
+
         public ClassTopicController(IClassTopicService classTopicService)
         {
             _classTopicService = classTopicService;
@@ -24,9 +24,10 @@ namespace IPMS.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetClassTopics([FromQuery] GetClassTopicRequest request)
         {
-            Guid currentUserId = new Guid (HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value);
-            var response = await _classTopicService.GetClassTopicsAvailable(currentUserId, request).GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            Guid currentUserId = new Guid(HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value);
+            var classTopics = await _classTopicService.GetClassTopicsAvailable(currentUserId, request);
+            var resposne = await classTopics.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(resposne);
         }
     }
 }
