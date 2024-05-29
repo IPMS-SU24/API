@@ -11,8 +11,6 @@ using IPMS.Business.Services;
 using IPMS.Business;
 using IPMS.Business.Repositories;
 using IPMS.Business;
-using Microsoft.AspNetCore.Authorization;
-using IPMS.API.Middlewares;
 
 namespace IPMS.API.Common.Extensions
 {
@@ -38,7 +36,6 @@ namespace IPMS.API.Common.Extensions
 
             //Add Depenency Injection
             services.AddSingleton<IMessageService, MessageService>();
-            services.AddSingleton<IAuthorizationMiddlewareResultHandler, IPMSAuthorizationMiddlewareResultHandler>();
 
             //Add Service
             services.AddScoped<ISemesterService, SemesterService>();
