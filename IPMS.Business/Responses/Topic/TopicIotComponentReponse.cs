@@ -10,9 +10,10 @@ namespace IPMS.Business.Responses.Topic
 {
     public class TopicIotComponentReponse
     {
+        public Guid Id { get; set; }
         public string TopicName { get; set; }
         public string Description { get; set; }
-        public virtual ICollection<string> IotComponentName { get; set; }  = new List<string>();
+        public virtual ICollection<string> IotComponents { get; set; }  = new List<string>();
         
     }
 }

@@ -61,9 +61,10 @@ namespace IPMS.Business.Services
 
             var responses = availableClassTopics.Select(ct => new TopicIotComponentReponse
             {
+                Id = ct.Topic.Id,
                 TopicName = ct.Topic.Name,
                 Description = ct.Topic.Description,
-                IotComponentName = componentsOfTopic
+                IotComponents = componentsOfTopic
                         .Where(cm => cm.MasterId.Equals(ct.TopicId))
                         .Select(cm => cm.Component.Name).ToList()
 
