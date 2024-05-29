@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using static IPMS.API.Common.Extensions.UserExtensions;
 
 namespace IPMS.API.Controllers
 {
@@ -20,11 +21,11 @@ namespace IPMS.API.Controllers
         {
             _projectDashboardService = projectDashboardService;
         }
-        [EnumAuthorize(UserRole.Student)]
+        [EnumAuthorize(UserRole.Leader)]
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var userId = Guid.Parse(HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value);
+            var userId = HttpContext.User.Claims.GetUserId();
             var response = new IPMSResponse<GetProjectDetailData>
             {
                 Data = await _projectDashboardService.GetProjectDetail(userId)
