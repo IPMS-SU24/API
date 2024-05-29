@@ -6,6 +6,8 @@ hooks:
     - location: scripts/pull_docker_image.sh
       timeout: 300
       runas: root
+    - location: scripts/get_env.sh
+      timeout: 300
   ApplicationStart:
     - location: scripts/start_docker_image.sh
       timeout: 300
