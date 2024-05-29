@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -40,17 +41,11 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.AddDI();
-builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b=>b.MigrationsAssembly("IPMS.DataAccess")));
+builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["ConnectionStrings_IPMS"], b=>b.MigrationsAssembly("IPMS.DataAccess")));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
-//TODO Config Add DbContext connection
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.DescribeAllParametersInCamelCase();
-    options.UseAutoFiltererParameters();
-});
 builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
 {
     config.SignIn.RequireConfirmedEmail = false;
@@ -60,6 +55,34 @@ builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
 builder.Services.AddSwaggerGenNewtonsoftSupport();
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonSQS>();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.DescribeAllParametersInCamelCase();
+    options.UseAutoFiltererParameters();
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -79,9 +102,9 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ClockSkew = TimeSpan.Zero,
-        ValidAudience = builder.Configuration["JWT:ValidAudience"],
-        ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
+        ValidAudience = builder.Configuration["JWT_ValidAudience"],
+        ValidIssuer = builder.Configuration["JWT_ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT_Secret"]))
     };
 });
 builder.Services.AddAutoMapper(cfg => cfg.Internal().MethodMappingEnabled = false, Assembly.GetExecutingAssembly());
@@ -102,7 +125,7 @@ else
 app.UseHttpsRedirection();
 
 app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
