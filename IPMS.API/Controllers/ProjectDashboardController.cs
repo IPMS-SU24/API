@@ -1,4 +1,6 @@
-﻿using IPMS.API.Filters;
+﻿using IPMS.API.Common.Attributes;
+using IPMS.API.Common.Enums;
+using IPMS.API.Filters;
 using IPMS.API.Responses;
 using IPMS.Business.Common.Singleton;
 using IPMS.Business.Interfaces;
@@ -18,7 +20,7 @@ namespace IPMS.API.Controllers
         {
             _projectDashboardService = projectDashboardService;
         }
-        [Authorize]
+        [EnumAuthorize(UserRole.Student)]
         [HttpGet]
         public async Task<IActionResult> Get()
         {
