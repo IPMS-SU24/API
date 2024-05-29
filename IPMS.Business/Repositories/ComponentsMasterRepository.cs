@@ -7,7 +7,7 @@ namespace IPMS.Business.Repositories
 {
     public class ComponentsMasterRepository : GenericRepository<ComponentsMaster>, IComponentsMasterRepository
     {
-        public ComponentsMasterRepository(IPMSDbContext dbContext) : base(dbContext)
+        public ComponentsMasterRepository(IPMSDbContext context) : base(context)
         {
 
         }

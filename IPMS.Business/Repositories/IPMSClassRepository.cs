@@ -8,7 +8,7 @@ namespace IPMS.Business.Repositories
 {
     public class IPMSClassRepository : GenericRepository<IPMSClass>, IIPMSClassRepository
     {
-        public IPMSClassRepository(IPMSDbContext dbContext) : base(dbContext)
+        public IPMSClassRepository(IPMSDbContext context) : base(context)
         {
 
         }

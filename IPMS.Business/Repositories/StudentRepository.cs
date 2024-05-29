@@ -8,7 +8,7 @@ namespace IPMS.Business.Repositories
 {
     public class StudentRepository : GenericRepository<Student>, IStudentRepository
     {
-        public StudentRepository(IPMSDbContext dbContext) : base(dbContext)
+        public StudentRepository(IPMSDbContext context) : base(context)
         {
 
         }

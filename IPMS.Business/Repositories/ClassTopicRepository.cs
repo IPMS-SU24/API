@@ -7,7 +7,7 @@ namespace IPMS.Business.Repositories
 {
     public class ClassTopicRepository : GenericRepository<ClassTopic>, IClassTopicRepository
     {
-        public ClassTopicRepository(IPMSDbContext dbContext) : base(dbContext)
+        public ClassTopicRepository(IPMSDbContext context) : base(context)
         {
 
         }

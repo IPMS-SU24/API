@@ -7,7 +7,7 @@ namespace IPMS.Business.Repositories
 {
     public class SemesterRepository : GenericRepository<Semester>, ISemesterRepository
     {
-        public SemesterRepository(IPMSDbContext dbContext) : base(dbContext)
+        public SemesterRepository(IPMSDbContext context) : base(context)
         {
         }
     }

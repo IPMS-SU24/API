@@ -12,7 +12,7 @@ namespace IPMS.Business.Repositories
 {
     public class IoTComponentRepository : GenericRepository<IoTComponent>, IIoTComponentRepository
     {
-        public IoTComponentRepository(IPMSDbContext dbContext) : base(dbContext)
+        public IoTComponentRepository(IPMSDbContext context) : base(context)
         {
 
         }
