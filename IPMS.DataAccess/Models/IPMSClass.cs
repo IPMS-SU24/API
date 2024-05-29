@@ -9,6 +9,7 @@ namespace IPMS.DataAccess.Models
         public DateTime CreateGroupDeadline { get; set; }
         public DateTime ChangeGroupDeadline { get; set; }
         public DateTime ChangeTopicDeadline { get; set; }
+        public DateTime BorrowIoTComponentDeadline { get; set; }
         public Guid? SemesterId { get; set; }
         public Guid? LecturerId { get; set; }
         public virtual Semester? Semester { get; set; }

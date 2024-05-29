@@ -18,7 +18,7 @@ namespace IPMS.Business.Repository
 
         public virtual IQueryable<TEntity> Get()
         {
-            return dbSet.AsQueryable();
+            return dbSet.AsNoTracking();
         }
 
         public virtual async Task<TEntity?> GetByID(object id)

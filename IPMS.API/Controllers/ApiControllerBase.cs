@@ -4,15 +4,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
 {
-    [ApiExceptionFilter]
+    [ApiExceptionFilterAttribute]
     [ValidateModelState]
     [ApiController]
     [Route("api/v1/[controller]s/")]
-    public class ApiControllerBase : ControllerBase
+    public abstract class ApiControllerBase : ControllerBase
     {
-        protected IActionResult GetResponse<TData>(IPMSResponse<TData> response)
+        protected IActionResult GetActionResponse<TData>(IPMSResponse<TData> response)
         {
-            return StatusCode((int)response.Status,response);
+            
+            return StatusCode((int) response.Status, response);
         }
     }
 }

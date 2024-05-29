@@ -10,7 +10,7 @@ namespace IPMS.API.Responses
         private string? _message;
         public string Message
         {
-            get => _message ?? Status.GetResponseMessage();
+            get => _message ?? Status.GetEnumDescription();
             set => _message = value;
         }
         public IDictionary<string, string[]>? Errors { get; set; }

@@ -1,4 +1,4 @@
-﻿namespace IPMS.API.Common.Exceptions
+﻿namespace IPMS.Business.Common.Exceptions
 {
     public class DataNotFoundException : Exception
     {
