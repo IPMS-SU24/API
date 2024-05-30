@@ -44,10 +44,9 @@ namespace IPMS.DataAccess
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddUserSecrets(Assembly.GetExecutingAssembly())
-                .AddEnvironmentVariables(prefix: "IPMS_")
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
-            return configuration["IPMS_ConnectionStrings_IPMS"];
+            return configuration["ConnectionStrings_IPMS"];
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

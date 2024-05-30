@@ -14,5 +14,6 @@ namespace IPMS.Business.Interfaces.Services
     {
         IQueryable<ClassTopic> GetClassTopics(GetClassTopicRequest request);
         Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request);
+        Task<bool> PickTopic(Guid currentUserId, Guid topicId);
     }
 }
