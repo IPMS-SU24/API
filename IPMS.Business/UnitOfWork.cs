@@ -54,7 +54,10 @@ namespace IPMS.Business
         {
             await _context.SaveChangesAsync();
         }
-
+        public void SaveChanges()
+        {
+            _context.SaveChanges();
+        }
         private bool disposed = false;
 
         protected virtual void Dispose(bool disposing)
