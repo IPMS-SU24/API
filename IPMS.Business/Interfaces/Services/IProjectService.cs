@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace IPMS.Business.Interfaces.Services
 {
-    public class IProjectService
+    public interface IProjectService
     {
+        public Task<string?> GetProjectName(Guid currentUserId);
     }
 }

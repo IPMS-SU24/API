@@ -46,6 +46,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IProjectDashboardService, ProjectDashboardService>();
             services.AddScoped<IClassTopicService, ClassTopicService>();
             services.AddScoped<IProjectService, ProjectService>();
+            services.AddScoped<ICommonServices, CommonServices>();
         }
     }
 }

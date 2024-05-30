@@ -1,5 +1,7 @@
-﻿using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Requests.Project;
+﻿using IPMS.API.Common.Enums;
+using IPMS.API.Common.Extensions;
+using IPMS.API.Responses;
+using IPMS.Business.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -14,8 +16,24 @@ namespace IPMS.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProjectName()
         {
-          //  var response = await _projectService.GetProjects(request).GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok();
+          //  Guid currentUserId = HttpContext.User.Claims.GetUserId();
+
+            var projectName = await _projectService.GetProjectName(new Guid("9c7d4c9e-6a23-4c13-af6d-e85b83705b2e"));
+
+            //set default is this student is studying
+            var response = new IPMSResponse<object>()
+            {
+                Data = projectName,
+            }; // Default is success
+
+            if (projectName == null)
+            {
+                response.Status = ResponseStatus.BadRequest;
+                response.Message = "Not studying";
+                response.Data = null;
+            }
+
+            return GetActionResponse(response);
         }
     }
 }
