@@ -1,6 +1,9 @@
-﻿using IPMS.Business.Common.Utils;
+﻿using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Responses.ProjectDashboard;
+using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
@@ -18,26 +21,55 @@ namespace IPMS.Business.Services
 
         public async Task<string?> GetProjectName(Guid currentUserId)
         {
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            return (await _commonServices.GetProject(currentUserId))?.GroupName;
+        }
 
-            var studiesIn = (await _commonServices.GetStudiesIn(currentUserId)).ToList();
+        public async Task<ProjectProgressData> GetProjectProgressData(Guid currentUserId)
+        {
+            var project = await _commonServices.GetProject(currentUserId);
+            if (project == null) throw new DataNotFoundException("Not found Project");
+            var topic = await _commonServices.GetProjectTopic(project.Id);
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            var studiesIn = await _commonServices.GetStudiesIn(currentUserId);
+            var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x=>x.ClassId), currentSemester.Id);
+            var response = new ProjectProgressData
+            {
+                ProjectName = project!.GroupName ?? string.Empty,
+                ProjectId = project!.Id,
+                TopicInfo = new()
+                {
+                    TopicName = topic?.Name ?? string.Empty,
+                    Description = topic?.Description ?? string.Empty,
+                    EndDate = @class.ChangeTopicDeadline
+                },
+                BorrowInfo = new()
+                {
+                    EndDate = @class.BorrowIoTComponentDeadline,
+                    AssessmentStatus = await _commonServices.GetBorrowIoTStatus(currentUserId, @class)
+                }
+            };
+            var projectSubmissions = await _commonServices.GetProjectSubmissions(project.Id);
+            var submissions = projectSubmissions.GroupBy(x => (Guid)x.SubmissionModule!.AssessmentId!).ToDictionary(x => x.Key);
+            foreach (var assessment in currentSemester.Syllabus!.Assessments)
+            {
+                var assessmentInfo = new AssessmentInformation
+                {
+                    Name = assessment.Name ?? string.Empty,
+                    Description = assessment.Description ?? string.Empty,
+                    Order = assessment.Order,
+                    Percentage = assessment.Percentage
+                };
 
-            if (studiesIn.Count() == 0 || studiesIn == null)
-                return null;
-
-            Guid? currentClassId = (await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId), currentSemesterId))?.Id;
-            
-            if (currentClassId == null) // Check null current user did not enrolled any class this semester
-                return null;
-
-            var currentStudyIn = studiesIn.FirstOrDefault(s => s.ClassId.Equals(currentClassId)); // Get current studying
-            if (currentStudyIn == null)
-                return null;
-
-            var project = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(p => p.Id.Equals(currentStudyIn.ProjectId)); // get current project
-
-
-            return project?.GroupName;
+                var submissionsOfAssessment = new List<ProjectSubmission>();
+                var isHaveSubmission = submissions.TryGetValue(assessment.Id, out var assessmentSubmissions);
+                if (isHaveSubmission)
+                {
+                    submissionsOfAssessment = assessmentSubmissions!.ToList();
+                }
+                assessmentInfo.AssessmentStatus = await _commonServices.GetAssessmentStatus(assessment.Id, submissionsOfAssessment);
+                response.Assessments.Add(assessmentInfo);
+            }
+            return response;
         }
     }
 }

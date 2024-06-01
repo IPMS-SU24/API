@@ -55,7 +55,7 @@ builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
 }).AddEntityFrameworkStores<IPMSDbContext>()
             .AddDefaultTokenProviders();
 builder.Services.AddSwaggerGenNewtonsoftSupport();
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions("IPMS_AWS"));
 builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddSwaggerGen(options =>
 {

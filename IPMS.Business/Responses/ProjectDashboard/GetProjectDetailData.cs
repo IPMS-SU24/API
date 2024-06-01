@@ -1,10 +1,14 @@
-﻿namespace IPMS.Business.Responses.ProjectDashboard
+﻿using IPMS.Business.Common.Enums;
+using Microsoft.OpenApi.Extensions;
+using System.Text.Json.Serialization;
+
+namespace IPMS.Business.Responses.ProjectDashboard
 {
     public class GetProjectDetailData
     {
         public Guid ProjectId { get; set; }
         public string TopicName { get; set; } = null!;
-        public List<AssessmentDetail> Assessements { get; set; } = new List<AssessmentDetail>();
+        public List<AssessmentDetail> Assessments { get; set; } = new List<AssessmentDetail>();
         public SubmissionCount Submission { get; set; } = new();
     }
     public class SubmissionCount
@@ -16,6 +20,8 @@
     {
         public Guid AssessmentId { get; set; }
         public string AssessmentName { get; set; } = null!;
-        public string Status { get; set; } = null!;
+        [JsonIgnore]
+        public AssessmentStatus AssessmentStatus { get; set; }
+        public string Status => AssessmentStatus.GetDisplayName();
     }
 }
