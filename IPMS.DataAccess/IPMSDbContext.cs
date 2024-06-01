@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using System.Reflection;
 
 namespace IPMS.DataAccess
@@ -28,25 +29,14 @@ namespace IPMS.DataAccess
         public virtual DbSet<ComponentsMaster> ComponentsMasters { get; set; }
         public virtual DbSet<TopicFavorite> TopicFavorites { get; set; }
         public virtual DbSet<ReportType> ReportTypes { get; set; }
+        private string _connectionString = string.Empty;
 
         public IPMSDbContext(DbContextOptions<IPMSDbContext> options) : base(options)
         {
         }
         public IPMSDbContext()
         {
-            
-        }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql(GetConnectionString());
-        private string GetConnectionString()
-        {
 
-            IConfigurationRoot configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddUserSecrets(Assembly.GetExecutingAssembly())
-                .AddJsonFile("appsettings.json", true, true)
-                .Build();
-            return configuration["ConnectionStrings_IPMS"];
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -62,7 +52,7 @@ namespace IPMS.DataAccess
                 entity.Ignore(c => c.LockoutEnd);
                 entity.Ignore(c => c.TwoFactorEnabled);
             });
-            modelBuilder.Entity<IdentityRole<Guid>>().ToTable("Role");                                      
+            modelBuilder.Entity<IdentityRole<Guid>>().ToTable("Role");
             modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("UserRole");
             modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("UserLogin");
             modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("UserClaim");
