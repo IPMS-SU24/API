@@ -33,5 +33,22 @@ namespace IPMS.API.Controllers
             }
             return GetActionResponse(response);
         }
+        [HttpPost]
+        [Route("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] TokenModel request)
+        {
+            var rs = await _authenticationService.RefreshToken(request);
+
+            var response = new IPMSResponse<TokenModel>
+            {
+                Data = rs
+            };
+            if (rs is null)
+            {
+                response.Status = ResponseStatus.BadRequest;
+                response.Message = "AccessToken or RefreshToken is not valid";
+            }
+            return GetActionResponse(response);
+        }
     }
 }
