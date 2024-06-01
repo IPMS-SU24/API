@@ -1,4 +1,5 @@
-﻿using Amazon.S3;
+﻿using Amazon;
+using Amazon.S3;
 using Amazon.S3.Model;
 using IPMS.Business.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +42,7 @@ namespace IPMS.Business.Services
 
         public  string GeneratePresignedUploadUrl(string objectKey)
         {
+            AWSConfigsS3.UseSignatureVersion4 = true;
             var request = new GetPreSignedUrlRequest
             {
                 BucketName = _configuration[BUCKET_NAME],
