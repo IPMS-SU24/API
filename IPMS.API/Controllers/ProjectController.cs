@@ -1,7 +1,10 @@
-﻿using IPMS.API.Common.Enums;
+﻿using IPMS.API.Common.Attributes;
+using IPMS.API.Common.Enums;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Responses.ProjectDashboard;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -13,7 +16,8 @@ namespace IPMS.API.Controllers
         {
             _projectService = ProjectService;
         }
-        [HttpGet]
+        [EnumAuthorize(UserRole.Student)]
+        [HttpGet("name")]
         public async Task<IActionResult> GetProjectName()
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
@@ -33,6 +37,21 @@ namespace IPMS.API.Controllers
                 response.Data = null;
             }
 
+            return GetActionResponse(response);
+        }
+        [HttpGet("detail")]  
+        public async Task<IActionResult> GetProjectProgress()
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var projectProgress = await _projectService.GetProjectProgressData(currentUserId);
+            var response = new IPMSResponse<ProjectProgressData>()
+            {
+                Data = projectProgress
+            };
+            if(projectProgress == null)
+            {
+                response.Status = ResponseStatus.BadRequest;
+            }
             return GetActionResponse(response);
         }
     }
