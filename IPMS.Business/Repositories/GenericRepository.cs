@@ -19,11 +19,11 @@ namespace IPMS.Business.Repository
 
         public virtual IQueryable<TEntity> Get()
         {
-            return dbSet.AsNoTracking();
+            return dbSet.GetQueryActive().AsNoTracking();
         }
         public virtual IQueryable<TEntity> GetContainsDeleted()
         {
-            return dbSet.GetQueryActive().AsNoTracking();
+            return dbSet.AsNoTracking();
         }
 
         public virtual async Task<TEntity?> GetByID(object id)
