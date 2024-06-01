@@ -15,15 +15,17 @@ namespace IPMS.Business.Services
     public class ClassTopicService : IClassTopicService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public ClassTopicService(IUnitOfWork unitOfWork)
+        private readonly ICommonServices _commonServices;
+        public ClassTopicService(IUnitOfWork unitOfWork, ICommonServices commonServices)
         {
             _unitOfWork = unitOfWork;
+            _commonServices = commonServices;
         }
         public IQueryable<ClassTopic> GetClassTopics(GetClassTopicRequest request)
         {
             return _unitOfWork.ClassTopicRepository.Get().ApplyFilter(request).AsNoTracking();
         }
-        private async Task<List<Student>> GetStudiesIn(Guid currentUserId)
+      /*  private async Task<List<Student>> GetStudiesIn(Guid currentUserId)
         {
             return await _unitOfWork.StudentRepository.Get() // Find Student from current User 
                                                        .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
@@ -34,18 +36,18 @@ namespace IPMS.Business.Services
             return await _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
                                                                       .FirstOrDefaultAsync(c => studiesIn.Contains(c.Id)
                                                                       && c.SemesterId.Equals(currentSemesterId));
-        }
+        }*/
         public async Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
         {
             // Get current Semester
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
 
-            var studiesInId = (await GetStudiesIn(currentUserId)).Select(s => s.ClassId).ToList();
+            var studiesInId = (await _commonServices.GetStudiesIn(currentUserId)).Select(s => s.ClassId).ToList();
 
             if (studiesInId.Count() == 0 || studiesInId == null)
                 return null;
 
-            Guid? currentClassId = (await GetCurrentClass(studiesInId, currentSemesterId))?.Id;
+            Guid? currentClassId = (await _commonServices.GetCurrentClass(studiesInId, currentSemesterId))?.Id;
 
             // Check null current user did not enrolled any class this semester
             if (currentClassId == null)
@@ -83,12 +85,12 @@ namespace IPMS.Business.Services
         {
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id; // Get current Semester
 
-            var studiesIn = await GetStudiesIn(currentUserId);
+            var studiesIn = await _commonServices.GetStudiesIn(currentUserId);
 
             if (studiesIn.Count() == 0 || studiesIn == null)
                 return false;
 
-            IPMSClass? currentClass = await GetCurrentClass(studiesIn.Select(s => s.ClassId), currentSemesterId);
+            IPMSClass? currentClass = await _commonServices.GetCurrentClass(studiesIn.Select(s => s.ClassId), currentSemesterId);
 
             if (currentClass == null) // Check null current user did not enrolled any class this semester
                 return false;

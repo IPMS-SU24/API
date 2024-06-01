@@ -20,6 +20,7 @@ namespace IPMS.API.Controllers
 
         /// <summary>
         /// Specifies ClassTopics in class that haven't chosen yet. On other hand, they are available topic that can choose.
+        /// https://docs.google.com/spreadsheets/d/1m8HHx6pYmBw-fNgilKLwJJ7M9m9AGki4it0be34URwQ/edit#gid=0
         /// </summary>
         [EnumAuthorize(UserRole.Student)]
         [HttpGet]
@@ -34,6 +35,7 @@ namespace IPMS.API.Controllers
         /// <summary>
         /// Pick ClassTopics in class that haven't chosen yet.
         /// Can change topic if in deadline pick topic
+        /// https://docs.google.com/spreadsheets/d/1m8HHx6pYmBw-fNgilKLwJJ7M9m9AGki4it0be34URwQ/edit#gid=1001191212
         /// </summary>
         [EnumAuthorize(UserRole.Leader)]
         [HttpPut]
