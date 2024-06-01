@@ -16,9 +16,9 @@ namespace IPMS.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProjectName()
         {
-          //  Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
 
-            var projectName = await _projectService.GetProjectName(new Guid("9c7d4c9e-6a23-4c13-af6d-e85b83705b2e"));
+            var projectName = await _projectService.GetProjectName(currentUserId);
 
             //set default is this student is studying
             var response = new IPMSResponse<object>()
