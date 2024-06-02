@@ -50,6 +50,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<ICommonServices, CommonServices>();
             services.AddScoped<IAssessmentService, AssessmentService>();
+            services.AddScoped<IBorrowIoTService, BorrowIoTService>();
         }
     }
 }

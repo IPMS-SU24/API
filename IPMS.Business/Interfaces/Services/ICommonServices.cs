@@ -19,5 +19,7 @@ namespace IPMS.Business.Interfaces.Services
         //Prerequisite: List all submission belong to the project of the assessment
         Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList);
         Task<AssessmentStatus> GetBorrowIoTStatus(Guid projectId, IPMSClass @class);
+        Task<int> GetRemainComponentQuantityOfLecturer(Guid lecturerId, Guid componentId);
+        Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId);
     }
 }
