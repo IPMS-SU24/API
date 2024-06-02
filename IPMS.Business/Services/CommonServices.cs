@@ -2,6 +2,7 @@
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
@@ -69,15 +70,15 @@ namespace IPMS.Business.Services
 
         public async Task<Topic?> GetProjectTopic(Guid projectId)
         {
-            return await _unitOfWork.ClassTopicRepository.Get().Where(x=>x.ProjectId == projectId)
-                                                            .Include(x=>x.Topic).Select(x=>x.Topic).FirstOrDefaultAsync();
+            return await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
+                                                            .Include(x => x.Topic).Select(x => x.Topic).FirstOrDefaultAsync();
         }
 
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
         {
             var now = DateTime.Now;
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-            var modules = currentSemester!.Modules.Where(x=> x.AssessmentId == assessmentId);
+            var modules = currentSemester!.Modules.Where(x => x.AssessmentId == assessmentId);
             var assessment = currentSemester.Syllabus!.Assessments.FirstOrDefault(x => x.Id == assessmentId);
             //Check Assessment Deadline, Start Date
             var deadline = modules.MaxBy(x => x.EndDate)!.EndDate;
@@ -112,11 +113,31 @@ namespace IPMS.Business.Services
         public async Task<AssessmentStatus> GetBorrowIoTStatus(Guid projectId, IPMSClass @class)
         {
             var now = DateTime.Now;
-            var isBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x=>x.MasterId == projectId).AnyAsync();
+            var isBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == projectId).AnyAsync();
             if (isBorrowed && @class.BorrowIoTComponentDeadline < now) return AssessmentStatus.Done;
             if (@class.BorrowIoTComponentDeadline > now && @class.ChangeTopicDeadline < now) return AssessmentStatus.InProgress;
             if (!isBorrowed && @class.BorrowIoTComponentDeadline > now) return AssessmentStatus.Expired;
             return AssessmentStatus.NotYet;
+        }
+
+        public async Task<int> GetRemainComponentQuantityOfLecturer(Guid lecturerId, Guid componentId)
+        {
+            //Get all project of lecturerId
+            var allProject = await GetAllCurrentProjectsOfLecturer(lecturerId);
+            //Get all quantity of component of Lecturer
+            var quantity = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x=>x.Status == BorrowedStatus.Approved && allProject.Contains(x.MasterId!.Value) && x.ComponentId == componentId).SumAsync(x=>x.Quantity);
+            var lecturerQuantity = await _unitOfWork.ComponentsMasterRepository.GetLecturerOwnComponents().Where(x=>x.MasterId == lecturerId && x.ComponentId == componentId).SumAsync(x=>x.Quantity);
+            return lecturerQuantity - quantity;
+        }
+
+        public async Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId)
+        {
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            return await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId == currentSemester.Id && x.LecturerId == lecturerId)
+                                                                                .Join(_unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId != null),
+                                                                                      @class => @class.Id,
+                                                                                      classTopic => classTopic.ClassId,
+                                                                                      (@class, classTopic) => classTopic.ProjectId.Value).ToListAsync();
         }
     }
 }
