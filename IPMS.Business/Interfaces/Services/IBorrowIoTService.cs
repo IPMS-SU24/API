@@ -7,5 +7,6 @@ namespace IPMS.Business.Interfaces.Services
     {
         Task<bool> CheckIoTValid(BorrowIoTModelRequest request, Guid leaderId);
         Task RegisterIoTForProject(Guid leaderId, IEnumerable<BorrowIoTModelRequest> borrowIoTModels);
+        Task GetAvailableIoTComponents(Guid leaderId, IEnumerable<BorrowIoTModelRequest> borrowIoTModels);
     }
 }

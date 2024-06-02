@@ -1,11 +1,11 @@
 ﻿using IPMS.API.Common.Extensions;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 using IPMS.API.Responses;
 using IPMS.API.Common.Attributes;
 using IPMS.API.Common.Enums;
+using IPMS.Business.Requests.IoTComponent;
 
 namespace IPMS.API.Controllers
 {

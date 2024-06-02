@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using IPMS.Business.Requests;
+using IPMS.Business.Requests.IoTComponent;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 
