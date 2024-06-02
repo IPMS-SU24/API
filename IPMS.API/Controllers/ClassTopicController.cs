@@ -5,7 +5,6 @@ using IPMS.API.Responses;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ClassTopic;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using static IPMS.API.Common.Extensions.UserExtensions;
 
 namespace IPMS.API.Controllers

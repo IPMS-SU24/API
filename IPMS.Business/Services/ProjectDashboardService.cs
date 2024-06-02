@@ -31,7 +31,7 @@ namespace IPMS.Business.Services
             var modules = currentSemester?.CurrentSemester?.Syllabus?.Assessments
                                                            .SelectMany(x => x.Modules).Where(x => x.EndDate > DateTime.Now).ToList();
             var projectSubmissions = await _unitOfWork.ProjectSubmissionRepository.Get()
-                                                      .Where(x => x.ProjectId == currentStudent.ProjectId && x.SubmissionLink != null)
+                                                      .Where(x => x.ProjectId == currentStudent.ProjectId && x.Name != null)
                                                       .Select(x => x.SubmissionModuleId).ToListAsync();
             var nearDeadlineSubmissions = modules.SkipWhile(x => projectSubmissions.Contains(x.Id)).Select(x=>new NearDealineSubmission
             {

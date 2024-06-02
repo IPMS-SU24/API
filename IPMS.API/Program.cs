@@ -1,16 +1,17 @@
+using Amazon.S3;
 using Amazon.SQS;
 using AutoFilterer.Swagger;
 using AutoMapper.Internal;
 using FluentValidation;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Filters;
-using IPMS.API.Middlewares;
 using IPMS.DataAccess;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
@@ -57,6 +58,7 @@ builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
 builder.Services.AddSwaggerGenNewtonsoftSupport();
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions("IPMS_AWS"));
 builder.Services.AddAWSService<IAmazonSQS>();
+builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddSwaggerGen(options =>
 {
     options.DescribeAllParametersInCamelCase();

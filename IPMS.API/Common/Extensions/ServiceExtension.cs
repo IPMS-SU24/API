@@ -13,6 +13,7 @@ using IPMS.Business.Repositories;
 using IPMS.Business;
 using Microsoft.AspNetCore.Authorization;
 using IPMS.API.Middlewares;
+using Amazon.S3;
 
 namespace IPMS.API.Common.Extensions
 {
@@ -38,6 +39,7 @@ namespace IPMS.API.Common.Extensions
 
             //Add Depenency Injection
             services.AddSingleton<IMessageService, MessageService>();
+            services.AddSingleton<IPresignedUrlService, PresignedUrlService>();
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, IPMSAuthorizationMiddlewareResultHandler>();
 
             //Add Service
