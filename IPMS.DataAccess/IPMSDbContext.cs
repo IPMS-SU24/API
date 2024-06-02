@@ -234,7 +234,7 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("ComponentsMaster")
                     .HasKey(e => e.Id);
-
+                entity.Property(e=>e.Status).IsRequired(false);
                 entity.HasOne(e => e.Component)
                     .WithMany(p => p.ComponentsMasters)
                     .HasForeignKey("ComponentId")

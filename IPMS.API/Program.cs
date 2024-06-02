@@ -44,7 +44,7 @@ builder.Services.AddRouting(options =>
 });
 builder.Configuration.AddEnvironmentVariables(prefix: "IPMS_");
 builder.Services.AddDI();
-builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["IPMS_ConnectionStrings_IPMS"], b=>b.MigrationsAssembly("IPMS.DataAccess")));
+builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["IPMS_ConnectionStrings_IPMS"], b => b.MigrationsAssembly("IPMS.DataAccess")));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -117,15 +117,18 @@ var app = builder.Build();
 app.Logger.LogInformation(builder.Configuration["IPMS_ConnectionStrings_IPMS"]);
 app.UseGlobalExceptionHandling();
 // Configure the HTTP request pipeline.
- app.UseSwagger();
- app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
 app.UseHttpsRedirection();
 
-app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+app.UseCors(options => options.AllowAnyMethod()
+                .AllowAnyHeader()
+                .SetIsOriginAllowed(origin => true) // allow any origin
+                .AllowCredentials());
 app.UseAuthentication();
 app.UseAuthorization();
 
