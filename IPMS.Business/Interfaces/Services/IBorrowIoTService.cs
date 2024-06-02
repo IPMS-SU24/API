@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Requests;
+﻿using IPMS.Business.Requests.IoTComponent;
+using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.DataAccess.Models;
 
 namespace IPMS.Business.Interfaces.Services
@@ -7,5 +8,6 @@ namespace IPMS.Business.Interfaces.Services
     {
         Task<bool> CheckIoTValid(BorrowIoTModelRequest request, Guid leaderId);
         Task RegisterIoTForProject(Guid leaderId, IEnumerable<BorrowIoTModelRequest> borrowIoTModels);
+        Task<IEnumerable<BorrowIoTComponentInformation>> GetAvailableIoTComponents(GetAvailableComponentRequest request, Guid leaderId);
     }
 }

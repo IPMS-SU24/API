@@ -2,7 +2,7 @@
 using IPMS.API.Common.Extensions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Requests;
+using IPMS.Business.Requests.IoTComponent;
 
 namespace IPMS.API.Validators.IoT
 {

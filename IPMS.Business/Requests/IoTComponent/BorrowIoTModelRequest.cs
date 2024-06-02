@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace IPMS.Business.Requests
+namespace IPMS.Business.Requests.IoTComponent
 {
     public class BorrowIoTModelRequest
     {
