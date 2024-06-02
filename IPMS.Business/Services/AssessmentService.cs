@@ -78,8 +78,10 @@ namespace IPMS.Business.Services
                     ProjectSubmissions = sm.ProjectSubmissions.Select(ps => new ProjectSubmissionResponse
                     {
                         Id = ps.Id,
+                        Name = ps.Name,
                         SubmitTime = ps.SubmissionDate,
-                        Link = _presignedUrlService.GeneratePresignedDownloadUrl(ps.Name)
+                        Link = _presignedUrlService.GeneratePresignedDownloadUrl("PS_" + ps.Id + "_" + ps.Name) //Get base on name on S3 
+                       
                     }).ToList()
                 }).ToList()
             };

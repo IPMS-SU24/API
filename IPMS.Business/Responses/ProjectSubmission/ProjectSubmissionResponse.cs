@@ -11,6 +11,7 @@ namespace IPMS.Business.Responses.ProjectSubmission
         public Guid Id { get; set; }
         public DateTime SubmitTime { get; set; }
         public string Link { get; set; }
+        public string Name { get; set; }
 
     }
 }
