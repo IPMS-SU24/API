@@ -1,11 +1,13 @@
 ﻿using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Requests;
 using IPMS.DataAccess.Models;
 using IPMS.Business.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using IPMS.Business.Requests.IoTComponent;
+using IPMS.Business.Responses.ProjectDashboard;
+using IPMS.Business.Common.Exceptions;
 
 namespace IPMS.Business.Services
 {
@@ -23,6 +25,7 @@ namespace IPMS.Business.Services
 
         public async Task<bool> CheckIoTValid(BorrowIoTModelRequest request, Guid leaderId)
         {
+            if (request.Quantity <= 0) return false;
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var studiesIn = await _commonServices.GetStudiesIn(leaderId);
             var project = await _commonServices.GetProject(leaderId);
@@ -44,6 +47,27 @@ namespace IPMS.Business.Services
             return true;
         }
 
+        public async Task<IEnumerable<BorrowIoTComponentInformation>> GetAvailableIoTComponents(GetAvailableComponentRequest request, Guid leaderId)
+        {
+            var result = new List<BorrowIoTComponentInformation>();
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            var studiesIn = await _commonServices.GetStudiesIn(leaderId);
+            var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId), currentSemester.Id);
+            var componentTopics = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Where(x => x.MasterId == request.TopicId).Include(x=>x.Component).ToListAsync();
+            if (!componentTopics.Any()) throw new DataNotFoundException("Not Found Component for Topic");
+            foreach (var component in componentTopics)
+            {
+                var info = new BorrowIoTComponentInformation
+                {
+                    Id = component.ComponentId!.Value,
+                    Name = component.Component.Name,
+                    Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, component.ComponentId!.Value)
+                };
+                result.Add(info);
+            }
+            return result;
+        }
+
         public async Task RegisterIoTForProject(Guid leaderId, IEnumerable<BorrowIoTModelRequest> borrowIoTModels)
         {
             var projectId = (await _commonServices.GetProject(leaderId)).Id;
@@ -52,6 +76,7 @@ namespace IPMS.Business.Services
                 opts.Items["MasterId"] = projectId;
             });
             await _unitOfWork.ComponentsMasterRepository.InsertRange(componentMasters);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

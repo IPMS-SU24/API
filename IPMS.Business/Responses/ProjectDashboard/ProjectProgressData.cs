@@ -33,6 +33,7 @@ namespace IPMS.Business.Responses.ProjectDashboard
             get => AssessmentStatus.GetDisplayName();
         }
         public DateTime EndDate { get; set; }
+        public List<BorrowIoTComponentInformation> IoTComponents { get; set; } = new();
     }
     public class BorrowIoTComponentInformation
     {
