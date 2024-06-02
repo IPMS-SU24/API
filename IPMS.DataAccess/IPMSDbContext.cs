@@ -247,7 +247,16 @@ namespace IPMS.DataAccess
                     .ToTable("ProjectSubmission")
                     .HasKey(e => e.Id);
 
+                entity.Property(e => e.Name).HasMaxLength(200);
+
                 entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
+
+                
+
+                entity.HasOne(e => e.Submitter)
+                    .WithMany(p => p.ProjectSubmissions)
+                    .HasForeignKey("SubmitterId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Project)
                     .WithMany(p => p.Submissions)

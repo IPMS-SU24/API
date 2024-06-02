@@ -20,6 +20,8 @@ namespace IPMS.Business.Services
         }
         public string GeneratePresignedDownloadUrl(string objectKey)
         {
+            if (objectKey == "" || objectKey == null)
+                return null;
             string urlString = string.Empty;
             try
             {

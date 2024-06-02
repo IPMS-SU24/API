@@ -28,7 +28,7 @@ namespace IPMS.API.Controllers
             return Ok(response);
         }
 
-        [EnumAuthorize(UserRole.Student, UserRole.Lecturer, UserRole.Admin)]
+     //   [EnumAuthorize(UserRole.Student, UserRole.Lecturer, UserRole.Admin)]
         [HttpGet]
         [Route("upload")]
         public IActionResult GeneratePresignedUploadUrl(string objectKey)

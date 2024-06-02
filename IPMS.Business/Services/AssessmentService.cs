@@ -15,11 +15,13 @@ namespace IPMS.Business.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
+        private readonly IPresignedUrlService _presignedUrlService;
 
-        public AssessmentService(IUnitOfWork unitOfWork, ICommonServices commonServices)
+        public AssessmentService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrlService)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
+            _presignedUrlService = presignedUrlService;
         }
         public async Task<AssessmentSubmissionProjectResponse> GetAssessmentById(Guid assessmentId, Guid currentUserId)
         {
@@ -77,7 +79,7 @@ namespace IPMS.Business.Services
                     {
                         Id = ps.Id,
                         SubmitTime = ps.SubmissionDate,
-                        Link = ps.SubmissionLink
+                        Link = _presignedUrlService.GeneratePresignedDownloadUrl(ps.Name)
                     }).ToList()
                 }).ToList()
             };
