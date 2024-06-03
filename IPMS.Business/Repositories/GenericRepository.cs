@@ -58,5 +58,10 @@ namespace IPMS.Business.Repository
             dbSet.Attach(entityToUpdate);
             _context.Entry(entityToUpdate).State = EntityState.Modified;
         }
+
+        public async Task InsertRange(IEnumerable<TEntity> entities)
+        {
+            await dbSet.AddRangeAsync(entities);
+        }
     }
 }

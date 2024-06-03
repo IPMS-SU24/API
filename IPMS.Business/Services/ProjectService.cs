@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Common.Exceptions;
+﻿using AutoMapper;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
@@ -12,11 +13,13 @@ namespace IPMS.Business.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
+        private readonly IMapper _mapper;
 
-        public ProjectService(IUnitOfWork unitOfWork, ICommonServices commonServices)
+        public ProjectService(IUnitOfWork unitOfWork, ICommonServices commonServices,IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
+            _mapper = mapper;
         }
 
         public async Task<string?> GetProjectName(Guid currentUserId)
@@ -32,6 +35,7 @@ namespace IPMS.Business.Services
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var studiesIn = await _commonServices.GetStudiesIn(currentUserId);
             var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x=>x.ClassId), currentSemester.Id);
+            var componentBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == project.Id).Include(x => x.Component).ToListAsync();
             var response = new ProjectProgressData
             {
                 ProjectName = project!.GroupName ?? string.Empty,
@@ -45,7 +49,8 @@ namespace IPMS.Business.Services
                 BorrowInfo = new()
                 {
                     EndDate = @class.BorrowIoTComponentDeadline,
-                    AssessmentStatus = await _commonServices.GetBorrowIoTStatus(currentUserId, @class)
+                    AssessmentStatus = await _commonServices.GetBorrowIoTStatus(currentUserId, @class),
+                    IoTComponents = _mapper.Map<List<BorrowIoTComponentInformation>>(componentBorrowed)
                 }
             };
             var projectSubmissions = await _commonServices.GetProjectSubmissions(project.Id);
