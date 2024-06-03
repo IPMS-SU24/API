@@ -4,6 +4,7 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ClassTopic;
+using IPMS.Business.Responses.Topic;
 using Microsoft.AspNetCore.Mvc;
 using static IPMS.API.Common.Extensions.UserExtensions;
 

@@ -24,13 +24,16 @@ namespace IPMS.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAssessmentById(Guid Id)
         {
-            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+           Guid currentUserId = HttpContext.User.Claims.GetUserId();
 
             var response = new IPMSResponse<AssessmentSubmissionProjectResponse>
             {
                 Data = await _assessmentService.GetAssessmentById(Id, currentUserId)
+                
             };
             return GetActionResponse(response);
         }
+
+       
     }
 }

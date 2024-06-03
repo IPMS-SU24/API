@@ -3,6 +3,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using IPMS.Business.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
+using System.Security.AccessControl;
 
 namespace IPMS.Business.Services
 {
@@ -18,9 +19,9 @@ namespace IPMS.Business.Services
             _configuration = configuration;
      
         }
-        public string GeneratePresignedDownloadUrl(string objectKey)
+        public string GeneratePresignedDownloadUrl(string objectName)
         {
-            if (objectKey == "" || objectKey == null)
+            if (string.IsNullOrEmpty(objectName))
                 return null;
             string urlString = string.Empty;
             try
@@ -28,7 +29,7 @@ namespace IPMS.Business.Services
                 var request = new GetPreSignedUrlRequest()
                 {
                     BucketName = _configuration[BUCKET_NAME],
-                    Key = objectKey,
+                    Key = objectName,
                     Expires = DateTime.UtcNow.AddHours(double.Parse(_configuration[EXPIRY])),
 
                 };
@@ -42,18 +43,20 @@ namespace IPMS.Business.Services
             return urlString;
         }
 
-        public  string GeneratePresignedUploadUrl(string objectKey)
+        public  string GeneratePresignedUploadUrl(string objectName)
         {
+            if (string.IsNullOrEmpty(objectName))
+                return null;
             AWSConfigsS3.UseSignatureVersion4 = true;
-            var request = new GetPreSignedUrlRequest
+            var requestS3 = new GetPreSignedUrlRequest
             {
                 BucketName = _configuration[BUCKET_NAME],
-                Key = objectKey,
+                Key = objectName,
                 Verb = HttpVerb.PUT,
                 Expires = DateTime.UtcNow.AddHours(double.Parse(_configuration[EXPIRY])),
             };
 
-            string url = _s3Client.GetPreSignedURL(request);
+            string url = _s3Client.GetPreSignedURL(requestS3);
             return url;
         }
     }
