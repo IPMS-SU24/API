@@ -25,20 +25,11 @@ namespace IPMS.Business.Services
         {
             return _unitOfWork.ClassTopicRepository.Get().ApplyFilter(request).AsNoTracking();
         }
-      /*  private async Task<List<Student>> GetStudiesIn(Guid currentUserId)
-        {
-            return await _unitOfWork.StudentRepository.Get() // Find Student from current User 
-                                                       .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
-        }
-
-        private async Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn, Guid currentSemesterId)
-        {
-            return await _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
-                                                                      .FirstOrDefaultAsync(c => studiesIn.Contains(c.Id)
-                                                                      && c.SemesterId.Equals(currentSemesterId));
-        }*/
+     
         public async Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
         {
+            request.searchValue = request.searchValue.Trim().ToLower();
+
             // Get current Semester
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
 
@@ -56,7 +47,9 @@ namespace IPMS.Business.Services
 
             var availableClassTopics = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopics are available and include Topic
                                                                        .Where(ct => ct.ClassId.Equals(currentClassId)
-                                                                       && ct.ProjectId == null).Include(ct => ct.Topic);
+                                                                                    && ct.ProjectId == null
+                                                                                    && (ct.Topic.Name.ToLower().Contains(request.searchValue) || ct.Topic.Description.ToLower().Contains(request.searchValue)))
+                                                                       .            Include(ct => ct.Topic);
 
             /*
                 In TopicIotComponentReponse have ComponentsMaster can query base on MasterType = Topic && MasterId == currentTopicId but we not need to specific these 

@@ -2,7 +2,6 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Requests.AWS;
 using Microsoft.Extensions.Configuration;
 using System.Security.AccessControl;
 
