@@ -74,24 +74,21 @@ namespace IPMS.Business.Services
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
         {
             var now = DateTime.Now;
-            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-            var modules = currentSemester!.Modules.Where(x => x.AssessmentId == assessmentId);
-            var assessment = currentSemester.Syllabus!.Assessments.FirstOrDefault(x => x.Id == assessmentId);
-            //Check Assessment Deadline, Start Date
-            var deadline = modules.MaxBy(x => x.EndDate)!.EndDate;
-            var start = modules.MinBy(x => x.StartDate)!.StartDate;
+            var time = await GetAssessmentTime(assessmentId);
             //Case 1: Start Time in the future => status NotYet
-            if (start > now)
+            if (time.startDate > now)
             {
                 return AssessmentStatus.NotYet;
             }
             //Case 2: Deadline in the future, Start time in the past => status InProgress
-            if (start <= now && deadline > now)
+            if (time.startDate <= now && time.endDate > now)
             {
                 return AssessmentStatus.InProgress;
             }
             //Case 3: Deadline in the past
             //Case 3.1: All module is submitted
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            var assessment = currentSemester.Syllabus!.Assessments.FirstOrDefault(x => x.Id == assessmentId);
             if (submissionList.Count() == assessment.Modules.Count)
             {
                 return AssessmentStatus.Done;
@@ -135,6 +132,21 @@ namespace IPMS.Business.Services
                                                                                       @class => @class.Id,
                                                                                       classTopic => classTopic.ClassId,
                                                                                       (@class, classTopic) => classTopic.ProjectId.Value).ToListAsync();
+        }
+
+        public async Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId)
+        {
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            var modules = currentSemester!.Modules.Where(x => x.AssessmentId == assessmentId);
+            var assessment = currentSemester.Syllabus!.Assessments.FirstOrDefault(x => x.Id == assessmentId);
+            //Check Assessment Deadline, Start Date
+            var deadline = modules.MaxBy(x => x.EndDate)!.EndDate;
+            var start = modules.MinBy(x => x.StartDate)!.StartDate;
+            return new()
+            {
+                startDate = start,
+                endDate = deadline
+            };
         }
     }
 }

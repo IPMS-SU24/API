@@ -16,5 +16,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<AssessmentStatus> GetBorrowIoTStatus(Guid projectId, IPMSClass @class);
         Task<int> GetRemainComponentQuantityOfLecturer(Guid lecturerId, Guid componentId);
         Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId);
+        Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid lecturerId);
     }
 }

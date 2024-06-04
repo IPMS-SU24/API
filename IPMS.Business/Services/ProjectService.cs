@@ -62,7 +62,8 @@ namespace IPMS.Business.Services
                     Name = assessment.Name ?? string.Empty,
                     Description = assessment.Description ?? string.Empty,
                     Order = assessment.Order,
-                    Percentage = assessment.Percentage
+                    Percentage = assessment.Percentage,
+                    EndDate = (await _commonServices.GetAssessmentTime(assessment.Id)).endDate
                 };
 
                 var submissionsOfAssessment = new List<ProjectSubmission>();

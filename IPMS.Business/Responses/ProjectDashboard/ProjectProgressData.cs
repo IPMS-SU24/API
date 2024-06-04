@@ -54,5 +54,6 @@ namespace IPMS.Business.Responses.ProjectDashboard
         {
             get => AssessmentStatus.GetDisplayName();
         }
+        public DateTime EndDate { get; set; }
     }
 }
