@@ -1,5 +1,6 @@
 ﻿using IPMS.Business.Common.Enums;
 using Microsoft.OpenApi.Extensions;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace IPMS.Business.Responses.ProjectDashboard
@@ -14,11 +15,11 @@ namespace IPMS.Business.Responses.ProjectDashboard
     }
     public class TopicInformation
     {
-        [JsonIgnore]
+        //[JsonIgnore]
         public AssessmentStatus AssessmentStatus { get; set; }
         public string Status
         {
-            get => AssessmentStatus.GetDisplayName();
+            get => AssessmentStatus.GetAttributeOfType<DisplayAttribute>().Name ?? string.Empty;
         }
         public string TopicName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
@@ -26,11 +27,11 @@ namespace IPMS.Business.Responses.ProjectDashboard
     }
     public class BorrowInformation
     {
-        [JsonIgnore]
+        //[JsonIgnore]
         public AssessmentStatus AssessmentStatus { get; set; }
         public string Status
         {
-            get => AssessmentStatus.GetDisplayName();
+            get => AssessmentStatus.GetAttributeOfType<DisplayAttribute>().Name ?? string.Empty;
         }
         public DateTime EndDate { get; set; }
         public List<BorrowIoTComponentInformation> IoTComponents { get; set; } = new();
@@ -47,12 +48,12 @@ namespace IPMS.Business.Responses.ProjectDashboard
         public string Description { get; set; }
         public int Order { get; set; }
         public decimal Percentage { get; set; }
-        [JsonIgnore]
+        //[JsonIgnore]
         public AssessmentStatus AssessmentStatus { get; set; }
         
         public string Status
         {
-            get => AssessmentStatus.GetDisplayName();
+            get => AssessmentStatus.GetAttributeOfType<DisplayAttribute>().Name ?? string.Empty;
         }
         public DateTime EndDate { get; set; }
     }

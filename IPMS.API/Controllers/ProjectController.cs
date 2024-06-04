@@ -39,6 +39,7 @@ namespace IPMS.API.Controllers
 
             return GetActionResponse(response);
         }
+        [EnumAuthorize(UserRole.Student)]
         [HttpGet("detail")]  
         public async Task<IActionResult> GetProjectProgress()
         {

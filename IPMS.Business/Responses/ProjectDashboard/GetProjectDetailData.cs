@@ -1,6 +1,6 @@
 ﻿using IPMS.Business.Common.Enums;
 using Microsoft.OpenApi.Extensions;
-using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace IPMS.Business.Responses.ProjectDashboard
 {
@@ -20,8 +20,8 @@ namespace IPMS.Business.Responses.ProjectDashboard
     {
         public Guid AssessmentId { get; set; }
         public string AssessmentName { get; set; } = null!;
-        [JsonIgnore]
+        //[JsonIgnore]
         public AssessmentStatus AssessmentStatus { get; set; }
-        public string Status => AssessmentStatus.GetDisplayName();
+        public string Status => AssessmentStatus.GetAttributeOfType<DisplayAttribute>().Name ?? string.Empty;
     }
 }
