@@ -13,8 +13,7 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<Topic> OwnTopics { get; set; } = new List<Topic>();
         public virtual ICollection<ProjectSubmission> ProjectSubmissions { get; set; } = new List<ProjectSubmission>();
         public string FullName {  get; set; }
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiryTime { get; set; }
+        public virtual ICollection<UserRefreshToken> RefreshTokens { get; set; } = new List<UserRefreshToken>();
         public bool IsDeleted { get; set; } = false;
     }
 }

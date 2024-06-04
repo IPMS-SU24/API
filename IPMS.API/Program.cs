@@ -11,24 +11,24 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-builder.Services.AddControllers().AddNewtonsoftJson(options =>
+builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    options.SerializerSettings.Converters.Add(new StringEnumConverter());
-    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 builder.Services.AddFluentValidationAutoValidation(option =>
 {
@@ -55,7 +55,6 @@ builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
     config.SignIn.RequireConfirmedPhoneNumber = false;
 }).AddEntityFrameworkStores<IPMSDbContext>()
             .AddDefaultTokenProviders();
-builder.Services.AddSwaggerGenNewtonsoftSupport();
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddAWSService<IAmazonS3>();
