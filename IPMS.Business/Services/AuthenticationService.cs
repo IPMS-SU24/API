@@ -1,14 +1,15 @@
-﻿using IPMS.Business.Models;
+﻿using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
 using IPMS.Business.Requests.Authentication;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using IPMS.Business.Interfaces.Services;
 
 namespace IPMS.Business.Services
 {
@@ -17,13 +18,16 @@ namespace IPMS.Business.Services
         private readonly UserManager<IPMSUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthenticationService> _logger;
         public AuthenticationService(UserManager<IPMSUser> userManager,
                                    RoleManager<IdentityRole<Guid>> roleManager,
-                                   IConfiguration configuration)
+                                   IConfiguration configuration,
+                                   ILogger<AuthenticationService> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public Task<IdentityResult> AddLecturerAccount(AddLecturerAccountRequest registerModel)
@@ -65,11 +69,21 @@ namespace IPMS.Business.Services
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                throw new SecurityTokenException("Invalid token");
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
 
-            return principal;
+                if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                    throw new SecurityTokenException("Invalid token");
+
+                return principal;
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogInformation(ex, "User Token Validate Fail");
+                return null;
+            }
+
         }
 
         public async Task<TokenModel?> Login(LoginRequest loginModel)
@@ -78,14 +92,13 @@ namespace IPMS.Business.Services
             if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
-
                 var authClaims = new List<Claim>
-                {
-                    new (ClaimTypes.Email, user.Email),
-                    new (ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new (ClaimTypes.Name, user.UserName),
-                    new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                };
+                    {
+                        new (ClaimTypes.Email, user.Email),
+                        new (ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new (ClaimTypes.Name, user.UserName),
+                        new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    };
 
                 foreach (var userRole in userRoles)
                 {
@@ -93,23 +106,31 @@ namespace IPMS.Business.Services
                 }
 
                 var accessToken = GenerateAccessToken(authClaims);
-                var refreshToken = GenerateRefreshToken();
 
                 _ = int.TryParse(_configuration["IPMS_JWT_RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
+                var refreshToken = string.Empty;
 
-                user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
+                if (user.RefreshTokens.Any(a => a.IsActive))
+                {
+                    var activeRefreshToken = user.RefreshTokens.Where(a => a.IsActive).FirstOrDefault();
+                    refreshToken = activeRefreshToken.Token;
+                }
+                else
+                {
+                    refreshToken = GenerateRefreshToken();
+                    user.RefreshTokens.Add(new UserRefreshToken
+                    {
+                        Token = refreshToken,
+                        Expires = DateTime.Now.AddDays(refreshTokenValidityInDays)
+                    });
+                    await _userManager.UpdateAsync(user);
+                }
 
-                await _userManager.UpdateAsync(user);
                 return new TokenModel
                 {
                     AccessToken = accessToken,
                     RefreshToken = refreshToken,
                 };
-            }
-            else if (user != null)
-            {
-                await _userManager.AccessFailedAsync(user);
             }
             return null;
         }
@@ -132,18 +153,23 @@ namespace IPMS.Business.Services
             string username = principal.Identity.Name;
 
             var user = await _userManager.FindByNameAsync(username);
+            var oldActiveRefreshToken = user.RefreshTokens.Where(x => x.IsActive && x.Token == refreshToken).FirstOrDefault();
 
-            if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now || user.IsDeleted)
+            if (user == null || oldActiveRefreshToken == null || user.IsDeleted)
             {
                 return null;
             }
-
+            //Revoke current token
+            oldActiveRefreshToken.Revoked = DateTime.Now;
             var newAccessToken = GenerateAccessToken(principal.Claims.ToList());
             var newRefreshToken = GenerateRefreshToken();
 
-            user.RefreshToken = newRefreshToken;
             _ = int.TryParse(_configuration["IPMS_JWT_RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
+            user.RefreshTokens.Add(new UserRefreshToken
+            {
+                Token = refreshToken,
+                Expires = DateTime.Now.AddDays(refreshTokenValidityInDays)
+            });
             await _userManager.UpdateAsync(user);
 
             return new TokenModel
