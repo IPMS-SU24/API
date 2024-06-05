@@ -1,13 +1,9 @@
-﻿using AutoMapper;
-using IPMS.Business.Interfaces;
+﻿using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ProjectSubmission;
+using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.DataAccess.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
 {
@@ -15,11 +11,73 @@ namespace IPMS.Business.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
+        private readonly IPresignedUrlService _presignedUrl;
 
-        public ProjectSubmissionService(IUnitOfWork unitOfWork, ICommonServices commonServices, IMapper mapper)
+        public ProjectSubmissionService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrl) 
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
+            _presignedUrl = presignedUrl;
+        }
+
+        public async Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId)
+        {
+            request.searchValue = request.searchValue.Trim().ToLower();
+            Guid projectId = (await _commonServices.GetProject(currentUserId))!.Id;
+
+            IQueryable<ProjectSubmission> projectSubmissions = _unitOfWork.ProjectSubmissionRepository
+                                                  .Get().Where(x => x.ProjectId == projectId
+                                                            && (x.SubmissionModule!.Name.ToLower().Contains(request.searchValue)
+                                                                || x.SubmissionModule.Assessment!.Name.ToLower().Contains(request.searchValue)))
+                                                  .Include(x => x.SubmissionModule).ThenInclude(x => x!.Assessment)
+                                                  .Include(x => x.Submitter);
+
+            if (request.submitterId != null) // Query with submitter
+            {
+                projectSubmissions = projectSubmissions.Where(x => x.SubmitterId.Equals(request.submitterId));
+            }
+
+            if (request.assessmentId != null) // Query with assessment
+            {
+                projectSubmissions = projectSubmissions.Where(x => x.SubmissionModule!.AssessmentId.Equals(request.assessmentId)).AsQueryable();
+            }
+
+            if (request.startDate != null)  // Query with startDate
+            {
+                projectSubmissions = projectSubmissions.Where(x => x.SubmissionDate >= request.startDate);
+            }
+
+            if (request.endDate != null) // Query with endDate
+            {
+                projectSubmissions = projectSubmissions.Where(x => x.SubmissionDate <= request.endDate);
+            }
+
+            var groupNewest = _unitOfWork.ProjectSubmissionRepository // IsNewest base on all of submission in submission module
+                                                  .Get().Where(x => x.ProjectId == projectId)
+                                                  .GroupBy(x => x.SubmissionModuleId)
+                                                    .Select(group => new
+                                                    {
+                                                        moudleId = group.Key,
+                                                        NewestSubmissionnId = group.OrderByDescending(x => x.SubmissionDate).FirstOrDefault()!.Id
+                                                    }).ToList();
+
+            IQueryable<GetAllSubmissionResponse> response = projectSubmissions.Select(x => new GetAllSubmissionResponse
+            {
+                ModuleName = x.SubmissionModule!.Name,
+                AssesmentName =  x.SubmissionModule.Assessment!.Name,
+                SubmitDate = x.SubmissionDate,
+                SubmitterName = x.Submitter!.FullName,
+                SubmitterId = x.SubmitterId,
+                Grade = x.FinalGrade,
+                Link = _presignedUrl.GeneratePresignedDownloadUrl(x.Name),
+                FileName = x.Name,
+                IsNewest = groupNewest.Select(gn => gn.NewestSubmissionnId).Contains(x.Id),
+                AssessmentId = x.SubmissionModule.AssessmentId,
+                ModuleId = x.SubmissionModuleId,
+            });
+           
+            
+            return response;
         }
 
         public async Task<bool> UpdateProjectSubmission(UpdateProjectSubmissionRequest request, Guid currentUserId)
@@ -64,12 +122,13 @@ namespace IPMS.Business.Services
                     return true;
 
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return false;
             }
-           
-            
+
+
         }
     }
 }

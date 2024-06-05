@@ -5,6 +5,7 @@ using IPMS.API.Responses;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ProjectSubmission;
 using IPMS.Business.Responses.Assessment;
+using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,7 @@ namespace IPMS.API.Controllers
         }
         [EnumAuthorize(UserRole.Student)]
         [HttpPut]
-        public async Task<IActionResult> GetProjectSubmissionName([FromBody] UpdateProjectSubmissionRequest request)
+        public async Task<IActionResult> UpdateProjectSubmissionName([FromBody] UpdateProjectSubmissionRequest request)
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             var response = new IPMSResponse<bool>
@@ -32,6 +33,24 @@ namespace IPMS.API.Controllers
             {
                 response.Status = ResponseStatus.BadRequest;
             }
+            return GetActionResponse(response);
+        }
+
+
+        /// <summary>
+        /// Get all submission in project of current user
+        /// https://docs.google.com/spreadsheets/d/10eDAKGeT4Na1yPKZc3QiA6lA6ll7YHxKLWjGjOtLTNY/edit#gid=0
+        /// </summary>
+        [EnumAuthorize(UserRole.Student)]
+        [HttpGet]
+        public async Task<IActionResult> GetAllSubmission([FromQuery] GetAllSubmissionRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var response = new IPMSResponse<IQueryable<GetAllSubmissionResponse>>
+            {
+                Data = await _projectSubmissionService.GetAllSubmission(request, currentUserId)
+            };
+
             return GetActionResponse(response);
         }
     }

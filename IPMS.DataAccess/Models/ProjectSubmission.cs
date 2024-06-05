@@ -11,7 +11,6 @@ namespace IPMS.DataAccess.Models
         public Guid? SubmissionModuleId { get; set; }
         public Guid? SubmitterId { get; set; }
         public virtual IPMSUser? Submitter { get; set; }
-
         public virtual Project? Project { get; set; }
         public virtual SubmissionModule? SubmissionModule { get; set; }
         public virtual ICollection<LecturerGrade> Grades {get; set;} = new List<LecturerGrade>();

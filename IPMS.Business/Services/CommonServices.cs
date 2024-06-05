@@ -43,7 +43,7 @@ namespace IPMS.Business.Services
         public async Task<Project?> GetProject(Guid currentUserId)
         {
 
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
             var studiesIn = (await GetStudiesIn(currentUserId)).ToList();
 
