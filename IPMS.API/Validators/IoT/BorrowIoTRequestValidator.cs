@@ -8,20 +8,18 @@ namespace IPMS.API.Validators.IoT
 {
     public class BorrowIoTListRequestValidator : AbstractValidator<List<BorrowIoTModelRequest>>
     {
-        public BorrowIoTListRequestValidator(IBorrowIoTService borrowIoTService, IHttpContextAccessor context, ICommonServices commonServices)
+        public BorrowIoTListRequestValidator(IBorrowIoTService borrowIoTService, IHttpContextAccessor context)
         {
-            var modelValidator = new BorrowIoTRequestValidator(commonServices, borrowIoTService, context);
+            var modelValidator = new BorrowIoTRequestValidator(borrowIoTService, context);
             RuleForEach(x => x).SetValidator(modelValidator);
         }
     }
     public class BorrowIoTRequestValidator : AbstractValidator<BorrowIoTModelRequest>
     {
         private readonly IBorrowIoTService _borrowIoTService;
-        private readonly ICommonServices _commonServices;
-        public BorrowIoTRequestValidator(ICommonServices commonServices, IBorrowIoTService borrowIoTService, IHttpContextAccessor context)
+        public BorrowIoTRequestValidator(IBorrowIoTService borrowIoTService, IHttpContextAccessor context)
         {
             _borrowIoTService = borrowIoTService;
-            _commonServices = commonServices;
             var leaderId = context.HttpContext.User.Claims.GetUserId();
             RuleFor(x => x).MustAsync(async (x, cancellationToken) => await _borrowIoTService.CheckIoTValid(x, leaderId)).WithMessage("IoT Component Not Valid");
         }

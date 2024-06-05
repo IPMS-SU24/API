@@ -274,7 +274,7 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Report")
                     .HasKey(e => e.Id);
-
+                entity.Property(e => e.ResponseContent).IsRequired(false);
                 entity.HasOne(e => e.Reporter)
                     .WithMany(p => p.Reports)
                     .HasForeignKey("ReporterId")

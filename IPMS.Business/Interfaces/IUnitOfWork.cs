@@ -14,6 +14,8 @@ namespace IPMS.Business.Interfaces
         ISyllabusRepository SyllabusRepository { get; }
         IAssessmentRepository AssessmentRepository { get; }
         ITopicRepository TopicRepository { get; }
+        IReportTypeRepository ReportTypeRepository { get; }
+        IReportRepository ReportRepository { get; }
         Task SaveChangesAsync();
         void SaveChanges();
         IComponentsMasterRepository ComponentsMasterRepository { get; }

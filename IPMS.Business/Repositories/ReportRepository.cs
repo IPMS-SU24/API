@@ -5,11 +5,10 @@ using IPMS.DataAccess.Models;
 
 namespace IPMS.Business.Repositories
 {
-    public class IoTComponentRepository : GenericRepository<IoTComponent>, IIoTComponentRepository
+    public class ReportRepository : GenericRepository<Report>, IReportRepository
     {
-        public IoTComponentRepository(IPMSDbContext context) : base(context)
+        public ReportRepository(IPMSDbContext context) : base(context)
         {
-
         }
     }
 }

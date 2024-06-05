@@ -2,7 +2,7 @@
 {
     public class BaseModel
     {
-        public Guid Id { get; set; } = new Guid();
+        public Guid Id { get; set; } = Guid.NewGuid();
         public bool IsDeleted { get; set; } = false;
     }
 }

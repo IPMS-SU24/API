@@ -3,7 +3,7 @@ using IPMS.Business.Requests.IoTComponent;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 
-namespace IPMS.API.MappingProfiles
+namespace IPMS.API.MappingProfiles.BorrowIoT
 {
     public class RegisterBorrowIoTProfile : Profile
     {
