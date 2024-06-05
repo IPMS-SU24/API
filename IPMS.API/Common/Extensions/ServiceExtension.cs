@@ -35,6 +35,8 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<ISyllabusRepository, SyllabusRepository>();
             services.AddScoped<IAssessmentRepository, AssessmentRepository>();
             services.AddScoped<ITopicRepository, TopicRepository>();
+            services.AddScoped<IReportTypeRepository, ReportTypeRepository>();
+            services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Depenency Injection
@@ -52,6 +54,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IAssessmentService, AssessmentService>();
             services.AddScoped<IBorrowIoTService, BorrowIoTService>();
             services.AddScoped<IProjectSubmissionService, ProjectSubmissionService>();
+            services.AddScoped<IReportService, ReportService>();
         }
     }
 }
