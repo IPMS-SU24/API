@@ -15,6 +15,7 @@ namespace IPMS.Business.Responses.ProjectDashboard
     }
     public class TopicInformation
     {
+        public Guid TopicId { get; set; }
         //[JsonIgnore]
         public AssessmentStatus AssessmentStatus { get; set; }
         public string Status
@@ -41,9 +42,11 @@ namespace IPMS.Business.Responses.ProjectDashboard
         public Guid Id { get; set; }
         public string Name { get; set; }
         public int Quantity { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
     public class AssessmentInformation
     {
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public int Order { get; set; }
@@ -56,5 +59,6 @@ namespace IPMS.Business.Responses.ProjectDashboard
             get => AssessmentStatus.GetAttributeOfType<DisplayAttribute>().Name ?? string.Empty;
         }
         public DateTime EndDate { get; set; }
+        public DateTime StartDate { get; set; }
     }
 }
