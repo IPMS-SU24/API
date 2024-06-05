@@ -939,7 +939,7 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.IPMSUser", b =>
                 {
-                    b.OwnsMany("IPMS.DataAccess.Models.UserRefreshToken", "RefreshTokens", b1 =>
+                    b.OwnsMany("IPMS.DataAccess.Models.IPMSUser.RefreshTokens#IPMS.DataAccess.Models.UserRefreshToken", "RefreshTokens", b1 =>
                         {
                             b1.Property<Guid>("IPMSUserId")
                                 .HasColumnType("uuid");
@@ -966,7 +966,7 @@ namespace IPMS.DataAccess.Migrations
 
                             b1.HasKey("IPMSUserId", "Id");
 
-                            b1.ToTable("UserRefreshToken");
+                            b1.ToTable("UserRefreshToken", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("IPMSUserId");

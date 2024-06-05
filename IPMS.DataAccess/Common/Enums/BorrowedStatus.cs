@@ -4,6 +4,6 @@
     {
         Pending = 0,
         Approved = 1,
-        Retunred = 2
+        Returned = 2
     }
 }
