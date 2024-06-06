@@ -17,5 +17,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<int> GetRemainComponentQuantityOfLecturer(Guid lecturerId, Guid componentId);
         Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId);
         Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid lecturerId);
+        AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime changeTopicDeadline, DateTime changeGroupDeadline);
     }
 }
