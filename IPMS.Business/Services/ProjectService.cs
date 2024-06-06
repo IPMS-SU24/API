@@ -45,7 +45,8 @@ namespace IPMS.Business.Services
                     TopicId = topic.Id,
                     TopicName = topic?.Name ?? string.Empty,
                     Description = topic?.Description ?? string.Empty,
-                    EndDate = @class.ChangeTopicDeadline
+                    EndDate = @class.ChangeTopicDeadline,
+                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic,@class.ChangeTopicDeadline,@class.ChangeGroupDeadline)
                 },
                 BorrowInfo = new()
                 {
