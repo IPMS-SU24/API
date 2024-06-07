@@ -31,7 +31,7 @@ namespace IPMS.Business.Services
             request.searchValue = request.searchValue.Trim().ToLower();
 
             // Get current Semester
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
             var studiesInId = (await _commonServices.GetStudiesIn(currentUserId)).Select(s => s.ClassId).ToList();
 
@@ -48,11 +48,12 @@ namespace IPMS.Business.Services
             var availableClassTopics = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopics are available and include Topic
                                                                        .Where(ct => ct.ClassId.Equals(currentClassId)
                                                                                     && ct.ProjectId == null
+                                                                                    && ct.Topic!.Status == RequestStatus.Approved // Only Topic Approved can choose
                                                                                     && (ct.Topic.Name.ToLower().Contains(request.searchValue) || ct.Topic.Description.ToLower().Contains(request.searchValue)))
                                                                        .            Include(ct => ct.Topic);
 
             /*
-                In TopicIotComponentReponse have ComponentsMaster can query base on MasterType = Topic && MasterId == currentTopicId but we not need to specific these 
+                In TopicIotComponentResponse have ComponentsMaster can query base on MasterType = Topic && MasterId == currentTopicId but we not need to specific these 
                 -> Just see that any ComponentMaster Exist 
                 -> have IoTComponent -> Get Name + Description
 
@@ -63,20 +64,20 @@ namespace IPMS.Business.Services
 
             var responses = availableClassTopics.Select(ct => new TopicIotComponentReponse
             {
-                Id = ct.Topic.Id,
+                Id = ct.Topic!.Id,
                 TopicName = ct.Topic.Name,
                 Description = ct.Topic.Description,
                 Detail = ct.Topic.Detail,
                 IotComponents = componentsOfTopic
                         .Where(cm => cm.MasterId.Equals(ct.TopicId))
-                        .Select(cm => cm.Component.Name).ToList()
+                        .Select(cm => cm.Component!.Name).ToList()
             });
 
             return responses;
         }
         public async Task<bool> PickTopic(Guid currentUserId, Guid topicId)
         {
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id; // Get current Semester
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id; // Get current Semester
 
             var studiesIn = await _commonServices.GetStudiesIn(currentUserId);
 
@@ -91,21 +92,31 @@ namespace IPMS.Business.Services
             if (currentClass.ChangeTopicDeadline < DateTime.Now) // Check is expired
                 return false;
 
-            ClassTopic? pickedTopicAvailable = await _unitOfWork.ClassTopicRepository.Get() // Is Picked Topic available
-                                                                               .FirstOrDefaultAsync(ct => ct.ClassId.Equals(currentClass.Id)
-                                                                               && ct.ProjectId == null && ct.TopicId.Equals(topicId));
-
-            if (pickedTopicAvailable == null)
-                return false;
-
+            // Check if project is request topic
             var currentStudiesIn = studiesIn.FirstOrDefault(s => s.ClassId.Equals(currentClass.Id));
 
             if (currentStudiesIn == null)
                 return false;
 
             ClassTopic? pickedTopic = await _unitOfWork.ClassTopicRepository.Get() // Find ClassTopic picked
-                                                                      .FirstOrDefaultAsync(ct => ct.ClassId.Equals(currentClass.Id)
+                                                                      .Include(ct => ct.Topic).FirstOrDefaultAsync(ct => ct.ClassId.Equals(currentClass.Id)
                                                                       && ct.ProjectId.Equals(currentStudiesIn.ProjectId));
+          
+            if (pickedTopic?.Topic != null) // Check topic is not null
+            {
+                if (pickedTopic.Topic.Status != RequestStatus.Approved) // Check if status is in request processing then cannot change topic
+                {
+                    return false;
+                }
+            }
+
+            ClassTopic? pickedTopicAvailable = await _unitOfWork.ClassTopicRepository.Get() // Is Picked Topic available
+                                                                               .FirstOrDefaultAsync(ct => ct.ClassId.Equals(currentClass.Id)
+                                                                               && ct.ProjectId == null && ct.TopicId.Equals(topicId)
+                                                                               && ct.Topic!.Status == RequestStatus.Approved); // Only project approved can pick
+
+            if (pickedTopicAvailable == null)
+                return false;
 
             // Set picked topic is available
             if (pickedTopic != null)
