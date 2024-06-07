@@ -1,4 +1,5 @@
-﻿using IPMS.DataAccess.Common.Models;
+﻿using IPMS.DataAccess.Common.Enums;
+using IPMS.DataAccess.Common.Models;
 
 namespace IPMS.DataAccess.Models
 {
