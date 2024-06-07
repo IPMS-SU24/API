@@ -42,7 +42,7 @@ namespace IPMS.Business.Services
                 ProjectId = project!.Id,
                 TopicInfo = new()
                 {
-                    TopicId = topic.Id,
+                    TopicId = topic?.Id,
                     TopicName = topic?.Name ?? string.Empty,
                     Description = topic?.Description ?? string.Empty,
                     EndDate = @class.ChangeTopicDeadline,

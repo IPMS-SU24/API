@@ -15,7 +15,7 @@ namespace IPMS.Business.Responses.ProjectDashboard
     }
     public class TopicInformation
     {
-        public Guid TopicId { get; set; }
+        public Guid? TopicId { get; set; }
         //[JsonIgnore]
         public AssessmentStatus AssessmentStatus { get; set; }
         public string Status
