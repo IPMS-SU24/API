@@ -43,6 +43,7 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Configuration.AddEnvironmentVariables(prefix: "IPMS_");
+builder.Configuration.AddEnvironmentVariables(prefix: "AWS");
 builder.Services.AddDI();
 builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["IPMS_ConnectionStrings_IPMS"], b => b.MigrationsAssembly("IPMS.DataAccess")));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
@@ -55,7 +56,7 @@ builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
     config.SignIn.RequireConfirmedPhoneNumber = false;
 }).AddEntityFrameworkStores<IPMSDbContext>()
             .AddDefaultTokenProviders();
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions(string.Empty));
 builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddSwaggerGen(options =>
