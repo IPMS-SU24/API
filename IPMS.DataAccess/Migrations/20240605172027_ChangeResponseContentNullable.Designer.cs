@@ -3,6 +3,7 @@ using System;
 using IPMS.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IPMS.DataAccess.Migrations
 {
     [DbContext(typeof(IPMSDbContext))]
-    partial class IPMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240605172027_ChangeResponseContentNullable")]
+    partial class ChangeResponseContentNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -938,7 +940,7 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.IPMSUser", b =>
                 {
-                    b.OwnsMany("IPMS.DataAccess.Models.IPMSUser.RefreshTokens#IPMS.DataAccess.Models.UserRefreshToken", "RefreshTokens", b1 =>
+                    b.OwnsMany("IPMS.DataAccess.Models.UserRefreshToken", "RefreshTokens", b1 =>
                         {
                             b1.Property<Guid>("IPMSUserId")
                                 .HasColumnType("uuid");
@@ -965,7 +967,7 @@ namespace IPMS.DataAccess.Migrations
 
                             b1.HasKey("IPMSUserId", "Id");
 
-                            b1.ToTable("UserRefreshToken", (string)null);
+                            b1.ToTable("UserRefreshToken");
 
                             b1.WithOwner()
                                 .HasForeignKey("IPMSUserId");

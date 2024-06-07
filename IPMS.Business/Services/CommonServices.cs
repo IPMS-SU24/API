@@ -43,7 +43,7 @@ namespace IPMS.Business.Services
         public async Task<Project?> GetProject(Guid currentUserId)
         {
 
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
             var studiesIn = (await GetStudiesIn(currentUserId)).ToList();
 
@@ -147,6 +147,19 @@ namespace IPMS.Business.Services
                 startDate = start,
                 endDate = deadline
             };
+        }
+
+        public AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime changeTopicDeadline, DateTime changeGroupDeadline)
+        {
+            var now = DateTime.Now;
+            //changeGroupDeadline be startDate
+            //changeTopicDeadline be endDate
+            if (changeGroupDeadline > now) return AssessmentStatus.NotYet;
+            //changeGroupDeadline <= now implicit
+            if (changeTopicDeadline > now) return AssessmentStatus.InProgress;
+            //changeTopicDeadline <= now implicit
+            if (topic != null) return AssessmentStatus.Done;
+            return AssessmentStatus.Expired;
         }
     }
 }

@@ -42,9 +42,11 @@ namespace IPMS.Business.Services
                 ProjectId = project!.Id,
                 TopicInfo = new()
                 {
+                    TopicId = topic?.Id,
                     TopicName = topic?.Name ?? string.Empty,
                     Description = topic?.Description ?? string.Empty,
-                    EndDate = @class.ChangeTopicDeadline
+                    EndDate = @class.ChangeTopicDeadline,
+                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic,@class.ChangeTopicDeadline,@class.ChangeGroupDeadline)
                 },
                 BorrowInfo = new()
                 {
@@ -57,13 +59,16 @@ namespace IPMS.Business.Services
             var submissions = projectSubmissions.GroupBy(x => (Guid)x.SubmissionModule!.AssessmentId!).ToDictionary(x => x.Key);
             foreach (var assessment in currentSemester.Syllabus!.Assessments)
             {
+                var assessmentDeadline = (await _commonServices.GetAssessmentTime(assessment.Id));
                 var assessmentInfo = new AssessmentInformation
                 {
                     Name = assessment.Name ?? string.Empty,
                     Description = assessment.Description ?? string.Empty,
                     Order = assessment.Order,
                     Percentage = assessment.Percentage,
-                    EndDate = (await _commonServices.GetAssessmentTime(assessment.Id)).endDate
+                    EndDate = assessmentDeadline.endDate,
+                    StartDate = assessmentDeadline.startDate,
+                    Id = assessment.Id,
                 };
 
                 var submissionsOfAssessment = new List<ProjectSubmission>();
