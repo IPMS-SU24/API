@@ -8,8 +8,9 @@ namespace IPMS.DataAccess.Common.Enums
 {
     public enum RequestStatus
     {
-        Waiting = 0,
-        Rejected = 1, 
-        Approved = 2,
+        Pending = 0,
+        Waiting = 1,
+        Rejected = 2, 
+        Approved = 3,
     }
 }
