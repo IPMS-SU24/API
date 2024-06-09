@@ -1,4 +1,5 @@
 ﻿using IPMS.API.Common.Enums;
+using IPMS.Business.Common.Enums;
 using Microsoft.AspNetCore.Authorization;
 
 namespace IPMS.API.Common.Attributes

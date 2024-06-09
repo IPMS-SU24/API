@@ -15,8 +15,7 @@ namespace IPMS.API.MappingProfiles.Topics
                 .AfterMap((src, dest) =>
                 {
                     dest.Status = RequestStatus.Waiting;
-                })
-                ;
+                });
         }
     }
 }

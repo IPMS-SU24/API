@@ -32,13 +32,13 @@ namespace IPMS.Business.Services
             };
             //Check leader in studying
             var studiesIn = await _commonService.GetStudiesIn(leaderId);
-            var @class = await _commonService.GetCurrentClass(studiesIn.Select(x=>x.ClassId));
+            var @class = await _commonService.GetCurrentClass(studiesIn.Select(x => x.ClassId));
             if (@class == null)
             {
                 result.Message = "Student is not studying";
                 return result;
             }
-            if(@class.ChangeTopicDeadline < DateTime.Now)
+            if (@class.ChangeTopicDeadline < DateTime.Now)
             {
                 result.Message = "Change Topic Deadline is expired";
                 return result;
@@ -57,7 +57,7 @@ namespace IPMS.Business.Services
                 return result;
             }
             //Check IoT Exist
-            var IoTComponents = await _unitOfWork.IoTComponentRepository.Get().Select(x=>x.Id).ToListAsync();
+            var IoTComponents = await _unitOfWork.IoTComponentRepository.Get().Select(x => x.Id).ToListAsync();
             if (IoTComponents != null && IoTComponents.Any())
             {
                 foreach (var component in request.IoTComponents)
@@ -66,12 +66,12 @@ namespace IPMS.Business.Services
                     {
                         return result;
                     }
-                    if(component.Quantity <= 0)
+                    if (component.Quantity <= 0)
                     {
                         result.Message = "IoT Component Quantity Must be Greater Than 0";
                         return result;
                     }
-                    if(request.IoTComponents.Count(x=>x.ComponentId == component.ComponentId) > 1)
+                    if (request.IoTComponents.Count(x => x.ComponentId == component.ComponentId) > 1)
                     {
                         result.Message = "Duplicate IoT Component";
                         return result;
@@ -98,9 +98,10 @@ namespace IPMS.Business.Services
         {
             //Create new Topic
             var newTopic = _mapper.Map<Topic>(request);
-            await _unitOfWork.TopicRepository.InsertAsync(newTopic);
             var studiesIn = await _commonService.GetStudiesIn(leaderId);
             var @class = await _commonService.GetCurrentClass(studiesIn.Select(x => x.ClassId));
+            newTopic.OwnerId = @class.LecturerId;
+            await _unitOfWork.TopicRepository.InsertAsync(newTopic);
             var project = await _commonService.GetProject(leaderId);
             //Add IoT Component to ComponentMaster
             var componentMasters = _mapper.Map<List<ComponentsMaster>>(request.IoTComponents, opts =>
@@ -109,23 +110,21 @@ namespace IPMS.Business.Services
                 opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Topic;
             });
             await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters);
-            //Update or Create Class Topic
-            var existingClassTopic = await _unitOfWork.ClassTopicRepository.Get().Where(x=>x.ProjectId == project.Id && x.ClassId == @class.Id).FirstOrDefaultAsync();
-            if(existingClassTopic != null)
+            //Release ClassTopic
+            var existingClassTopic = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id && x.ClassId == @class.Id).FirstOrDefaultAsync();
+            if (existingClassTopic != null)
             {
-                existingClassTopic.TopicId = newTopic.Id;
+                existingClassTopic.ProjectId = null;
                 _unitOfWork.ClassTopicRepository.Update(existingClassTopic);
             }
-            else
+            //Create Class Topic
+            var newClassTopic = new ClassTopic
             {
-                var newClassTopic = new ClassTopic
-                {
-                    TopicId = newTopic.Id,
-                    ProjectId = project.Id,
-                    ClassId = @class.Id
-                };
-                await _unitOfWork.ClassTopicRepository.InsertAsync(newClassTopic);
-            }
+                TopicId = newTopic.Id,
+                ProjectId = project.Id,
+                ClassId = @class.Id
+            };
+            await _unitOfWork.ClassTopicRepository.InsertAsync(newClassTopic);
             await _unitOfWork.SaveChangesAsync();
             var notificationMessageToLecturer = new NotificationMessage
             {

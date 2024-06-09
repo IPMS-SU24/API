@@ -5,6 +5,7 @@ using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.Topic;
 using IPMS.API.Responses;
 using Microsoft.AspNetCore.Mvc;
+using IPMS.Business.Common.Enums;
 
 namespace IPMS.API.Controllers
 {

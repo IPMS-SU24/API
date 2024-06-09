@@ -9,6 +9,10 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using IPMS.DataAccess.Common.Enums;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation.Results;
+using IPMS.Business.Models;
+using IPMS.Business.Requests.Group;
+using IPMS.Business.Common.Enums;
 
 namespace IPMS.Business.Services
 {
@@ -17,11 +21,64 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly UserManager<IPMSUser> _userManager;
-        public StudentGroupService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager)
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+        public StudentGroupService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _userManager = userManager;
+            _roleManager = roleManager;
+        }
+
+        public async Task<ValidationResultModel> CheckStudentValidForCreateGroup(Guid studentId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Student is not valid"
+            };
+            //Check student in any project
+            var project = await _commonServices.GetProject(studentId);
+            if(project != null)
+            {
+                result.Message = "Student is in a project";
+                return result;
+            }
+            //Check student is studying
+            var studiesIn = await _commonServices.GetStudiesIn(studentId);
+            var currentClass = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId));
+            if(currentClass == null)
+            {
+                result.Message = "Student is not studying";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public async Task<CreateGroupResponse> CreateGroup(CreateGroupRequest request, Guid studentId)
+        {
+            //Get Student
+            var studiesIn = await _commonServices.GetStudiesIn(studentId);
+            var currentClass = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId));
+            var student = studiesIn.Where(x=>x.ClassId == currentClass.Id).FirstOrDefault();
+            var project = new Project
+            {
+                GroupName = request.GroupName,
+                OwnerId = currentClass.LecturerId
+            };
+            await _unitOfWork.ProjectRepository.InsertAsync(project);
+            student.ProjectId = project.Id;
+            //Update Student
+            _unitOfWork.StudentRepository.Update(student);
+            var studentAccount = await _userManager.FindByIdAsync(studentId.ToString());
+            if (!await _roleManager.RoleExistsAsync(UserRole.Leader.ToString())) await _roleManager.CreateAsync(new IdentityRole<Guid>(UserRole.Leader.ToString()));
+            await _userManager.AddToRoleAsync(studentAccount, UserRole.Leader.ToString());
+            await _unitOfWork.SaveChangesAsync();
+            return new()
+            {
+                ProjectId = student.ProjectId.Value
+            };
         }
 
         public async Task<(Guid GroupId, Guid? MemberForSwapId)?> GetRequestGroupModel(Guid studentId)
