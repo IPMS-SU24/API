@@ -57,19 +57,9 @@ namespace IPMS.Business.Services
             };
             var projectSubmissions = await _commonServices.GetProjectSubmissions(project.Id);
             var submissions = projectSubmissions.GroupBy(x => (Guid)x.SubmissionModule!.AssessmentId!).ToDictionary(x => x.Key);
+            var mapAssessmentInformationTasks = new List<Task<AssessmentInformation>>();
             foreach (var assessment in currentSemester.Syllabus!.Assessments)
             {
-                var assessmentDeadline = (await _commonServices.GetAssessmentTime(assessment.Id));
-                var assessmentInfo = new AssessmentInformation
-                {
-                    Name = assessment.Name ?? string.Empty,
-                    Description = assessment.Description ?? string.Empty,
-                    Order = assessment.Order,
-                    Percentage = assessment.Percentage,
-                    EndDate = assessmentDeadline.endDate,
-                    StartDate = assessmentDeadline.startDate,
-                    Id = assessment.Id,
-                };
 
                 var submissionsOfAssessment = new List<ProjectSubmission>();
                 var isHaveSubmission = submissions.TryGetValue(assessment.Id, out var assessmentSubmissions);
@@ -77,10 +67,25 @@ namespace IPMS.Business.Services
                 {
                     submissionsOfAssessment = assessmentSubmissions!.ToList();
                 }
-                assessmentInfo.AssessmentStatus = await _commonServices.GetAssessmentStatus(assessment.Id, submissionsOfAssessment);
-                response.Assessments.Add(assessmentInfo);
+                mapAssessmentInformationTasks.Add(MapAssessmentInformation(assessment, submissionsOfAssessment));
             }
+            response.Assessments.AddRange(await Task.WhenAll(mapAssessmentInformationTasks));
             return response;
+        }
+        private async Task<AssessmentInformation> MapAssessmentInformation(Assessment assessment, List<ProjectSubmission> submissionsOfAssessment)
+        {
+            var assessmentDeadline = (await _commonServices.GetAssessmentTime(assessment.Id));
+            return new AssessmentInformation
+            {
+                Name = assessment.Name ?? string.Empty,
+                Description = assessment.Description ?? string.Empty,
+                Order = assessment.Order,
+                Percentage = assessment.Percentage,
+                EndDate = assessmentDeadline.endDate,
+                StartDate = assessmentDeadline.startDate,
+                Id = assessment.Id,
+                AssessmentStatus = await _commonServices.GetAssessmentStatus(assessment.Id, submissionsOfAssessment)
+            };
         }
     }
 }
