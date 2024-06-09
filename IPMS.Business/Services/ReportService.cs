@@ -22,7 +22,7 @@ namespace IPMS.Business.Services
 
         public async Task<ValidationResultModel> CheckValidReport(SendReportRequest request, Guid reporterId)
         {
-            var reportTypeMatch = await _unitOfWork.ReportTypeRepository.GetByID(request.ReportTypeId);
+            var reportTypeMatch = await _unitOfWork.ReportTypeRepository.GetByIDAsync(request.ReportTypeId);
             if (reportTypeMatch == null) return new()
             {
                 Result = false,
@@ -47,7 +47,7 @@ namespace IPMS.Business.Services
             {
                 opts.Items["ReporterId"] = reporterId;
             });
-            await _unitOfWork.ReportRepository.Insert(reportForSave);
+            await _unitOfWork.ReportRepository.InsertAsync(reportForSave);
             await _unitOfWork.SaveChangesAsync();
         }
     }

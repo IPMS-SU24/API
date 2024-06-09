@@ -1,9 +1,12 @@
-﻿using IPMS.DataAccess.Models;
+﻿using IPMS.DataAccess.Common.Models;
+using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Configuration;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace IPMS.DataAccess
@@ -385,7 +388,22 @@ namespace IPMS.DataAccess
                     .HasForeignKey("FavoriteId")
                     .OnDelete(DeleteBehavior.Cascade);
             });
+            // define your filter expression tree
+            Expression<Func<BaseModel, bool>> filterExpr = bm => !bm.IsDeleted;
+            foreach (var mutableEntityType in modelBuilder.Model.GetEntityTypes().Where(x=>!x.IsOwned()))
+            {
+                // check if current entity type is child of BaseModel
+                if (mutableEntityType.ClrType.IsAssignableTo(typeof(BaseModel)))
+                {
+                    // modify expression to handle correct child type
+                    var parameter = Expression.Parameter(mutableEntityType.ClrType);
+                    var body = ReplacingExpressionVisitor.Replace(filterExpr.Parameters.First(), parameter, filterExpr.Body);
+                    var lambdaExpression = Expression.Lambda(body, parameter);
 
+                    // set filter
+                    mutableEntityType.SetQueryFilter(lambdaExpression);
+                }
+            }
         }
     }
 }
