@@ -8,6 +8,7 @@ using AutoMapper;
 using IPMS.Business.Requests.IoTComponent;
 using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Common.Exceptions;
+using IPMS.DataAccess.Common.Enums;
 
 namespace IPMS.Business.Services
 {
@@ -23,7 +24,7 @@ namespace IPMS.Business.Services
             _mapper = mapper;
         }
 
-        public async Task<bool> CheckIoTValid(BorrowIoTModelRequest request, Guid leaderId)
+        public async Task<bool> CheckIoTValid(IoTModelRequest request, Guid leaderId)
         {
             if (request.Quantity <= 0) return false;
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
@@ -68,12 +69,13 @@ namespace IPMS.Business.Services
             return result;
         }
 
-        public async Task RegisterIoTForProject(Guid leaderId, IEnumerable<BorrowIoTModelRequest> borrowIoTModels)
+        public async Task RegisterIoTForProject(Guid leaderId, IEnumerable<IoTModelRequest> borrowIoTModels)
         {
             var projectId = (await _commonServices.GetProject(leaderId)).Id;
             var componentMasters = _mapper.Map<IEnumerable<ComponentsMaster>>(borrowIoTModels, opts =>
             {
-                opts.Items["MasterId"] = projectId;
+                opts.Items[nameof(ComponentsMaster.MasterId)] = projectId;
+                opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Project;
             });
             await _unitOfWork.ComponentsMasterRepository.InsertRange(componentMasters);
             await _unitOfWork.SaveChangesAsync();

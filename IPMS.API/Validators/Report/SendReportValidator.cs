@@ -13,9 +13,9 @@ namespace IPMS.API.Validators.Report
             RuleFor(x => x).CustomAsync( async (x, validationContext, cancellationToken) =>
             {
                 var validationResult =  await reportService.CheckValidReport(x, reporterId);
-                if(!validationResult.result)
+                if(!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.message);
+                    validationContext.AddFailure(validationResult.Message);
                 }
             });
         }

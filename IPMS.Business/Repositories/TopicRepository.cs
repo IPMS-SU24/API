@@ -2,7 +2,7 @@
 using IPMS.Business.Repository;
 using IPMS.DataAccess;
 using IPMS.DataAccess.Models;
-using IPMS.DataAccess;
+using IPMS.DataAccess.Common.Enums;
 
 namespace IPMS.Business.Repositories
 {
@@ -10,6 +10,11 @@ namespace IPMS.Business.Repositories
     {
         public TopicRepository(IPMSDbContext context) : base(context)
         {
+        }
+
+        public IQueryable<Topic> GetApprovedTopics()
+        {
+            return Get().Where(x=>x.Status == RequestStatus.Approved);
         }
     }
 }

@@ -6,7 +6,7 @@ using IPMS.Business.Requests.IoTComponent;
 
 namespace IPMS.API.Validators.IoT
 {
-    public class BorrowIoTListRequestValidator : AbstractValidator<List<BorrowIoTModelRequest>>
+    public class BorrowIoTListRequestValidator : AbstractValidator<List<IoTModelRequest>>
     {
         public BorrowIoTListRequestValidator(IBorrowIoTService borrowIoTService, IHttpContextAccessor context)
         {
@@ -14,7 +14,7 @@ namespace IPMS.API.Validators.IoT
             RuleForEach(x => x).SetValidator(modelValidator);
         }
     }
-    public class BorrowIoTRequestValidator : AbstractValidator<BorrowIoTModelRequest>
+    public class BorrowIoTRequestValidator : AbstractValidator<IoTModelRequest>
     {
         private readonly IBorrowIoTService _borrowIoTService;
         public BorrowIoTRequestValidator(IBorrowIoTService borrowIoTService, IHttpContextAccessor context)

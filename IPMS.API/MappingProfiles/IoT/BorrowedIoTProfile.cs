@@ -2,7 +2,7 @@
 using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.DataAccess.Models;
 
-namespace IPMS.API.MappingProfiles.BorrowIoT
+namespace IPMS.API.MappingProfiles.IoT
 {
     public class BorrowedIoTProfile : Profile
     {

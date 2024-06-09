@@ -21,7 +21,7 @@ namespace IPMS.API.Controllers
         }
         [EnumAuthorize(UserRole.Leader)]
         [HttpPost("borrow")]
-        public async Task<IActionResult> RegisterIoT([FromBody] List<BorrowIoTModelRequest> requests)
+        public async Task<IActionResult> RegisterIoT([FromBody] List<IoTModelRequest> requests)
         {
             var leaderId = HttpContext.User.Claims.GetUserId();
             await _borrowIoTService.RegisterIoTForProject(leaderId,requests);

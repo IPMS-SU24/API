@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Requests.Report;
+﻿using IPMS.Business.Models;
+using IPMS.Business.Requests.Report;
 using IPMS.Business.Responses.Report;
 
 namespace IPMS.Business.Interfaces.Services
@@ -7,6 +8,6 @@ namespace IPMS.Business.Interfaces.Services
     {
         Task<IEnumerable<ReportTypeResponse>> GetReportType();
         Task SendReport(SendReportRequest request, Guid reporterId);
-        Task<(bool result, string? message)> CheckValidReport(SendReportRequest request, Guid reporterId);
+        Task<ValidationResultModel> CheckValidReport(SendReportRequest request, Guid reporterId);
     }
 }

@@ -30,6 +30,11 @@ namespace IPMS.Business.Services
                                                                       .FirstOrDefaultAsync(c => studiesIn.Contains(c.Id)
                                                                       && c.SemesterId.Equals(currentSemesterId));
         }
+        public async Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn)
+        {
+            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            return await GetCurrentClass(studiesIn, currentSemesterId);
+        }
         public async Task<(DateTime StartDate, DateTime EndDate)> GetAssessmentTime(Guid assessmentId, IUnitOfWork unitOfWork)
         {
             var assessmentModules = await unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == assessmentId).ToListAsync();
