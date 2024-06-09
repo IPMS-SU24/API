@@ -7,7 +7,7 @@ namespace IPMS.API.Controllers
     [ApiExceptionFilter]
     [ValidateModelState]
     [ApiController]
-    [Route("api/v1/[controller]s/")]
+    [Route("api/v1/[controller]/")]
     public abstract class ApiControllerBase : ControllerBase
     {
         protected IActionResult GetActionResponse<TData>(IPMSResponse<TData> response)
