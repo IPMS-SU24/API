@@ -3,6 +3,7 @@ using System;
 using IPMS.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IPMS.DataAccess.Migrations
 {
     [DbContext(typeof(IPMSDbContext))]
-    partial class IPMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240609051713_AddMaxMemberInGroupClass")]
+    partial class AddMaxMemberInGroupClass
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -538,7 +540,6 @@ namespace IPMS.DataAccess.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("ShortName")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -572,7 +573,7 @@ namespace IPMS.DataAccess.Migrations
                         .HasPrecision(4, 2)
                         .HasColumnType("numeric(4,2)");
 
-                    b.Property<Guid>("InformationId")
+                    b.Property<Guid?>("InformationId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsDeleted")
@@ -1070,8 +1071,7 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Information")
                         .WithMany("Students")
                         .HasForeignKey("InformationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("IPMS.DataAccess.Models.Project", "Project")
                         .WithMany("Students")

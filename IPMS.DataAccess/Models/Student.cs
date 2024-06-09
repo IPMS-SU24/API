@@ -7,9 +7,9 @@ namespace IPMS.DataAccess.Models
         public decimal? ContributePercentage { get; set; }
         public decimal? FinalGrade { get; set; }
         public Guid? ProjectId { get; set; }
-        public Guid? InformationId { get; set; }
+        public Guid InformationId { get; set; }
         public Guid ClassId { get; set; }
-        public virtual IPMSUser? Information { get; set; }
+        public virtual IPMSUser Information { get; set; } = null!;
         public virtual IPMSClass Class { get; set; } = null!;
         public virtual Project? Project { get; set; }
     }

@@ -86,7 +86,6 @@ namespace IPMS.DataAccess
 
                 entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
 
-
                 entity.HasOne(e => e.Information)
                     .WithMany(p => p.Students)
                     .HasForeignKey("InformationId")

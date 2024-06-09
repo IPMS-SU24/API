@@ -23,6 +23,7 @@ namespace IPMS.Business
 
         public IReportTypeRepository ReportTypeRepository { get; }
         public IReportRepository ReportRepository { get; }
+        public IMemberHistoryRepository MemberHistoryRepository { get; }
 
         //TODO in Sprint 2
         //Add repository
@@ -33,7 +34,8 @@ namespace IPMS.Business
                     IComponentsMasterRepository componentsMasterRepository, IIoTComponentRepository ioTComponentRepository,
                     IProjectRepository projectRepository, IProjectSubmissionRepository projectSubmissionRepository,
                     ISubmissionModuleRepository submissionModuleRepository, ISyllabusRepository syllabusRepository,
-                    IAssessmentRepository assessmentRepository, IReportTypeRepository reportTypeRepository, IReportRepository reportRepository)
+                    IAssessmentRepository assessmentRepository, IReportTypeRepository reportTypeRepository, IReportRepository reportRepository,
+                    IMemberHistoryRepository memberHistoryRepository)
         {
             _context = context;
             ProjectRepository = projectRepository;
@@ -55,6 +57,7 @@ namespace IPMS.Business
             IoTComponentRepository = ioTComponentRepository;
             ReportTypeRepository = reportTypeRepository;
             ReportRepository = reportRepository;
+            MemberHistoryRepository = memberHistoryRepository;
         }
         public async Task SaveChangesAsync()
         {

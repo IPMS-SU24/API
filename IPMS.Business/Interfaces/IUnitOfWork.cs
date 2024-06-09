@@ -16,6 +16,7 @@ namespace IPMS.Business.Interfaces
         ITopicRepository TopicRepository { get; }
         IReportTypeRepository ReportTypeRepository { get; }
         IReportRepository ReportRepository { get; }
+        IMemberHistoryRepository MemberHistoryRepository { get; }
         Task SaveChangesAsync();
         void SaveChanges();
         IComponentsMasterRepository ComponentsMasterRepository { get; }
