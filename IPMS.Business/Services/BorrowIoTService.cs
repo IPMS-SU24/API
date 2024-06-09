@@ -36,7 +36,7 @@ namespace IPMS.Business.Services
             var borrowAssessmentStatus = await _commonServices.GetBorrowIoTStatus(project.Id, @class);
             if (borrowAssessmentStatus != AssessmentStatus.InProgress) return false;
             //Check Exist
-            var iot = await _unitOfWork.IoTComponentRepository.GetByID(request.ComponentId);
+            var iot = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.ComponentId);
             if (iot == null) return false;
             //Check iot in iot list of Topic
             var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x=>x.ProjectId == project.Id).Select(x=>x.TopicId).FirstOrDefaultAsync();
@@ -74,7 +74,7 @@ namespace IPMS.Business.Services
                 opts.Items[nameof(ComponentsMaster.MasterId)] = projectId;
                 opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Project;
             });
-            await _unitOfWork.ComponentsMasterRepository.InsertRange(componentMasters);
+            await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters);
             await _unitOfWork.SaveChangesAsync();
         }
         private async Task<BorrowIoTComponentInformation> MapBorrowIoTComponentInformation(ComponentsMaster component, IPMSClass @class)

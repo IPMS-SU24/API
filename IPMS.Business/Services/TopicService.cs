@@ -98,7 +98,7 @@ namespace IPMS.Business.Services
         {
             //Create new Topic
             var newTopic = _mapper.Map<Topic>(request);
-            await _unitOfWork.TopicRepository.Insert(newTopic);
+            await _unitOfWork.TopicRepository.InsertAsync(newTopic);
             var studiesIn = await _commonService.GetStudiesIn(leaderId);
             var @class = await _commonService.GetCurrentClass(studiesIn.Select(x => x.ClassId));
             var project = await _commonService.GetProject(leaderId);
@@ -108,7 +108,7 @@ namespace IPMS.Business.Services
                 opts.Items[nameof(ComponentsMaster.MasterId)] = newTopic.Id;
                 opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Topic;
             });
-            await _unitOfWork.ComponentsMasterRepository.InsertRange(componentMasters);
+            await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters);
             //Update or Create Class Topic
             var existingClassTopic = await _unitOfWork.ClassTopicRepository.Get().Where(x=>x.ProjectId == project.Id && x.ClassId == @class.Id).FirstOrDefaultAsync();
             if(existingClassTopic != null)
@@ -124,7 +124,7 @@ namespace IPMS.Business.Services
                     ProjectId = project.Id,
                     ClassId = @class.Id
                 };
-                await _unitOfWork.ClassTopicRepository.Insert(newClassTopic);
+                await _unitOfWork.ClassTopicRepository.InsertAsync(newClassTopic);
             }
             await _unitOfWork.SaveChangesAsync();
             var notificationMessageToLecturer = new NotificationMessage

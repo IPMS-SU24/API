@@ -117,7 +117,7 @@ namespace IPMS.Business.Services
                         SubmitterId = currentUserId
                     };
 
-                    await _unitOfWork.ProjectSubmissionRepository.Insert(submission); // Insert
+                    await _unitOfWork.ProjectSubmissionRepository.InsertAsync(submission); // Insert
                     _unitOfWork.SaveChanges(); // Save changes
                     return true;
 

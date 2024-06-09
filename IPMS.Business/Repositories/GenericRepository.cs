@@ -19,21 +19,17 @@ namespace IPMS.Business.Repository
 
         public virtual IQueryable<TEntity> Get()
         {
-            return dbSet.GetQueryActive().AsNoTracking();
-        }
-        public virtual IQueryable<TEntity> GetContainsDeleted()
-        {
             return dbSet.AsNoTracking();
         }
 
-        public virtual async Task<TEntity?> GetByID(object id)
+        public virtual async Task<TEntity?> GetByIDAsync(object id)
         {
             var result =  await dbSet.FindAsync(id);
             if (result != null && result.IsDeleted) return null;
             return await dbSet.FindAsync(id);
         }
 
-        public virtual async Task Insert(TEntity entity)
+        public virtual async Task InsertAsync(TEntity entity)
         {
             await dbSet.AddAsync(entity);
         }
@@ -59,7 +55,7 @@ namespace IPMS.Business.Repository
             _context.Entry(entityToUpdate).State = EntityState.Modified;
         }
 
-        public async Task InsertRange(IEnumerable<TEntity> entities)
+        public async Task InsertRangeAsync(IEnumerable<TEntity> entities)
         {
             await dbSet.AddRangeAsync(entities);
         }
