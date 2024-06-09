@@ -2,7 +2,7 @@
 
 namespace IPMS.Business.Requests.IoTComponent
 {
-    public class BorrowIoTModelRequest
+    public class IoTModelRequest
     {
         [JsonPropertyName("Id")]
         public Guid ComponentId { get; set; }
