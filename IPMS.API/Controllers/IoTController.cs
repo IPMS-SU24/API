@@ -10,6 +10,7 @@ using IPMS.Business.Responses.ProjectDashboard;
 
 namespace IPMS.API.Controllers
 {
+    [Route("api/v1/iot")]
     public class IoTController : ApiControllerBase
     {
         private readonly IBorrowIoTService _borrowIoTService;

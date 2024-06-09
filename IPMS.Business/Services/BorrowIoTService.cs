@@ -9,6 +9,7 @@ using IPMS.Business.Requests.IoTComponent;
 using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Common.Exceptions;
 using IPMS.DataAccess.Common.Enums;
+using System.Security.Claims;
 
 namespace IPMS.Business.Services
 {
@@ -56,16 +57,12 @@ namespace IPMS.Business.Services
             var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId), currentSemester.Id);
             var componentTopics = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Where(x => x.MasterId == request.TopicId).Include(x=>x.Component).ToListAsync();
             if (!componentTopics.Any()) throw new DataNotFoundException("Not Found Component for Topic");
+            var mapComponentTasks = new List<Task<BorrowIoTComponentInformation>>();
             foreach (var component in componentTopics)
             {
-                var info = new BorrowIoTComponentInformation
-                {
-                    Id = component.ComponentId!.Value,
-                    Name = component.Component.Name,
-                    Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, component.ComponentId!.Value)
-                };
-                result.Add(info);
+                mapComponentTasks.Add(MapBorrowIoTComponentInformation(component, @class));
             }
+            result.AddRange(await Task.WhenAll(mapComponentTasks));
             return result;
         }
 
@@ -79,6 +76,15 @@ namespace IPMS.Business.Services
             });
             await _unitOfWork.ComponentsMasterRepository.InsertRange(componentMasters);
             await _unitOfWork.SaveChangesAsync();
+        }
+        private async Task<BorrowIoTComponentInformation> MapBorrowIoTComponentInformation(ComponentsMaster component, IPMSClass @class)
+        {
+            return new BorrowIoTComponentInformation
+            {
+                Id = component.ComponentId!.Value,
+                Name = component.Component.Name,
+                Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, component.ComponentId!.Value)
+            };
         }
     }
 }
