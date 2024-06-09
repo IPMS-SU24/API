@@ -13,9 +13,11 @@ namespace IPMS.API.Controllers
     public class IoTController : ApiControllerBase
     {
         private readonly IBorrowIoTService _borrowIoTService;
-        public IoTController(IBorrowIoTService borrowIoTService)
+        private readonly IIoTDataService _IoTDataService;
+        public IoTController(IBorrowIoTService borrowIoTService, IIoTDataService ioTDataService)
         {
             _borrowIoTService = borrowIoTService;
+            _IoTDataService = ioTDataService;
         }
         [EnumAuthorize(UserRole.Leader)]
         [HttpPost("borrow")]
@@ -39,6 +41,12 @@ namespace IPMS.API.Controllers
             {
                 response.Status = ResponseStatus.BadRequest;
             }
+            return GetActionResponse(response);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] GetIoTComponentRequest request)
+        {
+            var response = await _IoTDataService.GetAll(request).GetPaginatedResponse();
             return GetActionResponse(response);
         }
     }
