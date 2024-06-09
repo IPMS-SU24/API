@@ -1,8 +1,12 @@
-﻿using IPMS.API.Common.Attributes;
+﻿using FluentValidation;
+using IPMS.API.Common.Attributes;
 using IPMS.API.Common.Enums;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
+using IPMS.API.Validators.Group;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Requests.Group;
 using IPMS.Business.Responses.Group;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +33,15 @@ namespace IPMS.API.Controllers
                 Data = await _studentGroupService.GetStudentGroupInformation(studentId)
             };
             return GetActionResponse(response);
+        }
+        [EnumAuthorize(UserRole.Student)]
+        [HttpPost]
+        public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request)
+
+        {
+            var studentId = User.Claims.GetUserId();
+            await _studentGroupService.CreateGroup(request,studentId);
+            return GetActionResponse(new IPMSResponse<object>());
         }
     }
 }
