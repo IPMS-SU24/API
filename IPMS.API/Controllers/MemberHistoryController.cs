@@ -10,5 +10,12 @@ namespace IPMS.API.Controllers
         {
             _memberHistoryService = MemberHistoryService;
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLoggedInUserHistory()
+        {
+
+            return Ok();
+        }
     }
 }

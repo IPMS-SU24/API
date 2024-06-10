@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IPMS.Business.Responses.MemberHistory;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,6 @@ namespace IPMS.Business.Interfaces.Services
 {
     public interface IMemberHistoryService
     {
-
+        Task<IQueryable<LoggedInUserHistoryResponse>> GetLoggedInUserHistories(Guid currentUserId);
     }
 }

@@ -4,11 +4,9 @@ using IPMS.Business.Requests.ClassTopic;
 using IPMS.DataAccess.Models;
 using AutoFilterer.Extensions;
 using Microsoft.EntityFrameworkCore;
-
 using IPMS.Business.Responses.Topic;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.Business.Common.Utils;
-using System.Linq;
 
 namespace IPMS.Business.Services
 {
