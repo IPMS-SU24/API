@@ -33,7 +33,7 @@ namespace IPMS.Business.Services
             // --> Get SubmissionModule
             //Can get ProjectSubmission base on projectId + submissionModule Id
             
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
             var studiesIn = (await _commonServices.GetStudiesIn(currentUserId)).ToList();
 
