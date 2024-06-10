@@ -43,5 +43,21 @@ namespace IPMS.API.Controllers
             await _studentGroupService.CreateGroup(request,studentId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+        [EnumAuthorize(UserRole.Student)]
+        [HttpPost("swap")]
+        public async Task<IActionResult> RequestToSwapGroup([FromBody] SwapGroupRequest request)
+        {
+            var studentId = User.Claims.GetUserId();
+            await _studentGroupService.RequestToSwapGroup(request,studentId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+        [EnumAuthorize(UserRole.Student)]
+        [HttpPost("join")]
+        public async Task<IActionResult> RequestToJoinGroup([FromBody] JoinGroupRequest request)
+        {
+            var studentId = User.Claims.GetUserId();
+            await _studentGroupService.RequestToJoinGroup(request,studentId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }

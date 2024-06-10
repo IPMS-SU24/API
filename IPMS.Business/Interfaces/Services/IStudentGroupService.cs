@@ -10,5 +10,9 @@ namespace IPMS.Business.Interfaces.Services
         Task<CreateGroupResponse> CreateGroup(CreateGroupRequest request, Guid studentId);
         Task<(Guid GroupId, Guid? MemberForSwapId)?> GetRequestGroupModel(Guid studentId);
         Task<ValidationResultModel> CheckStudentValidForCreateGroup(Guid studentId);
+        Task<ValidationResultModel> CheckValidRequestSwap(SwapGroupRequest request, Guid studentId);
+        Task<ValidationResultModel> CheckValidRequestJoin(JoinGroupRequest request, Guid studentId);
+        Task RequestToSwapGroup(SwapGroupRequest request, Guid studentId);
+        Task RequestToJoinGroup(JoinGroupRequest request, Guid studentId);
     }
 }

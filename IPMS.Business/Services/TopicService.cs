@@ -132,7 +132,7 @@ namespace IPMS.Business.Services
                 Title = "New Topic Registration",
                 Message = $"A New Topic has been suggested to you from {project.GroupName}"
             };
-            _messageService.SendMessage(notificationMessageToLecturer);
+            await _messageService.SendMessage(notificationMessageToLecturer);
         }
     }
 }

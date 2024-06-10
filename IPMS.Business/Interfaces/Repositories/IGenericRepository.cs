@@ -1,4 +1,6 @@
-﻿namespace IPMS.Business.Interfaces.Repositories
+﻿using IPMS.DataAccess.Common.Models;
+
+namespace IPMS.Business.Interfaces.Repositories
 {
     public interface IGenericRepository<TEntity>
     {
@@ -9,5 +11,6 @@
         void Delete(TEntity deleteEntity);
         void HardDelete(TEntity deleteEntity);
         void Update(TEntity updateEntity);
+        Task LoadExplicitProperty(TEntity entity, string propName);
     }
 }
