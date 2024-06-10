@@ -4,7 +4,6 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Responses.ProjectDashboard;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using IPMS.API.Common.Enums;
 

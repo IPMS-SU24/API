@@ -10,5 +10,12 @@ namespace IPMS.API.Controllers
         {
             _memberHistoryService = MemberHistoryService;
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLoggedInUserHistory()
+        {
+            var response = await _memberHistoryService.GetLoggedInUserHistories(new Guid("9c7d4c9e-6a23-4c13-af6d-e85b83705b2e"));
+            return Ok();
+        }
     }
 }
