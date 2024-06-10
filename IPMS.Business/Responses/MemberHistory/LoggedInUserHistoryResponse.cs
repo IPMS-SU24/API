@@ -11,7 +11,7 @@ namespace IPMS.Business.Responses.MemberHistory
     {
         public Guid Id { get; set; }
         public Guid LeaderId { get; set; }
-        public string Type { get; set; }
+        public string RequestType { get; set; }
         public GeneralObjectInformation Requester { get; set; }
         public GeneralObjectInformation? MemberSwap { get; set; }
         public GeneralObjectInformation? ProjectFrom { get; set; }

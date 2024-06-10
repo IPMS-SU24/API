@@ -15,5 +15,6 @@ namespace IPMS.DataAccess.Models
         public RequestStatus MemberSwapStatus{ get; set; } = RequestStatus.Waiting;
         public string ProjectFromComment { get; set; } = "";
         public string ProjectToComment { get; set; } = "";
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
 }
