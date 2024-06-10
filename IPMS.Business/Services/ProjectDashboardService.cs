@@ -73,24 +73,28 @@ namespace IPMS.Business.Services
                                                                     .CountAsync();
 
             var submissions = projectSubmissions.GroupBy(x => x.SubmissionModule.AssessmentId).ToDictionary(x => x.Key);
-
+            var mapAssessmentDetailTasks = new List<Task<AssessmentDetail>>();
             foreach (var assessment in currentSemesterInfo.CurrentSemester!.Syllabus!.Assessments)
             {
-                var detail = new AssessmentDetail
-                {
-                    AssessmentId = assessment.Id,
-                    AssessmentName = assessment.Name
-                };
                 var submissionsOfAssessment = new List<ProjectSubmission>();
                 var isHaveSubmission = submissions.TryGetValue(assessment.Id, out var assessmentSubmissions);
                 if (isHaveSubmission)
                 {
                     submissionsOfAssessment = assessmentSubmissions!.ToList();
                 }
-                detail.AssessmentStatus = await _commonService.GetAssessmentStatus(assessment.Id, submissionsOfAssessment);
-                response.Assessments.Add(detail);
+                mapAssessmentDetailTasks.Add(MapAssessmentDetail(submissionsOfAssessment, assessment));
             }
+            response.Assessments.AddRange(await Task.WhenAll(mapAssessmentDetailTasks));
             return response;
+        }
+        private async Task<AssessmentDetail> MapAssessmentDetail(List<ProjectSubmission> submissionsOfAssessment, Assessment assessment)
+        {
+            return new AssessmentDetail
+            {
+                AssessmentId = assessment.Id,
+                AssessmentName = assessment.Name,
+                AssessmentStatus = await _commonService.GetAssessmentStatus(assessment.Id, submissionsOfAssessment)
+            };
         }
     }
 }

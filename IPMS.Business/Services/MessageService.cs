@@ -10,8 +10,8 @@ namespace IPMS.Business.Services
 {
     public class MessageService : IMessageService
     {
-        private static readonly string SQS_EMAIL = "MailSQS";
-        private static readonly string SQS_NOTIFICATION = "NotificationSQS";
+        private static readonly string SQS_EMAIL = "IPMS_MailSQS";
+        private static readonly string SQS_NOTIFICATION = "IPMS_NotificationSQS";
         private readonly IAmazonSQS _sqsClient;
         private readonly IConfiguration _configuration;
         private readonly ILogger<MessageService> _logger;
@@ -30,7 +30,7 @@ namespace IPMS.Business.Services
                 QueueUrl = queueUrl,
                 MessageBody = JsonSerializer.Serialize(message)
             };
-            _sqsClient.SendMessageAsync(sendMessageRequest);
+            await _sqsClient.SendMessageAsync(sendMessageRequest);
         }
         private async Task<string> GetQueueUrl<TMessage>(TMessage message)
         {

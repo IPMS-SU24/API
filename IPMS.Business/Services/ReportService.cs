@@ -2,6 +2,7 @@
 using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
 using IPMS.Business.Requests.Report;
 using IPMS.Business.Responses.Report;
 using IPMS.DataAccess.Models;
@@ -19,17 +20,17 @@ namespace IPMS.Business.Services
             _mapper = mapper;
         }
 
-        public async Task<(bool result, string? message)> CheckValidReport(SendReportRequest request, Guid reporterId)
+        public async Task<ValidationResultModel> CheckValidReport(SendReportRequest request, Guid reporterId)
         {
-            var reportTypeMatch = await _unitOfWork.ReportTypeRepository.GetByID(request.ReportTypeId);
+            var reportTypeMatch = await _unitOfWork.ReportTypeRepository.GetByIDAsync(request.ReportTypeId);
             if (reportTypeMatch == null) return new()
             {
-                result = false,
-                message = "Cannot found the Report Type"
+                Result = false,
+                Message = "Cannot found the Report Type"
             };
             return new()
             {
-                result = true
+                Result = true
             };
         }
 
@@ -46,7 +47,7 @@ namespace IPMS.Business.Services
             {
                 opts.Items["ReporterId"] = reporterId;
             });
-            await _unitOfWork.ReportRepository.Insert(reportForSave);
+            await _unitOfWork.ReportRepository.InsertAsync(reportForSave);
             await _unitOfWork.SaveChangesAsync();
         }
     }

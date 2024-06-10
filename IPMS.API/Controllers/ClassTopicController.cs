@@ -2,9 +2,9 @@
 using IPMS.API.Common.Enums;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ClassTopic;
-using IPMS.Business.Responses.Topic;
 using Microsoft.AspNetCore.Mvc;
 using static IPMS.API.Common.Extensions.UserExtensions;
 

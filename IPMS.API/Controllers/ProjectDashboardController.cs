@@ -1,14 +1,9 @@
 ﻿using IPMS.API.Common.Attributes;
-using IPMS.API.Common.Enums;
-using IPMS.API.Filters;
 using IPMS.API.Responses;
-using IPMS.Business.Common.Singleton;
-using IPMS.Business.Interfaces;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Responses.ProjectDashboard;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using static IPMS.API.Common.Extensions.UserExtensions;
 

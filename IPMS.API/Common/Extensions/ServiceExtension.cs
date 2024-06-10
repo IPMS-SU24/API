@@ -37,6 +37,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<ITopicRepository, TopicRepository>();
             services.AddScoped<IReportTypeRepository, ReportTypeRepository>();
             services.AddScoped<IReportRepository, ReportRepository>();
+            services.AddScoped<IMemberHistoryRepository, MemberHistoryRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Depenency Injection
@@ -55,6 +56,8 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IBorrowIoTService, BorrowIoTService>();
             services.AddScoped<IProjectSubmissionService, ProjectSubmissionService>();
             services.AddScoped<IReportService, ReportService>();
+            services.AddScoped<IStudentGroupService, StudentGroupService>();
+            services.AddScoped<IIoTDataService, IoTDataService>();
         }
     }
 }

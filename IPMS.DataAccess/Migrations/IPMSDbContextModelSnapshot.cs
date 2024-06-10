@@ -234,6 +234,9 @@ namespace IPMS.DataAccess.Migrations
                     b.Property<Guid?>("LecturerId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("MaxMember")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -535,6 +538,7 @@ namespace IPMS.DataAccess.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("ShortName")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -568,7 +572,7 @@ namespace IPMS.DataAccess.Migrations
                         .HasPrecision(4, 2)
                         .HasColumnType("numeric(4,2)");
 
-                    b.Property<Guid?>("InformationId")
+                    b.Property<Guid>("InformationId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsDeleted")
@@ -1066,7 +1070,8 @@ namespace IPMS.DataAccess.Migrations
                     b.HasOne("IPMS.DataAccess.Models.IPMSUser", "Information")
                         .WithMany("Students")
                         .HasForeignKey("InformationId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("IPMS.DataAccess.Models.Project", "Project")
                         .WithMany("Students")

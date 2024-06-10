@@ -1,25 +1,28 @@
-﻿using IPMS.API.Common.Extensions;
-using IPMS.Business.Interfaces.Services;
-using Microsoft.AspNetCore.Mvc;
-
-using IPMS.API.Responses;
-using IPMS.API.Common.Attributes;
+﻿using IPMS.API.Common.Attributes;
 using IPMS.API.Common.Enums;
+using IPMS.API.Common.Extensions;
+using IPMS.API.Responses;
+using IPMS.Business.Common.Enums;
+using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.IoTComponent;
 using IPMS.Business.Responses.ProjectDashboard;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
 {
+    [Route("api/v1/iot")]
     public class IoTController : ApiControllerBase
     {
         private readonly IBorrowIoTService _borrowIoTService;
-        public IoTController(IBorrowIoTService borrowIoTService)
+        private readonly IIoTDataService _IoTDataService;
+        public IoTController(IBorrowIoTService borrowIoTService, IIoTDataService ioTDataService)
         {
             _borrowIoTService = borrowIoTService;
+            _IoTDataService = ioTDataService;
         }
         [EnumAuthorize(UserRole.Leader)]
         [HttpPost("borrow")]
-        public async Task<IActionResult> RegisterIoT([FromBody] List<BorrowIoTModelRequest> requests)
+        public async Task<IActionResult> RegisterIoT([FromBody] List<IoTModelRequest> requests)
         {
             var leaderId = HttpContext.User.Claims.GetUserId();
             await _borrowIoTService.RegisterIoTForProject(leaderId,requests);
@@ -39,6 +42,12 @@ namespace IPMS.API.Controllers
             {
                 response.Status = ResponseStatus.BadRequest;
             }
+            return GetActionResponse(response);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] GetIoTComponentRequest request)
+        {
+            var response = await _IoTDataService.GetAll(request).GetPaginatedResponse();
             return GetActionResponse(response);
         }
     }

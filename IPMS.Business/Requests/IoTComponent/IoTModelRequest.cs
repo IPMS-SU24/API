@@ -2,11 +2,11 @@
 
 namespace IPMS.Business.Requests.IoTComponent
 {
-    public class BorrowIoTModelRequest
+    public class IoTModelRequest
     {
-        [JsonPropertyName("Id")]
+        [JsonPropertyName("id")]
         public Guid ComponentId { get; set; }
-        [JsonPropertyName("Quantity")]
+        [JsonPropertyName("quantity")]
         public int Quantity { get; set; }
     }
 }

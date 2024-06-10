@@ -1,4 +1,4 @@
-﻿namespace IPMS.API.Common.Enums
+﻿namespace IPMS.Business.Common.Enums
 {
     public enum UserRole
     {
