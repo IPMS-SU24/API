@@ -112,7 +112,7 @@ namespace IPMS.Business.Services
                         Id = request.Id,
                         Name = request.Name,
                         SubmissionDate = request.SubmissionDate,
-                        ProjectId = currentProject.Id,
+                        ProjectId = currentProject!.Id,
                         SubmissionModuleId = request.SubmissionModuleId,
                         SubmitterId = currentUserId
                     };
