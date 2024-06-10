@@ -59,5 +59,10 @@ namespace IPMS.Business.Repository
         {
             await dbSet.AddRangeAsync(entities);
         }
+
+        public async Task LoadExplicitProperty(TEntity entity, string propName)
+        {
+            await _context.Entry(entity).Navigation(propName).LoadAsync();
+        }
     }
 }
