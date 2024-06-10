@@ -83,7 +83,7 @@ namespace IPMS.Business.Services
                 ProjectId = student.ProjectId.Value
             };
         }
-         
+
         public async Task<(Guid GroupId, Guid? MemberForSwapId)?> GetRequestGroupModel(Guid studentId)
         {
             var currentRequest = await _unitOfWork.MemberHistoryRepository.Get().Where(x => x.ReporterId == studentId
@@ -175,29 +175,53 @@ namespace IPMS.Business.Services
         public async Task RequestToSwapGroup(SwapGroupRequest request, Guid studentId)
         {
             var reporterProject = await _commonServices.GetProject(studentId);
-            var memberForProject = await _commonServices.GetProject(request.MemberId);
+            var memberSwapForProject = await _commonServices.GetProject(request.MemberId);
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(reporterProject, nameof(Project.Students));
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(memberSwapForProject, nameof(Project.Students));
+            var leaderList = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList();
             var memberHistory = new MemberHistory()
             {
                 MemberSwapId = request.MemberId,
                 ReporterId = studentId,
                 ProjectFromId = reporterProject.Id,
-                ProjectToId = memberForProject.Id
+                ProjectToId = memberSwapForProject.Id
             };
+            var sendMessageTasks = new List<Task>();
+            //Add leaderId to notification
+            foreach (var member in reporterProject.Students)
+            {
+                if (leaderList.Contains(member.InformationId))
+                {
+                    await _unitOfWork.StudentRepository.LoadExplicitProperty(member, nameof(Student.Information));
+                    sendMessageTasks.Add(_messageService.SendMessage(new NotificationMessage
+                    {
+                        AccountId = member.InformationId,
+                        Message = $"Member {member.Information.FullName} have been requested swap to group {memberSwapForProject.GroupName}",
+                        Title = "Swap Group Request"
+                    }));
+                }
+            }
+            //Add leaderId to notification
+            foreach (var member in memberSwapForProject.Students)
+            {
+                if (leaderList.Contains(member.InformationId))
+                {
+                    await _unitOfWork.StudentRepository.LoadExplicitProperty(member, nameof(Student.Information));
+                    sendMessageTasks.Add(_messageService.SendMessage(new NotificationMessage
+                    {
+                        AccountId = member.InformationId,
+                        Message = $"Member {member.Information.FullName} have been requested swap to your group",
+                        Title = "Swap Group Request"
+                    }));
+                }
+            }
             await _unitOfWork.MemberHistoryRepository.InsertAsync(memberHistory);
-            var notificationMessage = new NotificationMessage
+            sendMessageTasks.Add(_messageService.SendMessage(new NotificationMessage
             {
                 AccountId = request.MemberId,
-                Message = "You are requested to swap group",
+                Message = $"You are requested to swap to group {reporterProject.GroupName}",
                 Title = "Swap Group Request"
-            };
-            _messageService.SendMessage(notificationMessage);
-            //TODO send message to other
-            var leaderNotificationMessage = new NotificationMessage
-            {
-                AccountId = request.MemberId,
-                Message = "You are requested to swap group",
-                Title = "Swap Group Request"
-            };
+            }));
         }
 
         public async Task<ValidationResultModel> CheckValidRequestSwap(SwapGroupRequest request, Guid studentId)
@@ -216,14 +240,21 @@ namespace IPMS.Business.Services
             }
             var studiesIn = await _commonServices.GetStudiesIn(studentId);
             var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId));
-            if(@class == null)
+            if (@class == null)
             {
                 result.Message = "Student not in class";
                 return result;
             }
-            if(@class.ChangeGroupDeadline < DateTime.Now)
+            if (@class.ChangeGroupDeadline < DateTime.Now)
             {
                 result.Message = "Cannot change group at this time";
+            }
+
+            var reporterProject = await _commonServices.GetProject(studentId);
+            if (reporterProject == null)
+            {
+                result.Message = "You are not in group";
+                return result;
             }
             var memberForSwapProject = await _commonServices.GetProject(request.MemberId);
             if (memberForSwapProject == null)
@@ -242,6 +273,11 @@ namespace IPMS.Business.Services
                     return result;
                 }
             }
+            if(reporterProject.Id == memberForSwapProject.Id)
+            {
+                result.Message = "Cannot swap to the same project";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;
@@ -256,6 +292,13 @@ namespace IPMS.Business.Services
             };
             //Check student is not leader
             var user = await _userManager.FindByIdAsync(studentId.ToString());
+
+            var joinGroupExist = await _unitOfWork.ProjectRepository.Get().Where(x => x.Id == request.GroupId).Select(x=>x.Id).FirstOrDefaultAsync();
+            if (joinGroupExist == Guid.Empty)
+            {
+                result.Message = "Not found group";
+                return result;
+            }
             var studiesIn = await _commonServices.GetStudiesIn(studentId);
             var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId));
             if (@class == null)
@@ -266,6 +309,7 @@ namespace IPMS.Business.Services
             if (@class.ChangeGroupDeadline < DateTime.Now)
             {
                 result.Message = "Cannot change group at this time";
+                return result;
             }
             var project = await _commonServices.GetProject(studentId);
             if (project != null)
@@ -273,10 +317,10 @@ namespace IPMS.Business.Services
                 result.Message = "Student currently in a group";
                 return result;
             }
-            var joinGroupExist = await _unitOfWork.ProjectRepository.Get().Where(x => x.Id == request.GroupId).AnyAsync();
-            if (!joinGroupExist)
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Students));
+            if (@class.MaxMember <= project.Students.Count)
             {
-                result.Message = "Not found group";
+                result.Message = "Group is full";
                 return result;
             }
             result.Message = string.Empty;
