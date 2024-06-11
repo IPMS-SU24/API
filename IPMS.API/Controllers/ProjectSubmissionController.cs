@@ -6,7 +6,9 @@ using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ProjectSubmission;
 using IPMS.Business.Responses.ProjectSubmission;
+using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace IPMS.API.Controllers
 {
@@ -45,11 +47,8 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> GetAllSubmission([FromQuery] GetAllSubmissionRequest request)
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
-            var response = new IPMSResponse<IQueryable<GetAllSubmissionResponse>>
-            {
-                Data = await _projectSubmissionService.GetAllSubmission(request, currentUserId)
-            };
-
+            var data = await _projectSubmissionService.GetAllSubmission(request, currentUserId);
+            var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return GetActionResponse(response);
         }
     }

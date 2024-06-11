@@ -1,4 +1,8 @@
-﻿using IPMS.Business.Interfaces.Services;
+﻿using IPMS.API.Common.Attributes;
+using IPMS.API.Common.Extensions;
+using IPMS.Business.Common.Enums;
+using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Requests.MemberHistory;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -11,11 +15,14 @@ namespace IPMS.API.Controllers
             _memberHistoryService = MemberHistoryService;
         }
 
+        [EnumAuthorize(UserRole.Student)]
         [HttpGet]
-        public async Task<IActionResult> GetLoggedInUserHistory()
+        public async Task<IActionResult> GetLoggedInUserHistory([FromQuery] GetLoggedInUserHistoryRequest request)
         {
-            var response = await _memberHistoryService.GetLoggedInUserHistories(new Guid("9c7d4c9e-6a23-4c13-af6d-e85b83705b2e"));
-            return Ok();
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var data = await _memberHistoryService.GetLoggedInUserHistories(currentUserId);
+            var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
         }
     }
 }
