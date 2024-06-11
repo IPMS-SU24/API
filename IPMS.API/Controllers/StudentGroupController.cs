@@ -40,8 +40,11 @@ namespace IPMS.API.Controllers
 
         {
             var studentId = User.Claims.GetUserId();
-            await _studentGroupService.CreateGroup(request,studentId);
-            return GetActionResponse(new IPMSResponse<object>());
+            var response = await _studentGroupService.CreateGroup(request,studentId);
+            return GetActionResponse(new IPMSResponse<CreateGroupResponse>
+            {
+                Data = response
+            });
         }
         [EnumAuthorize(UserRole.Student)]
         [HttpPost("swap")]
