@@ -7,11 +7,11 @@ namespace IPMS.Business.Requests.ProjectSubmission
 {
     public class GetAllSubmissionRequest: BasePaginationAutoFiltererRequest
     {
-        public string searchValue { get; set; } = "";
-        public Guid? submitterId { get; set; }
-        public Guid? assessmentId { get; set; }
-        public DateTime? startDate { get; set; }
-        public DateTime? endDate { get; set; }
+        public string? SearchValue { get; set; } = "";
+        public Guid? SubmitterId { get; set; }
+        public Guid? AssessmentId { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
 
     }
 }

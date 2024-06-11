@@ -6,6 +6,6 @@ namespace IPMS.Business.Requests.ClassTopic
 {
     public class GetClassTopicRequest : BasePaginationAutoFiltererRequest
     {
-        public string searchValue { get; set; } = "";
+        public string? SearchValue { get; set; } 
     }
 }

@@ -22,34 +22,38 @@ namespace IPMS.Business.Services
 
         public async Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId)
         {
-            request.searchValue = request.searchValue.Trim().ToLower();
+            if (request.SearchValue == null)
+            {
+                request.SearchValue = "";
+            }
+            request.SearchValue = request.SearchValue.Trim().ToLower();
             Guid projectId = (await _commonServices.GetProject(currentUserId))!.Id;
 
             IQueryable<ProjectSubmission> projectSubmissions = _unitOfWork.ProjectSubmissionRepository
                                                   .Get().Where(x => x.ProjectId == projectId
-                                                            && (x.SubmissionModule!.Name.ToLower().Contains(request.searchValue)
-                                                                || x.SubmissionModule.Assessment!.Name.ToLower().Contains(request.searchValue)))
+                                                            && (x.SubmissionModule!.Name.ToLower().Contains(request.SearchValue)
+                                                                || x.SubmissionModule.Assessment!.Name.ToLower().Contains(request.SearchValue)))
                                                   .Include(x => x.SubmissionModule).ThenInclude(x => x!.Assessment)
                                                   .Include(x => x.Submitter);
 
-            if (request.submitterId != null) // Query with submitter
+            if (request.SubmitterId != null) // Query with submitter
             {
-                projectSubmissions = projectSubmissions.Where(x => x.SubmitterId.Equals(request.submitterId));
+                projectSubmissions = projectSubmissions.Where(x => x.SubmitterId.Equals(request.SubmitterId));
             }
 
-            if (request.assessmentId != null) // Query with assessment
+            if (request.AssessmentId != null) // Query with assessment
             {
-                projectSubmissions = projectSubmissions.Where(x => x.SubmissionModule!.AssessmentId.Equals(request.assessmentId)).AsQueryable();
+                projectSubmissions = projectSubmissions.Where(x => x.SubmissionModule!.AssessmentId.Equals(request.AssessmentId)).AsQueryable();
             }
 
-            if (request.startDate != null)  // Query with startDate
+            if (request.StartDate != null)  // Query with startDate
             {
-                projectSubmissions = projectSubmissions.Where(x => x.SubmissionDate >= request.startDate);
+                projectSubmissions = projectSubmissions.Where(x => x.SubmissionDate >= request.StartDate);
             }
 
-            if (request.endDate != null) // Query with endDate
+            if (request.EndDate != null) // Query with endDate
             {
-                projectSubmissions = projectSubmissions.Where(x => x.SubmissionDate <= request.endDate);
+                projectSubmissions = projectSubmissions.Where(x => x.SubmissionDate <= request.EndDate);
             }
 
             var groupNewest = _unitOfWork.ProjectSubmissionRepository // IsNewest base on all of submission in submission module
