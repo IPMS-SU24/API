@@ -14,21 +14,35 @@ namespace IPMS.Business.Services
     public class CommonServices : ICommonServices
     {
         private readonly IUnitOfWork _unitOfWork;
+        private Project? Project { get; set; }
+        private IPMSClass? Class { get; set; }
+        private List<Student>? StudiesIn { get; set; }
+        private Topic? ProjectTopic { get; set; }
+        private IEnumerable<ProjectSubmission>? ProjectSubmissions { get; set; }
+
         public CommonServices(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
         public async Task<List<Student>> GetStudiesIn(Guid currentUserId)
         {
-            return await _unitOfWork.StudentRepository.Get() // Find Student from current User 
+            if(StudiesIn == null)
+            {
+                StudiesIn = await _unitOfWork.StudentRepository.Get() // Find Student from current User 
                                                        .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
+            }
+            return StudiesIn;
         }
 
         public async Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn, Guid currentSemesterId)
         {
-            return await _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
+            if (Class == null)
+            {
+                Class = await _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
                                                                       .FirstOrDefaultAsync(c => studiesIn.Contains(c.Id)
                                                                       && c.SemesterId.Equals(currentSemesterId));
+            }
+            return Class;
         }
         public async Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn)
         {
@@ -47,7 +61,7 @@ namespace IPMS.Business.Services
 
         public async Task<Project?> GetProject(Guid currentUserId)
         {
-
+            if (this.Project != null) return this.Project;
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
             var studiesIn = (await GetStudiesIn(currentUserId)).ToList();
@@ -72,8 +86,12 @@ namespace IPMS.Business.Services
 
         public async Task<Topic?> GetProjectTopic(Guid projectId)
         {
-            return await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
+            if (ProjectTopic == null)
+            {
+                ProjectTopic = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
                                                             .Include(x => x.Topic).Select(x => x.Topic).FirstOrDefaultAsync();
+            }
+            return ProjectTopic;
         }
 
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
@@ -104,9 +122,13 @@ namespace IPMS.Business.Services
 
         public async Task<IEnumerable<ProjectSubmission>> GetProjectSubmissions(Guid projectId)
         {
-            return await _unitOfWork.ProjectSubmissionRepository
+            if(ProjectSubmissions == null)
+            {
+                ProjectSubmissions = await _unitOfWork.ProjectSubmissionRepository
                                                     .Get().Where(x => x.ProjectId == projectId)
                                                     .Include(x => x.SubmissionModule).ToListAsync();
+            }
+            return ProjectSubmissions;
         }
 
         public async Task<AssessmentStatus> GetBorrowIoTStatus(Guid projectId, IPMSClass @class)
@@ -124,8 +146,8 @@ namespace IPMS.Business.Services
             //Get all project of lecturerId
             var allProject = await GetAllCurrentProjectsOfLecturer(lecturerId);
             //Get all quantity of component of Lecturer
-            var quantity = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x=>x.Status == BorrowedStatus.Approved && allProject.Contains(x.MasterId!.Value) && x.ComponentId == componentId).SumAsync(x=>x.Quantity);
-            var lecturerQuantity = await _unitOfWork.ComponentsMasterRepository.GetLecturerOwnComponents().Where(x=>x.MasterId == lecturerId && x.ComponentId == componentId).SumAsync(x=>x.Quantity);
+            var quantity = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.Status == BorrowedStatus.Approved && allProject.Contains(x.MasterId!.Value) && x.ComponentId == componentId).SumAsync(x => x.Quantity);
+            var lecturerQuantity = await _unitOfWork.ComponentsMasterRepository.GetLecturerOwnComponents().Where(x => x.MasterId == lecturerId && x.ComponentId == componentId).SumAsync(x => x.Quantity);
             return lecturerQuantity - quantity;
         }
 
