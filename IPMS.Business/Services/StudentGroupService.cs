@@ -1,18 +1,16 @@
-﻿using IPMS.Business.Common.Exceptions;
+﻿using IPMS.Business.Common.Enums;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Responses.Group;
-using IPMS.DataAccess.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using IPMS.DataAccess.Common.Enums;
-using Microsoft.EntityFrameworkCore;
-using FluentValidation.Results;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Group;
-using IPMS.Business.Common.Enums;
+using IPMS.Business.Responses.Group;
+using IPMS.DataAccess.Common.Enums;
+using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace IPMS.Business.Services
 {
@@ -355,6 +353,53 @@ namespace IPMS.Business.Services
                 }));
             }
             await Task.WhenAll(sendMessageTasks);
+        }
+
+        public async Task<ValidationResultModel> CheckValidAssignLeaderRequest(AssignLeaderRequest request, Guid studentId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Cannot assign leader"
+            };
+            if(request.MemberId == studentId)
+            {
+                result.Message = "Can Only assign to another member";
+                return result;
+            }
+            var project = await _commonServices.GetProject(studentId);
+            if(project == null)
+            {
+                result.Message = "Not found Valid Project";
+                return result;
+            }
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Students));
+            var isMemberInGroup = project.Students.Any(x => x.InformationId == request.MemberId);
+            if(!isMemberInGroup)
+            {
+                result.Message = "The student want to assign is not in your group";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public async Task AssignLeader(AssignLeaderRequest request, Guid studentId)
+        {
+            //Remove role leader
+            var oldLeader = await _userManager.FindByIdAsync(studentId.ToString());
+            await _userManager.RemoveFromRoleAsync(oldLeader, UserRole.Leader.ToString());
+            //Add role to new Leader
+            var newLeader = await _userManager.FindByIdAsync(request.MemberId.ToString());
+            await _userManager.AddToRoleAsync(newLeader, UserRole.Leader.ToString());
+            //Send message to new leader
+            var message = new NotificationMessage
+            {
+                AccountId = request.MemberId,
+                Title = "New Leader Assignment",
+                Message = "You have been assigned to become leader of your group"
+            };
+            await _messageService.SendMessage(message);
         }
     }
 }
