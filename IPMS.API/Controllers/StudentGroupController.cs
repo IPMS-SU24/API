@@ -59,5 +59,13 @@ namespace IPMS.API.Controllers
             await _studentGroupService.RequestToJoinGroup(request,studentId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+        [EnumAuthorize(UserRole.Leader)]
+        [HttpPut("leader-assignment")]
+        public async Task<IActionResult> AssignLeader([FromBody] AssignLeaderRequest request)
+        {
+            var studentId = User.Claims.GetUserId();
+            await _studentGroupService.AssignLeader(request,studentId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }
