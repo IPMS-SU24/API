@@ -16,7 +16,7 @@ namespace IPMS.API.Controllers
         {
             _projectDashboardService = projectDashboardService;
         }
-        [EnumAuthorize(UserRole.Leader)]
+        [EnumAuthorize(UserRole.Student)]
         [HttpGet]
         public async Task<IActionResult> Get()
         {

@@ -88,7 +88,7 @@ namespace IPMS.Business.Services
 
         public async Task<TokenModel?> Login(LoginRequest loginModel)
         {
-            var user = await _userManager.FindByNameAsync(loginModel.Username);
+            var user = await _userManager.FindByEmailAsync(loginModel.Email);
             if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
@@ -96,7 +96,8 @@ namespace IPMS.Business.Services
                     {
                         new (ClaimTypes.Email, user.Email),
                         new (ClaimTypes.NameIdentifier, user.Id.ToString()),
-                        new (ClaimTypes.Name, user.UserName),
+                        new ("Id", user.UserName),
+                        new ("FullName", user.FullName),
                         new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     };
 
