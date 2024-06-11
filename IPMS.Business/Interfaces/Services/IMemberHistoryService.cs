@@ -9,6 +9,6 @@ namespace IPMS.Business.Interfaces.Services
 {
     public interface IMemberHistoryService
     {
-        Task<IQueryable<LoggedInUserHistoryResponse>> GetLoggedInUserHistories(Guid currentUserId);
+        Task<List<LoggedInUserHistoryResponse>> GetLoggedInUserHistories(Guid currentUserId);
     }
 }

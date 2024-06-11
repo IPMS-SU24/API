@@ -8,9 +8,6 @@ using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace IPMS.Business.Services
 {
@@ -27,13 +24,13 @@ namespace IPMS.Business.Services
             _userManager = userManager;
         }
 
-        public async Task<IQueryable<LoggedInUserHistoryResponse>> GetLoggedInUserHistories(Guid currentUserId) 
+        public async Task<List<LoggedInUserHistoryResponse>> GetLoggedInUserHistories(Guid currentUserId)
         {
             // Will not kick user
 
             // Find current class
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
-            var studiesIn = (await _commonServices.GetStudiesIn(currentUserId)).Select(s => s.Id);
+            var studiesIn = (await _commonServices.GetStudiesIn(currentUserId)).Select(s => s.ClassId);
             var currentClass = await _commonServices.GetCurrentClass(studiesIn, currentSemesterId);
 
             if (currentClass == null)
@@ -55,20 +52,21 @@ namespace IPMS.Business.Services
             }
 
             // Find histories
-            IQueryable<MemberHistory> histories;
+            //IQueryable<MemberHistory> histories;
+            List<MemberHistory> histories;
             //  Note: find with current class to ignore case re-study
             if (leaderId != null && leaderId.Equals(currentUserId))  // current user also a leader
             {
-                histories = _unitOfWork.MemberHistoryRepository.Get().
+                histories = await _unitOfWork.MemberHistoryRepository.Get().
                                             Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(mh.Id)
                                             || mh.ProjectFromId.Equals(project!.Id) || mh.ProjectToId.Equals(project.Id))
-                                                && mh.IPMSClassId.Equals(currentClass!.Id));
+                                                && mh.IPMSClassId.Equals(currentClass!.Id)).ToListAsync();
             }
             else // not a leader
             {
-                histories = _unitOfWork.MemberHistoryRepository.Get().
+                histories = await _unitOfWork.MemberHistoryRepository.Get().
                                             Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(mh.Id))
-                                                    && mh.IPMSClassId.Equals(currentClass!.Id));
+                                                    && mh.IPMSClassId.Equals(currentClass!.Id)).ToListAsync();
             }
 
             // if have any rejected - needn't update anything -> Just show current status
@@ -98,21 +96,21 @@ namespace IPMS.Business.Services
             //  MemberSwap = query IPMSUser from memberSwapId 
             var users = _userManager.Users.ToList();
             var projects = _unitOfWork.ProjectRepository.Get().ToList();
-
-            IQueryable<LoggedInUserHistoryResponse> response = histories.Select(h => new LoggedInUserHistoryResponse
+            var response = histories.Select(h => new LoggedInUserHistoryResponse
             {
                 Id = h.Id,
                 LeaderId = new Guid(),
-                RequestType = (h.ProjectFromId == null) ? "join" : "swap",
-                Requester =  GetUser(users, h.ReporterId), // cannot use async await in here, cannot query
+                RequestType = (h.ProjectFromId == Guid.Empty) ? "join" : "swap",
+                Requester = GetUser(users, h.ReporterId), // cannot use async await in here, cannot query
                 MemberSwap = GetUser(users, h.MemberSwapId),
-                ProjectFrom  = GetProject(projects, h.ProjectFromId), // Iqueryable will be borrow if query db again -> so that query before and just linq select
+                ProjectFrom = GetProject(projects, h.ProjectFromId), // Iqueryable will be borrow if query db again -> so that query before and just linq select
                 ProjectTo = GetProject(projects, h.ProjectToId),
                 Status = GetFinalStatus(h),
                 CreateAt = h.CreatedDate,
-            });
+            }).ToList();
 
             return response;
+            
         }
         private RequestStatus GetFinalStatus(MemberHistory history)
         {
@@ -169,7 +167,7 @@ namespace IPMS.Business.Services
             };
 
         }
-        private IQueryable<MemberHistory> UpdateExpiredRequest(IQueryable<MemberHistory> histories)
+        private List<MemberHistory> UpdateExpiredRequest(List<MemberHistory> histories)
         {
             foreach (var history in histories)
             {
@@ -194,13 +192,13 @@ namespace IPMS.Business.Services
         }
 
         // Can implement but not improve readable
-     /*   private bool ReviewStatus(Guid? ReviewId, RequestStatus currentStatus, RequestStatus expectStatus)
-        {
-            if (ReviewStatus != null && currentStatus == expectStatus)
-            {
-                return true;
-            }
-            return false;
-        }*/
+        /*   private bool ReviewStatus(Guid? ReviewId, RequestStatus currentStatus, RequestStatus expectStatus)
+           {
+               if (ReviewStatus != null && currentStatus == expectStatus)
+               {
+                   return true;
+               }
+               return false;
+           }*/
     }
 }

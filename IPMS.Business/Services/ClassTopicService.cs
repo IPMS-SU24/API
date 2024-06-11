@@ -26,7 +26,11 @@ namespace IPMS.Business.Services
      
         public async Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request)
         {
-            request.searchValue = request.searchValue.Trim().ToLower();
+            if (request.SearchValue == null)
+            {
+                request.SearchValue = "";
+            }
+            request.SearchValue = request.SearchValue.Trim().ToLower();
 
             // Get current Semester
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
@@ -47,7 +51,7 @@ namespace IPMS.Business.Services
                                                                        .Where(ct => ct.ClassId.Equals(currentClassId)
                                                                                     && ct.ProjectId == null
                                                                                     && ct.Topic!.Status == RequestStatus.Approved // Only Topic Approved can choose
-                                                                                    && (ct.Topic.Name.ToLower().Contains(request.searchValue) || ct.Topic.Description.ToLower().Contains(request.searchValue)))
+                                                                                    && (ct.Topic.Name.ToLower().Contains(request.SearchValue) || ct.Topic.Description.ToLower().Contains(request.SearchValue)))
                                                                        .            Include(ct => ct.Topic);
 
             /*

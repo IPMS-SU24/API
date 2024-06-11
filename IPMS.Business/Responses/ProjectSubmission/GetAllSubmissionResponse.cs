@@ -1,4 +1,5 @@
-﻿namespace IPMS.Business.Responses.ProjectSubmission
+﻿
+namespace IPMS.Business.Responses.ProjectSubmission
 {
     public class GetAllSubmissionResponse
     {
