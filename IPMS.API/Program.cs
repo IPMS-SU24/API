@@ -9,10 +9,13 @@ using IPMS.API.Filters;
 using IPMS.DataAccess;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -37,6 +40,12 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields = HttpLoggingFields.Request;
+    logging.RequestBodyLogLimit = 4096;
+    logging.ResponseBodyLogLimit = 4096;
+});
 builder.Services.AddFluentValidationAutoValidation(option =>
 {
     option.OverrideDefaultResultFactoryWith<IPMSResultFactory>();
@@ -52,7 +61,15 @@ builder.Services.AddRouting(options =>
 builder.Configuration.AddEnvironmentVariables(prefix: "IPMS_");
 builder.Configuration.AddEnvironmentVariables(prefix: "AWS");
 builder.Services.AddDI();
-builder.Services.AddDbContext<IPMSDbContext>(options => options.UseNpgsql(builder.Configuration["IPMS_ConnectionStrings_IPMS"], b => b.MigrationsAssembly("IPMS.DataAccess")));
+builder.Services.AddDbContext<IPMSDbContext>(options =>
+{
+    ILoggerFactory consoleLoggerFactory = LoggerFactory.Create(logBuilder=>
+    {
+        logBuilder.AddConsole();
+        logBuilder.AddFilter((logLevel) => logLevel == LogLevel.Error);
+    });
+    options.UseNpgsql(builder.Configuration["IPMS_ConnectionStrings_IPMS"], b => b.MigrationsAssembly("IPMS.DataAccess")).UseLoggerFactory(consoleLoggerFactory);
+});
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -120,7 +137,6 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAutoMapper(cfg => cfg.Internal().MethodMappingEnabled = false, Assembly.GetExecutingAssembly());
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var app = builder.Build();
-app.Logger.LogInformation(builder.Configuration["IPMS_ConnectionStrings_IPMS"]);
 app.UseGlobalExceptionHandling();
 // Configure the HTTP request pipeline.
 app.UseSwagger();
@@ -134,6 +150,7 @@ app.UseCors(options => options.AllowAnyMethod()
                 .AllowAnyHeader()
                 .SetIsOriginAllowed(origin => true) // allow any origin
                 .AllowCredentials());
+app.UseHttpLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 
