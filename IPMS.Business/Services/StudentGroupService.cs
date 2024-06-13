@@ -315,7 +315,7 @@ namespace IPMS.Business.Services
                 result.Message = "Student currently in a group";
                 return result;
             }
-            var studentInNewGroupCount = await _unitOfWork.StudentRepository.Get().Where(x=>x.ProjectId == joinGroupExist).CountAsync()
+            var studentInNewGroupCount = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == joinGroupExist).CountAsync();
             if (@class.MaxMember <= studentInNewGroupCount)
             {
                 result.Message = "Group is full";
