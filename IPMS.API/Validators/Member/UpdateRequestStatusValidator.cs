@@ -14,6 +14,7 @@ namespace IPMS.API.Validators.Member
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.Status).NotEmpty();
             RuleFor(x => x.ReviewId).NotEmpty();
+            RuleFor(x => x.Type).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
                 var validationResult = await memberHistoryService.UpdateRequestStatusValidators(x, studentId);

@@ -19,9 +19,9 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly UserManager<IPMSUser> _userManager;
-        private readonly StudentGroupService _studentGroupService;
+        private readonly IStudentGroupService _studentGroupService;
         private MemberHistory history { get; set; }
-        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, StudentGroupService studentGroupService)
+        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, IStudentGroupService studentGroupService)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
@@ -54,7 +54,7 @@ namespace IPMS.Business.Services
             Guid leaderId = Guid.Empty; // default current user is freedom
 
             // Find current project
-            var project = await _commonServices.GetProject(currentUserId);
+            var project = await _commonServices.GetProject(currentUserId);  
 
             if (project != null) // user currently in project
             {
@@ -110,7 +110,7 @@ namespace IPMS.Business.Services
             var response = histories.Select(h => new LoggedInUserHistoryResponse
             {
                 Id = h.Id,
-                LeaderId = leaderId,
+                LeaderId = leaderId, // leader ID of this project with case join
                 RequestType = (h.ProjectFromId == Guid.Empty) ? "join" : "swap",
                 Requester = GetUser(users, h.ReporterId), // cannot use async await in here, cannot query
                 MemberSwap = GetUser(users, h.MemberSwapId),
@@ -125,24 +125,36 @@ namespace IPMS.Business.Services
         }
         private RequestStatus GetFinalStatus(MemberHistory history)
         {
-            if (history.MemberSwapId != null && history.MemberSwapStatus == RequestStatus.Waiting)
+            if (history.MemberSwapId != null && history.MemberSwapStatus == RequestStatus.Rejected)
             {
                 return RequestStatus.Rejected;
 
             }
 
-            else if (history.ProjectFromId != null && history.ProjectFromStatus == RequestStatus.Waiting)
+            else if (history.ProjectFromId != null && history.ProjectFromStatus == RequestStatus.Rejected)
             {
                 return RequestStatus.Rejected;
 
             }
 
-            else if (history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Waiting)
+            else if (history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Rejected)
             {
                 return RequestStatus.Rejected;
 
             }
-            return RequestStatus.Approved;
+            if (history.ProjectFromId != null) // case swap
+            {
+                if ((history.MemberSwapId != null && history.MemberSwapStatus == RequestStatus.Approved)
+                    && (history.ProjectFromId != null && history.ProjectFromStatus == RequestStatus.Approved)
+                    && ((history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Approved)))
+                    return RequestStatus.Approved;
+            } else // case join
+            {
+                if (history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Approved)
+                    return RequestStatus.Approved;
+
+            }
+            return RequestStatus.Waiting;
 
         }
         private GeneralObjectInformation GetUser(List<IPMSUser> users, Guid? userId)
@@ -215,6 +227,14 @@ namespace IPMS.Business.Services
                 result.Message = "History does not exist";
                 return result;
             }
+            IPMSUser reqUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id.Equals(history.ReporterId));
+            if (reqUser == null)
+            {
+                result.Message = "Requester is not exist";
+                return result;
+            }
+            Project reqUserProject = await _commonServices.GetProject(reqUser.Id);
+
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
             var studiesIn = (await _commonServices.GetStudiesIn(studentId)).Select(s => s.ClassId);
             var currentClass = await _commonServices.GetCurrentClass(studiesIn, currentSemesterId); // need not to check current Class because checked when get project
@@ -227,25 +247,25 @@ namespace IPMS.Business.Services
 
             if (request.Type == "join")
             {
-                if (history.ProjectFromId != Guid.Empty || history.ProjectFromId != null // validation data
-                    || history.MemberSwapId == Guid.Empty || history.MemberSwapId == null)
+                if (history.ProjectFromId != Guid.Empty  // validation data
+                    || history.MemberSwapId != Guid.Empty)
                 {
                     result.Message = "Request is not correct";
                     return result;
                 }
                 
-                if (project != null)
+                if (reqUserProject != null)
                 {
                     result.Message = "Student currently in project";
                     return result;
                 }
 
-                await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Students));
-                if (currentClass.MaxMember <= project.Students.Count)
+               /* await _unitOfWork.ProjectRepository.LoadExplicitProperty(reqUserProject, nameof(Project.Students));
+                if (currentClass.MaxMember <= reqUserProject.Students.Count)
                 {
                     result.Message = "Group is full";
                     return result;
-                }
+                }*/
 
 
             }
@@ -264,13 +284,7 @@ namespace IPMS.Business.Services
                     result.Message = "Can not swap itself";
                     return result;
                 }
-                IPMSUser reqUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id.Equals(history.ReporterId));
-                if (reqUser == null)
-                {
-                    result.Message = "Requester is not exist";
-                    return result;
-                }
-                Project reqUserProject = await _commonServices.GetProject(reqUser.Id);
+                
                 if (reqUserProject == null)
                 {
                     result.Message = "Requester is not in project";
@@ -374,10 +388,11 @@ namespace IPMS.Business.Services
                 _unitOfWork.MemberHistoryRepository.Update(history);
                 await _unitOfWork.SaveChangesAsync();
 
-                if (request.Status == RequestStatus.Approved)
-                {
-                    await ChangeGroupMember(request);
-                }
+                
+            }
+            if (request.Status == RequestStatus.Approved)
+            {
+                await ChangeGroupMember(request);
             }
         }
 
@@ -390,8 +405,8 @@ namespace IPMS.Business.Services
             {
                 if (history.ProjectFromStatus == RequestStatus.Approved && history.ProjectToStatus == RequestStatus.Approved && history.MemberSwapStatus == RequestStatus.Approved)
                 {
-                    await _studentGroupService.RemoveMember(history.ReporterId);
-                    await _studentGroupService.RemoveMember((Guid)history.MemberSwapId!);
+                 //   await _studentGroupService.RemoveMember(history.ReporterId);
+                 //   await _studentGroupService.RemoveMember((Guid)history.MemberSwapId!);
 
                     await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
                     await _studentGroupService.AddMember((Guid)history.MemberSwapId!, (Guid)history.ProjectFromId!);

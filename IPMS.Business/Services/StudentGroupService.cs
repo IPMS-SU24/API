@@ -466,7 +466,7 @@ namespace IPMS.Business.Services
         }
         public async Task AddMember(Guid studentId, Guid projectId) // need validation
         {
-            var project = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(p => p.Id.Equals(projectId));
+            /*var project = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(p => p.Id.Equals(projectId));
 
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
             var studiesIn = (await _commonServices.GetStudiesIn(studentId)).Select(s => s.ClassId);
@@ -478,6 +478,11 @@ namespace IPMS.Business.Services
                 ClassId = currentClass.Id
             };
             await _unitOfWork.StudentRepository.InsertAsync(newMem);
+            await _unitOfWork.SaveChangesAsync();*/
+
+            var student = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(s => s.InformationId.Equals(studentId));
+            student.ProjectId = projectId;
+            _unitOfWork.StudentRepository.Update(student);
             await _unitOfWork.SaveChangesAsync();
 
         }
