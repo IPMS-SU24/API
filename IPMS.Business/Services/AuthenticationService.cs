@@ -6,6 +6,7 @@ using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -20,17 +21,17 @@ namespace IPMS.Business.Services
         private readonly UserManager<IPMSUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly ICommonServices _commonService;
-        private readonly IConfiguration _configuration;
         private readonly ILogger<AuthenticationService> _logger;
+        private readonly JWTConfig _jwtConfig;
         public AuthenticationService(UserManager<IPMSUser> userManager,
                                    RoleManager<IdentityRole<Guid>> roleManager,
-                                   IConfiguration configuration,
+                                   IOptions<JWTConfig> jwtConfig,
                                    ILogger<AuthenticationService> logger,
                                    ICommonServices commonService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
-            _configuration = configuration;
+            _jwtConfig = jwtConfig.Value;
             _logger = logger;
             _commonService = commonService;
         }
@@ -42,13 +43,13 @@ namespace IPMS.Business.Services
 
         public string GenerateAccessToken(IEnumerable<Claim> claims)
         {
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["IPMS_JWT_Secret"]));
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Secret));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
             var tokeOptions = new JwtSecurityToken(
-                issuer: _configuration["IPMS_JWT_ValidIssuer"],
-                audience: _configuration["IPMS_JWT_ValidAudience"],
+                issuer: _jwtConfig.ValidIssuer,
+                audience: _jwtConfig.ValidAudience,
                 claims: claims,
-                expires: DateTime.Now.AddHours(double.Parse(_configuration["IPMS_JWT_TokenExpiryTimeInHour"])),
+                expires: DateTime.Now.AddHours(_jwtConfig.TokenExpiryTimeInHour),
                 signingCredentials: signinCredentials
             );
             return new JwtSecurityTokenHandler().WriteToken(tokeOptions);
@@ -69,7 +70,7 @@ namespace IPMS.Business.Services
                 ValidateAudience = false,
                 ValidateIssuer = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["IPMS_JWT_Secret"])),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Secret)),
                 ValidateLifetime = false
             };
 
@@ -117,7 +118,6 @@ namespace IPMS.Business.Services
                 }
                 var accessToken = GenerateAccessToken(authClaims);
 
-                _ = int.TryParse(_configuration["IPMS_JWT_RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
                 var refreshToken = string.Empty;
 
                 if (user.RefreshTokens.Any(a => a.IsActive))
@@ -131,7 +131,7 @@ namespace IPMS.Business.Services
                     user.RefreshTokens.Add(new UserRefreshToken
                     {
                         Token = refreshToken,
-                        Expires = DateTime.Now.AddDays(refreshTokenValidityInDays)
+                        Expires = DateTime.Now.AddDays(_jwtConfig.RefreshTokenValidityInDays)
                     });
                     await _userManager.UpdateAsync(user);
                 }
@@ -174,11 +174,10 @@ namespace IPMS.Business.Services
             var newAccessToken = GenerateAccessToken(principal.Claims.ToList());
             var newRefreshToken = GenerateRefreshToken();
 
-            _ = int.TryParse(_configuration["IPMS_JWT_RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
             user.RefreshTokens.Add(new UserRefreshToken
             {
                 Token = refreshToken,
-                Expires = DateTime.Now.AddDays(refreshTokenValidityInDays)
+                Expires = DateTime.Now.AddDays(_jwtConfig.RefreshTokenValidityInDays)
             });
             await _userManager.UpdateAsync(user);
 
