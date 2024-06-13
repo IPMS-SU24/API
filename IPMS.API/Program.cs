@@ -6,9 +6,12 @@ using FluentValidation;
 using IPMS.API.Common;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Filters;
+using IPMS.Business.Common.Extensions;
+using IPMS.Business.Models;
 using IPMS.DataAccess;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -46,6 +49,7 @@ builder.Services.AddHttpLogging(logging =>
     logging.RequestBodyLogLimit = 4096;
     logging.ResponseBodyLogLimit = 4096;
 });
+builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env-demo");
 builder.Services.AddFluentValidationAutoValidation(option =>
 {
     option.OverrideDefaultResultFactoryWith<IPMSResultFactory>();
@@ -63,12 +67,11 @@ builder.Configuration.AddEnvironmentVariables(prefix: "AWS");
 builder.Services.AddDI();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
-    ILoggerFactory consoleLoggerFactory = LoggerFactory.Create(logBuilder=>
-    {
+    ILoggerFactory consoleLoggerFactory = LoggerFactory.Create(logBuilder=>   {
         logBuilder.AddConsole();
         logBuilder.AddFilter((logLevel) => logLevel == LogLevel.Error);
     });
-    options.UseNpgsql(builder.Configuration["IPMS_ConnectionStrings_IPMS"], b => b.MigrationsAssembly("IPMS.DataAccess")).UseLoggerFactory(consoleLoggerFactory);
+    options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess")).UseLoggerFactory(consoleLoggerFactory);
 });
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
@@ -80,9 +83,10 @@ builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
     config.SignIn.RequireConfirmedPhoneNumber = false;
 }).AddEntityFrameworkStores<IPMSDbContext>()
             .AddDefaultTokenProviders();
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions(string.Empty));
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddAWSService<IAmazonS3>();
+builder.Services.Configure<JWTConfig>(builder.Configuration.GetSection("JWT"));
 builder.Services.AddSwaggerGen(options =>
 {
     options.DescribeAllParametersInCamelCase();
@@ -129,9 +133,9 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ClockSkew = TimeSpan.Zero,
-        ValidAudience = builder.Configuration["IPMS_JWT_ValidAudience"],
-        ValidIssuer = builder.Configuration["IPMS_JWT_ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["IPMS_JWT_Secret"]))
+        ValidAudience = builder.Configuration.GetSection("JWT")["ValidAudience"],
+        ValidIssuer = builder.Configuration.GetSection("JWT")["ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetSection("JWT")["Secret"]))
     };
 });
 builder.Services.AddAutoMapper(cfg => cfg.Internal().MethodMappingEnabled = false, Assembly.GetExecutingAssembly());

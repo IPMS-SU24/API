@@ -9,8 +9,8 @@ namespace IPMS.Business.Services
 {
     public class PresignedUrlService : IPresignedUrlService
     {
-        private readonly string BUCKET_NAME = "IPMS_BucketName";
-        private readonly string EXPIRY = "IPMS_UrlExpiryTimeInHours";
+        private readonly string BUCKET_NAME = "BucketName";
+        private readonly string EXPIRY = "UrlExpiryTimeInHours";
         private readonly IAmazonS3 _s3Client;
         private readonly IConfiguration _configuration;
         public PresignedUrlService(IAmazonS3 s3Client, IConfiguration configuration)
