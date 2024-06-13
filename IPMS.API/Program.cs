@@ -45,7 +45,7 @@ builder.Services.AddControllers(options =>
 });
 builder.Services.AddHttpLogging(logging =>
 {
-    logging.LoggingFields = HttpLoggingFields.Request;
+    logging.LoggingFields = HttpLoggingFields.RequestPath | HttpLoggingFields.RequestBody | HttpLoggingFields.RequestQuery;
     logging.RequestBodyLogLimit = 4096;
     logging.ResponseBodyLogLimit = 4096;
 });
@@ -62,16 +62,10 @@ builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
 });
-builder.Configuration.AddEnvironmentVariables(prefix: "IPMS_");
-builder.Configuration.AddEnvironmentVariables(prefix: "AWS");
 builder.Services.AddDI();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
-    ILoggerFactory consoleLoggerFactory = LoggerFactory.Create(logBuilder=>   {
-        logBuilder.AddConsole();
-        logBuilder.AddFilter((logLevel) => logLevel == LogLevel.Error);
-    });
-    options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess")).UseLoggerFactory(consoleLoggerFactory);
+    options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess"));
 });
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
