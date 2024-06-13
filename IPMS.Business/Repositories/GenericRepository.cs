@@ -24,7 +24,7 @@ namespace IPMS.Business.Repository
 
         public virtual async Task<TEntity?> GetByIDAsync(object id)
         {
-            var result =  await dbSet.FindAsync(id);
+            var result = await dbSet.FindAsync(id);
             if (result != null && result.IsDeleted) return null;
             return await dbSet.FindAsync(id);
         }
@@ -62,7 +62,16 @@ namespace IPMS.Business.Repository
 
         public async Task LoadExplicitProperty(TEntity entity, string propName)
         {
+            var isTracked = _context.Entry(entity).State != EntityState.Detached;
+            if (!isTracked)
+            {
+                _context.Attach(entity);
+            }
             await _context.Entry(entity).Navigation(propName).LoadAsync();
+            if(!isTracked)
+            {
+                _context.Entry(entity).State = EntityState.Detached;
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Interfaces.Services;
+﻿using IPMS.Business.Common.Enums;
+using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Authentication;
 using IPMS.DataAccess.Models;
@@ -10,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace IPMS.Business.Services
 {
@@ -17,17 +19,20 @@ namespace IPMS.Business.Services
     {
         private readonly UserManager<IPMSUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+        private readonly ICommonServices _commonService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthenticationService> _logger;
         public AuthenticationService(UserManager<IPMSUser> userManager,
                                    RoleManager<IdentityRole<Guid>> roleManager,
                                    IConfiguration configuration,
-                                   ILogger<AuthenticationService> logger)
+                                   ILogger<AuthenticationService> logger,
+                                   ICommonServices commonService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _logger = logger;
+            _commonService = commonService;
         }
 
         public Task<IdentityResult> AddLecturerAccount(AddLecturerAccountRequest registerModel)
@@ -99,13 +104,17 @@ namespace IPMS.Business.Services
                         new ("Id", user.UserName),
                         new ("FullName", user.FullName),
                         new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
                     };
-
-                foreach (var userRole in userRoles)
+                if (userRoles.Contains(UserRole.Student.ToString()))
                 {
-                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                    //If student => Add ProjectId to Claim
+                    var project = await _commonService.GetProject(user.Id);
+                    if(project != null)
+                    {
+                        authClaims.Add(new("ProjectId",project.Id.ToString()));
+                    }
                 }
-
                 var accessToken = GenerateAccessToken(authClaims);
 
                 _ = int.TryParse(_configuration["IPMS_JWT_RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
