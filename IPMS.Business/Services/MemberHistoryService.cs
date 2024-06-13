@@ -1,5 +1,4 @@
-﻿using Amazon.S3.Model.Internal.MarshallTransformations;
-using IPMS.Business.Common.Enums;
+﻿using IPMS.Business.Common.Enums;
 using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
@@ -11,6 +10,7 @@ using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.CompilerServices;
 
 namespace IPMS.Business.Services
 {
@@ -19,12 +19,14 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly UserManager<IPMSUser> _userManager;
-
-        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager)
+        private readonly StudentGroupService _studentGroupService;
+        private MemberHistory history { get; set; }
+        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, StudentGroupService studentGroupService)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _userManager = userManager;
+            _studentGroupService = studentGroupService;
         }
         private async Task<Guid> GetLeaderId(Guid projectId)
         {
@@ -207,10 +209,18 @@ namespace IPMS.Business.Services
                 Message = "Operation did not successfully"
             };
 
-            MemberHistory history = await _unitOfWork.MemberHistoryRepository.Get().FirstOrDefaultAsync(mh => mh.Id.Equals(request.Id));
+            history = await _unitOfWork.MemberHistoryRepository.Get().FirstOrDefaultAsync(mh => mh.Id.Equals(request.Id));
             if (history == null)
             {
                 result.Message = "History does not exist";
+                return result;
+            }
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            var studiesIn = (await _commonServices.GetStudiesIn(studentId)).Select(s => s.ClassId);
+            var currentClass = await _commonServices.GetCurrentClass(studiesIn, currentSemesterId); // need not to check current Class because checked when get project
+            if (currentClass.ChangeGroupDeadline < DateTime.Now)
+            {
+                result.Message = "Cannot review at this time";
                 return result;
             }
             Project project = await _commonServices.GetProject(studentId);
@@ -223,17 +233,26 @@ namespace IPMS.Business.Services
                     result.Message = "Request is not correct";
                     return result;
                 }
+                
                 if (project != null)
                 {
                     result.Message = "Student currently in project";
                     return result;
                 }
-               
+
+                await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Students));
+                if (currentClass.MaxMember <= project.Students.Count)
+                {
+                    result.Message = "Group is full";
+                    return result;
+                }
+
+
             }
             else if (request.Type == "swap")
             {
                 if (history.ProjectFromId == Guid.Empty || history.ProjectFromId == null // validation data
-                    || history.ProjectToId == Guid.Empty || history.ProjectToId == null 
+                    || history.ProjectToId == Guid.Empty || history.ProjectToId == null
                     || history.MemberSwapId == Guid.Empty || history.MemberSwapId == null)
                 {
                     result.Message = "Request is not correct";
@@ -281,9 +300,9 @@ namespace IPMS.Business.Services
 
                 // check case Id for project or member swap
                 if ((history.ProjectFromId == request.ReviewId && request.ReviewId == project.Id) // review (project to || project from --> need current user is in role leader) &&  (user in project to || project from)
-                       || (history.ProjectToId == request.ReviewId && request.ReviewId == project.Id)) 
+                       || (history.ProjectToId == request.ReviewId && request.ReviewId == project.Id))
                 {
-                    if (leaderId != studentId) 
+                    if (leaderId != studentId)
                     {
                         result.Message = "Current user is not leader";
                         return result;
@@ -295,7 +314,7 @@ namespace IPMS.Business.Services
                     return result;
                 }
 
-                
+
                 if (request.ReviewId == studentId) // case member swap - can ignore case project from || project to because GUID is global unique!
                 {
                     if (project.Id != history.ProjectToId)   // case member changed to another group
@@ -317,7 +336,7 @@ namespace IPMS.Business.Services
                         return result;
                     }
                 }
-                
+
             }
             else // difference case join/swap
             {
@@ -331,8 +350,53 @@ namespace IPMS.Business.Services
         }
         public async Task UpdateRequestStatus(UpdateRequestStatusRequest request, Guid currentUserId)
         {
-            var x = await _commonServices.GetStudiesIn(currentUserId);
+            if (request.Type == "join")
+            {
+                history.ProjectToStatus = request.Status;
 
+            }
+            else if (request.Type == "swap")
+            {
+                if (history.ProjectFromId == request.ReviewId)
+                {
+                    history.ProjectFromStatus = request.Status;
+                }
+                else if (history.ProjectToId == request.ReviewId)
+                {
+                    history.ProjectToStatus = request.Status;
+                }
+                else if (history.MemberSwapId == request.ReviewId)
+                {
+                    history.MemberSwapStatus = request.Status;
+                }
+                
+                // save changes
+                _unitOfWork.MemberHistoryRepository.Update(history);
+                await _unitOfWork.SaveChangesAsync();
+
+                if (request.Status == RequestStatus.Approved)
+                {
+                    await ChangeGroupMember(request);
+                }
+            }
+        }
+
+        private async Task ChangeGroupMember(UpdateRequestStatusRequest request)
+        {
+            if (request.Type == "join")
+            {
+               await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
+            } else if (request.Type == "swap")
+            {
+                if (history.ProjectFromStatus == RequestStatus.Approved && history.ProjectToStatus == RequestStatus.Approved && history.MemberSwapStatus == RequestStatus.Approved)
+                {
+                    await _studentGroupService.RemoveMember(history.ReporterId);
+                    await _studentGroupService.RemoveMember((Guid)history.MemberSwapId!);
+
+                    await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
+                    await _studentGroupService.AddMember((Guid)history.MemberSwapId!, (Guid)history.ProjectFromId!);
+                }
+            } 
         }
     }
 }

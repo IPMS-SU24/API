@@ -80,7 +80,6 @@ namespace IPMS.Business.Services
 
             var project = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(p => p.Id.Equals(currentStudyIn.ProjectId)); // get current project
 
-
             return project;
         }
 

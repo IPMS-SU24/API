@@ -11,6 +11,7 @@ using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
 
 namespace IPMS.Business.Services
 {
@@ -271,7 +272,7 @@ namespace IPMS.Business.Services
                     return result;
                 }
             }
-            if(reporterProject.Id == memberForSwapProject.Id)
+            if (reporterProject.Id == memberForSwapProject.Id)
             {
                 result.Message = "Cannot swap to the same project";
                 return result;
@@ -291,7 +292,7 @@ namespace IPMS.Business.Services
             //Check student is not leader
             var user = await _userManager.FindByIdAsync(studentId.ToString());
 
-            var joinGroupExist = await _unitOfWork.ProjectRepository.Get().Where(x => x.Id == request.GroupId).Select(x=>x.Id).FirstOrDefaultAsync();
+            var joinGroupExist = await _unitOfWork.ProjectRepository.Get().Where(x => x.Id == request.GroupId).Select(x => x.Id).FirstOrDefaultAsync();
             if (joinGroupExist == Guid.Empty)
             {
                 result.Message = "Not found group";
@@ -361,20 +362,20 @@ namespace IPMS.Business.Services
             {
                 Message = "Cannot assign leader"
             };
-            if(request.MemberId == studentId)
+            if (request.MemberId == studentId)
             {
                 result.Message = "Can Only assign to another member";
                 return result;
             }
             var project = await _commonServices.GetProject(studentId);
-            if(project == null)
+            if (project == null)
             {
                 result.Message = "Not found Valid Project";
                 return result;
             }
             await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Students));
             var isMemberInGroup = project.Students.Any(x => x.InformationId == request.MemberId);
-            if(!isMemberInGroup)
+            if (!isMemberInGroup)
             {
                 result.Message = "The student want to assign is not in your group";
                 return result;
@@ -400,6 +401,85 @@ namespace IPMS.Business.Services
                 Message = "You have been assigned to become leader of your group"
             };
             await _messageService.SendMessage(message);
+        }
+        public async Task<ValidationResultModel> RemoveMemberValidators(Guid studentId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = string.Empty,
+                Result = true
+            };
+            var project = await _commonServices.GetProject(studentId);
+            if (project == null)
+            {
+                result.Message = "Remove member did not successfully";
+                result.Result = false;
+                return result;
+            }
+
+            return result;
+        }
+        public async Task RemoveMember(Guid studentId) // need validation
+        {
+            var project = await _commonServices.GetProject(studentId);
+            _unitOfWork.ProjectRepository.Delete(project);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<ValidationResultModel> AddMemberValidators(Guid studentId, Guid projectId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = string.Empty,
+                Result = true
+            };
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id.Equals(studentId));
+            if (user == null)
+            {
+                result.Message = "User does not existed";
+                result.Result = false;
+            }
+            var project = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(p => p.Id.Equals(projectId));
+            if (project == null)
+            {
+                result.Message = "Project does not existed";
+                result.Result = false;
+                return result;
+            }
+
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            var studiesIn = (await _commonServices.GetStudiesIn(studentId)).Select(s => s.ClassId);
+            var currentClass = await _commonServices.GetCurrentClass(studiesIn, currentSemesterId); // need not to check current Class because checked when get project
+            if (currentClass.ChangeGroupDeadline < DateTime.Now)
+            {
+                result.Message = "Cannot add member at this time";
+                return result;
+            }
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Students));
+            if (currentClass.MaxMember <= project.Students.Count)
+            {
+                result.Message = "Group is full";
+                return result;
+            }
+
+            return result;
+        }
+        public async Task AddMember(Guid studentId, Guid projectId) // need validation
+        {
+            var project = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(p => p.Id.Equals(projectId));
+
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            var studiesIn = (await _commonServices.GetStudiesIn(studentId)).Select(s => s.ClassId);
+            var currentClass = await _commonServices.GetCurrentClass(studiesIn, currentSemesterId);
+            var newMem = new Student
+            {
+                ProjectId = projectId,
+                InformationId = studentId,
+                ClassId = currentClass.Id
+            };
+            await _unitOfWork.StudentRepository.InsertAsync(newMem);
+            await _unitOfWork.SaveChangesAsync();
+
         }
     }
 }

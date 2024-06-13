@@ -1,11 +1,6 @@
 ﻿using IPMS.Business.Models;
 using IPMS.Business.Requests.MemberHistory;
 using IPMS.Business.Responses.MemberHistory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IPMS.Business.Interfaces.Services
 {
