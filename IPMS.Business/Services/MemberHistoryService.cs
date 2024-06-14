@@ -85,9 +85,9 @@ namespace IPMS.Business.Services
             // Update if expired
             if (currentClass!.ChangeGroupDeadline <= DateTime.Now)
             {
-                int expiredReviews = histories.Count(h => (h.MemberSwapId != null && h.MemberSwapStatus == RequestStatus.Waiting)
-                                                            || (h.ProjectFromId != null && h.ProjectFromStatus == RequestStatus.Waiting)
-                                                            || (h.ProjectToId != null && h.ProjectToStatus == RequestStatus.Waiting));
+                int expiredReviews = histories.Count(h => (h.MemberSwapId != Guid.Empty && h.MemberSwapStatus == RequestStatus.Waiting)
+                                                            || (h.ProjectFromId != Guid.Empty && h.ProjectFromStatus == RequestStatus.Waiting)
+                                                            || (h.ProjectToId != Guid.Empty && h.ProjectToStatus == RequestStatus.Waiting));
                 if (expiredReviews > 0) // set status
                 {
                     histories = UpdateExpiredRequest(histories);
@@ -95,7 +95,7 @@ namespace IPMS.Business.Services
             }
 
             // Create IQueryable response
-            //  Type = ProjectFrom (currentProject) != null: Swap, else: Join
+            //  Type = ProjectFrom (currentProject) != Guid.Empty: Swap, else: Join
             //      Combine 3 status if 1 reject -> reject
 
             //  ProjectFrom = query project to find name -> found above
@@ -275,9 +275,9 @@ namespace IPMS.Business.Services
             }
             else if (request.Type == "swap")
             {
-                if (history.ProjectFromId == Guid.Empty || history.ProjectFromId == null // validation data
-                    || history.ProjectToId == Guid.Empty || history.ProjectToId == null
-                    || history.MemberSwapId == Guid.Empty || history.MemberSwapId == null)
+                if (history.ProjectFromId == Guid.Empty || history.ProjectFromId == Guid.Empty // validation data
+                    || history.ProjectToId == Guid.Empty || history.ProjectToId == Guid.Empty
+                    || history.MemberSwapId == Guid.Empty || history.MemberSwapId == Guid.Empty)
                 {
                     result.Message = "Request is not correct";
                     return result;
@@ -387,13 +387,12 @@ namespace IPMS.Business.Services
                 {
                     history.MemberSwapStatus = request.Status;
                 }
-                
-                // save changes
-                _unitOfWork.MemberHistoryRepository.Update(history);
-                await _unitOfWork.SaveChangesAsync();
-
-                
             }
+
+            // save changes
+            _unitOfWork.MemberHistoryRepository.Update(history);
+            await _unitOfWork.SaveChangesAsync();
+
             if (request.Status == RequestStatus.Approved)
             {
                 await ChangeGroupMember(request);
