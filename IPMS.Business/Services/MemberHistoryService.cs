@@ -116,10 +116,10 @@ namespace IPMS.Business.Services
                 Id = h.Id,
                 LeaderId = leaderId, 
                 RequestType = (h.ProjectFromId == Guid.Empty) ? "join" : "swap",
-                Requester = GetUser(users, h.ReporterId), // cannot use async await in here, cannot query
-                MemberSwap = GetUser(users, h.MemberSwapId),
-                ProjectFrom = GetProject(projects, h.ProjectFromId), // Iqueryable will be borrow if query db again -> so that query before and just linq select
-                ProjectTo = GetProject(projects, h.ProjectToId),
+                Requester = GetUser(users, h.ReporterId, null), // cannot use async await in here, cannot query
+                MemberSwap = GetUser(users, h.MemberSwapId, h.MemberSwapStatus),
+                ProjectFrom = GetProject(projects, h.ProjectFromId, h.ProjectFromStatus), // Iqueryable will be borrow if query db again -> so that query before and just linq select
+                ProjectTo = GetProject(projects, h.ProjectToId, h.ProjectToStatus),
                 Status = GetFinalStatus(h),
                 CreateAt = h.CreatedDate,
             }).ToList();
@@ -161,7 +161,7 @@ namespace IPMS.Business.Services
             return RequestStatus.Waiting;
 
         }
-        private GeneralObjectInformation GetUser(List<IPMSUser> users, Guid? userId)
+        private GeneralObjectInformation GetUser(List<IPMSUser> users, Guid? userId, RequestStatus? status)
         {
             if (userId == null) // case join
                 return null;
@@ -171,14 +171,22 @@ namespace IPMS.Business.Services
             if (user == null) // validate user
                 return null;
 
-            return new GeneralObjectInformation
+            GeneralObjectInformation information = new GeneralObjectInformation
             {
                 Id = user.Id,
                 Name = user.FullName
             };
+            if (status != null)
+            {
+                information.Status = status;
+            }
+
+            return information;
+
+
         }
 
-        private GeneralObjectInformation GetProject(List<Project> projects, Guid? projectId)
+        private GeneralObjectInformation GetProject(List<Project> projects, Guid? projectId, RequestStatus status)
         {
             if (projectId == null) // case join
                 return null;
@@ -187,11 +195,18 @@ namespace IPMS.Business.Services
             if (project == null) // validate project
                 return null;
 
-            return new GeneralObjectInformation
+            GeneralObjectInformation information = new GeneralObjectInformation
             {
                 Id = project.Id,
                 Name = project.GroupName
             };
+
+            if (status != null)
+            {
+                information.Status = status;
+            }
+
+            return information;
 
         }
         private List<MemberHistory> UpdateExpiredRequest(List<MemberHistory> histories)
