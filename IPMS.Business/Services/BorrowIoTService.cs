@@ -31,7 +31,7 @@ namespace IPMS.Business.Services
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var studiesIn = await _commonServices.GetStudiesIn(leaderId);
             var project = await _commonServices.GetProject(leaderId);
-            var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x=>x.ClassId), currentSemester.Id);
+            var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId), currentSemester.Id);
             //Check borrow Assessment Status => Not In Progress => Validate Fail
             var borrowAssessmentStatus = await _commonServices.GetBorrowIoTStatus(project.Id, @class);
             if (borrowAssessmentStatus != AssessmentStatus.InProgress) return false;
@@ -39,13 +39,13 @@ namespace IPMS.Business.Services
             var iot = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.ComponentId);
             if (iot == null) return false;
             //Check iot in iot list of Topic
-            var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x=>x.ProjectId == project.Id).Select(x=>x.TopicId).FirstOrDefaultAsync();
+            var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id).Select(x => x.TopicId).FirstOrDefaultAsync();
             var isInTopicComponent = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents()
                                                                                     .Where(x => x.MasterId == topicId && x.ComponentId == request.ComponentId).AnyAsync();
             if (!isInTopicComponent) return false;
             //Check remain Quantity
             var remainQuantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, request.ComponentId);
-            if(remainQuantity < request.Quantity) return false;
+            if (remainQuantity < request.Quantity) return false;
             return true;
         }
 
@@ -74,8 +74,13 @@ namespace IPMS.Business.Services
                 opts.Items[nameof(ComponentsMaster.MasterId)] = projectId;
                 opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Project;
             });
-            await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters);
+           
+            await CreateReportIoTForProject(leaderId, borrowIoTModels); // create report before to check that report type is exist
+
+            await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters); // create borrow Iot Components
             await _unitOfWork.SaveChangesAsync();
+
+
         }
         private async Task<BorrowIoTComponentInformation> MapBorrowIoTComponentInformation(ComponentsMaster component, IPMSClass @class)
         {
@@ -86,5 +91,37 @@ namespace IPMS.Business.Services
                 Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, component.ComponentId!.Value)
             };
         }
+
+        private async Task CreateReportIoTForProject(Guid leaderId, IEnumerable<IoTModelRequest> borrowIoTModels)
+        {
+            var components = await _unitOfWork.IoTComponentRepository.Get().Where(Ic => borrowIoTModels.Select(bIm => bIm.ComponentId).Contains(Ic.Id)).ToListAsync();
+            string content = "";
+            foreach (var iotModels in borrowIoTModels)
+            {
+                // always found Iot Component, have validation above
+                content = content + components.FirstOrDefault(c => c.Id.Equals(iotModels.ComponentId))!.Name + " x " + iotModels.Quantity + "\n"; 
+            }
+
+            var reportType = await _unitOfWork.ReportTypeRepository.Get()
+                        .FirstOrDefaultAsync(rt => rt.Id.Equals(new Guid("552212b8-7899-491c-84a4-a3bf35cc36ad"))); // find report Borrow Iot Component
+            
+            if (reportType == null )
+            {
+                throw new DataNotFoundException("Report type Borrow Iot Components not found");
+            }
+
+            var report = new Report
+            {
+                ReporterId = leaderId,
+                Title = "Borrow Iot Components",
+                Content = content,
+                ReportTypeId = reportType.Id 
+            };
+
+            await _unitOfWork.ReportRepository.InsertAsync(report);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        
     }
 }

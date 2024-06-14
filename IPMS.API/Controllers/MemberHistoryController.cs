@@ -24,5 +24,15 @@ namespace IPMS.API.Controllers
             var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return GetActionResponse(response);
         }
+
+        [EnumAuthorize(UserRole.Student, UserRole.Leader)]
+        [HttpPut]
+        public async Task<IActionResult> UpdateRequestStatus([FromBody] UpdateRequestStatusRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+
+            await _memberHistoryService.UpdateRequestStatus(request, currentUserId);
+            return Ok();
+        }
     }
 }
