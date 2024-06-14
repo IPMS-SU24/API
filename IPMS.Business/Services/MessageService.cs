@@ -10,8 +10,8 @@ namespace IPMS.Business.Services
 {
     public class MessageService : IMessageService
     {
-        private static readonly string SQS_EMAIL = "IPMS_MailSQS";
-        private static readonly string SQS_NOTIFICATION = "IPMS_NotificationSQS";
+        private static readonly string SQS_EMAIL = "MailSQS";
+        private static readonly string SQS_NOTIFICATION = "NotificationSQS";
         private readonly IAmazonSQS _sqsClient;
         private readonly IConfiguration _configuration;
         private readonly ILogger<MessageService> _logger;
@@ -51,7 +51,7 @@ namespace IPMS.Business.Services
             }
             catch (QueueDoesNotExistException ex)
             {
-                _logger.LogError(ex, "SQS Queue for send mail is not existed!!!");
+                _logger.LogError(ex, "SQS Queue for send is not existed!!!");
                 throw;
             }
         }
