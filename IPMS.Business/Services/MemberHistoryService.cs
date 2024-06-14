@@ -105,12 +105,16 @@ namespace IPMS.Business.Services
 
 
             //  MemberSwap = query IPMSUser from memberSwapId 
+
+            // leaderId : 
+            //  case swap: just need leaderId of current user -> memberswap, leader project to can review, leader project from can review
+            //  case join: current user -> leaderId: dont have --> Guid.Empty. Leader project to: can review
             var users = _userManager.Users.ToList();
             var projects = _unitOfWork.ProjectRepository.Get().ToList();
             var response = histories.Select(h => new LoggedInUserHistoryResponse
             {
                 Id = h.Id,
-                LeaderId = leaderId, // leader ID of this project with case join
+                LeaderId = leaderId, 
                 RequestType = (h.ProjectFromId == Guid.Empty) ? "join" : "swap",
                 Requester = GetUser(users, h.ReporterId), // cannot use async await in here, cannot query
                 MemberSwap = GetUser(users, h.MemberSwapId),
@@ -125,32 +129,32 @@ namespace IPMS.Business.Services
         }
         private RequestStatus GetFinalStatus(MemberHistory history)
         {
-            if (history.MemberSwapId != null && history.MemberSwapStatus == RequestStatus.Rejected)
+            if (history.MemberSwapId != Guid.Empty && history.MemberSwapStatus == RequestStatus.Rejected)
             {
                 return RequestStatus.Rejected;
 
             }
 
-            else if (history.ProjectFromId != null && history.ProjectFromStatus == RequestStatus.Rejected)
+            else if (history.ProjectFromId != Guid.Empty && history.ProjectFromStatus == RequestStatus.Rejected)
             {
                 return RequestStatus.Rejected;
 
             }
 
-            else if (history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Rejected)
+            else if (history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Rejected)
             {
                 return RequestStatus.Rejected;
 
             }
-            if (history.ProjectFromId != null) // case swap
+            if (history.ProjectFromId != Guid.Empty) // case swap
             {
-                if ((history.MemberSwapId != null && history.MemberSwapStatus == RequestStatus.Approved)
-                    && (history.ProjectFromId != null && history.ProjectFromStatus == RequestStatus.Approved)
-                    && ((history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Approved)))
+                if ((history.MemberSwapId != Guid.Empty && history.MemberSwapStatus == RequestStatus.Approved)
+                    && (history.ProjectFromId != Guid.Empty && history.ProjectFromStatus == RequestStatus.Approved)
+                    && ((history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Approved)))
                     return RequestStatus.Approved;
             } else // case join
             {
-                if (history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Approved)
+                if (history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Approved)
                     return RequestStatus.Approved;
 
             }
@@ -194,18 +198,18 @@ namespace IPMS.Business.Services
         {
             foreach (var history in histories)
             {
-                if (history.MemberSwapId != null && history.MemberSwapStatus == RequestStatus.Waiting)
+                if (history.MemberSwapId != Guid.Empty && history.MemberSwapStatus == RequestStatus.Waiting)
                 {
                     history.MemberSwapStatus = RequestStatus.Rejected;
                 }
 
-                if (history.ProjectFromId != null && history.ProjectFromStatus == RequestStatus.Waiting)
+                if (history.ProjectFromId != Guid.Empty && history.ProjectFromStatus == RequestStatus.Waiting)
                 {
                     history.ProjectFromStatus = RequestStatus.Rejected;
 
                 }
 
-                if (history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Waiting)
+                if (history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Waiting)
                 {
                     history.ProjectToStatus = RequestStatus.Rejected;
 
