@@ -59,6 +59,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IStudentGroupService, StudentGroupService>();
             services.AddScoped<IIoTDataService, IoTDataService>();
             services.AddScoped<IMemberHistoryService, MemberHistoryService>();
+            services.AddScoped<ISemesterService, SemesterService>();
         }
     }
 }
