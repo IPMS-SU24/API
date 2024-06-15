@@ -8,5 +8,9 @@ namespace IPMS.API.Common.Extensions
         {
             return app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
         }
+        public static IApplicationBuilder UseRequestResponseMiddleware(this IApplicationBuilder app)
+        {
+            return app.UseMiddleware<RequestResponseLoggingMiddleware>();
+        }
     }
 }

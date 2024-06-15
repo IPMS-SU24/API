@@ -44,13 +44,7 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
-builder.Services.AddHttpLogging(logging =>
-{
-    logging.LoggingFields = HttpLoggingFields.RequestPath | HttpLoggingFields.RequestBody | HttpLoggingFields.RequestQuery;
-    logging.RequestBodyLogLimit = 4096;
-    logging.ResponseBodyLogLimit = 4096;
-});
-builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env");
+//builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env");
 builder.Services.AddFluentValidationAutoValidation(option =>
 {
     option.OverrideDefaultResultFactoryWith<IPMSResultFactory>();
@@ -151,7 +145,7 @@ app.UseCors(options => options.AllowAnyMethod()
                 .AllowAnyHeader()
                 .SetIsOriginAllowed(origin => true) // allow any origin
                 .AllowCredentials());
-app.UseHttpLogging();
+app.UseRequestResponseMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 
