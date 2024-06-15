@@ -9,6 +9,7 @@ using IPMS.API.Filters;
 using IPMS.Business.Common.Extensions;
 using IPMS.Business.Models;
 using IPMS.DataAccess;
+using IPMS.DataAccess.Common;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -67,6 +68,7 @@ builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess"));
+    options.AddInterceptors(new AuditingSaveChangesInterceptor());
 });
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

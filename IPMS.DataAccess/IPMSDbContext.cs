@@ -42,6 +42,19 @@ namespace IPMS.DataAccess
 
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddUserSecrets(Assembly.GetExecutingAssembly())
+                .AddJsonFile("appsettings.json", true, true)
+                .Build();
+                optionsBuilder.UseNpgsql(configuration.GetConnectionString("IPMS"));
+            }
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -88,7 +101,7 @@ namespace IPMS.DataAccess
                 entity.Property(e => e.ContributePercentage).HasPrecision(3, 0);
 
                 entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
-
+                entity.HasIndex(e => new {e.ClassId,e.InformationId }).IsUnique();
                 entity.HasOne(e => e.Information)
                     .WithMany(p => p.Students)
                     .HasForeignKey("InformationId")
@@ -176,7 +189,7 @@ namespace IPMS.DataAccess
                 entity.Property(e => e.Description).HasMaxLength(10000);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
-
+                entity.HasIndex(e => e.Name).IsUnique();
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("SemesterId")
@@ -300,7 +313,7 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Semester")
                     .HasKey(e => e.Id);
-
+                entity.HasIndex(e=>e.ShortName).IsUnique();
                 entity.Property(e => e.Description).HasMaxLength(10000);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
@@ -345,7 +358,7 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
-
+                entity.HasIndex(e => e.Id).IsUnique();
                 entity.Property(e => e.Description).HasMaxLength(10000);
 
                 entity.Property(e => e.Name).HasMaxLength(50);

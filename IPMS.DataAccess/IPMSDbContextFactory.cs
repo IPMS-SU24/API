@@ -17,13 +17,12 @@ namespace IPMS.DataAccess
         private string GetConnectionString()
         {
 
-            IConfigurationRoot configuration = new ConfigurationBuilder()
+            IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddUserSecrets(Assembly.GetExecutingAssembly())
-                .AddEnvironmentVariables(prefix: "IPMS_")
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
-            return configuration["IPMS_ConnectionStrings_IPMS"];
+            return configuration.GetConnectionString("IPMS");
         }
     }
 
