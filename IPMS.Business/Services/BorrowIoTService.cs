@@ -9,7 +9,6 @@ using IPMS.Business.Requests.IoTComponent;
 using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Common.Exceptions;
 using IPMS.DataAccess.Common.Enums;
-using System.Security.Claims;
 
 namespace IPMS.Business.Services
 {
@@ -74,8 +73,6 @@ namespace IPMS.Business.Services
                 opts.Items[nameof(ComponentsMaster.MasterId)] = projectId;
                 opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Project;
             });
-           
-            await CreateReportIoTForProject(leaderId, borrowIoTModels); // create report before to check that report type is exist
 
             await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters); // create borrow Iot Components
             await _unitOfWork.SaveChangesAsync();
@@ -92,36 +89,5 @@ namespace IPMS.Business.Services
             };
         }
 
-        private async Task CreateReportIoTForProject(Guid leaderId, IEnumerable<IoTModelRequest> borrowIoTModels)
-        {
-            var components = await _unitOfWork.IoTComponentRepository.Get().Where(Ic => borrowIoTModels.Select(bIm => bIm.ComponentId).Contains(Ic.Id)).ToListAsync();
-            string content = "";
-            foreach (var iotModels in borrowIoTModels)
-            {
-                // always found Iot Component, have validation above
-                content = content + components.FirstOrDefault(c => c.Id.Equals(iotModels.ComponentId))!.Name + " x " + iotModels.Quantity + "\n"; 
-            }
-
-            var reportType = await _unitOfWork.ReportTypeRepository.Get()
-                        .FirstOrDefaultAsync(rt => rt.Id.Equals(new Guid("552212b8-7899-491c-84a4-a3bf35cc36ad"))); // find report Borrow Iot Component
-            
-            if (reportType == null )
-            {
-                throw new DataNotFoundException("Report type Borrow Iot Components not found");
-            }
-
-            var report = new Report
-            {
-                ReporterId = leaderId,
-                Title = "Borrow Iot Components",
-                Content = content,
-                ReportTypeId = reportType.Id 
-            };
-
-            await _unitOfWork.ReportRepository.InsertAsync(report);
-            await _unitOfWork.SaveChangesAsync();
-        }
-
-        
     }
 }
