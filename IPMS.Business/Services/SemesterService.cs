@@ -34,23 +34,46 @@ namespace IPMS.Business.Services
 
         public async Task<GetClassInfoInSemesterResponse> GetClassesInSemester(Guid lecturerId, GetClassInfoInSemesterRequest request)
         {
-            //Get All Class
-            var classes = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester).Include(x=>x.Students)
+            //All Class Query
+            var classesQuery = _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
                                                          .Where(x => x.Semester.ShortName == request.SemesterCode && x.LecturerId == lecturerId)
-                                                         .Select(x => new ClassInSemesterInfo
+                                                         .Select(x => new
                                                          {
                                                              ClassCode = x.Name,
                                                              ClassId = x.Id,
                                                              ClassName = x.Description,
-                                                             MaxMembers = x.MaxMember,
-                                                             Total = x.Students.Count,
-                                                             GroupNum = x.Students.Select(x=>x.ProjectId).Distinct().Count()
-                                                         })
-                                                         .ToListAsync();
-            if(classes == null || !classes.Any()) { throw new DataNotFoundException(); }
-            //Calculate enrolled Student (EmailConfirmed == true)
-            var studentCount =_unitOfWork.StudentRepository.Get().Include(x => x.Information);
-            throw new NotImplementedException();
+                                                             MaxMembers = x.MaxMember
+                                                         });
+
+            //Calculate enrolled Student (EmailConfirmed == true), total student, number of groups
+            var studentQuery = _unitOfWork.StudentRepository.Get().Include(x => x.Information)
+                                                                    .GroupBy(x => x.ClassId).Select(x => new
+                                                                    {
+                                                                        ClassId = x.Key,
+                                                                        Enroll = x.Where(stu => stu.Information.EmailConfirmed).Count(),
+                                                                        Total = x.Count(),
+                                                                        GroupNum = x.Select(y => y.ProjectId).Distinct().Count()
+                                                                    });
+            var result = await classesQuery.Join(
+                                studentQuery,
+                                c => c.ClassId,
+                                s => s.ClassId,
+                                (@class, student) => new ClassInSemesterInfo
+                                {
+                                   ClassId = @class.ClassId,
+                                   ClassName = @class.ClassName,
+                                   ClassCode = @class.ClassCode,
+                                   MaxMembers = @class.MaxMembers,
+                                   Enroll = student.Enroll,
+                                   Total = student.Total,
+                                   GroupNum = student.GroupNum,
+                                }
+                                ).ToListAsync();
+            if (result == null || !result.Any()) throw new DataNotFoundException();
+            return new()
+            {
+                Classes = result
+            };
         }
     }
 }

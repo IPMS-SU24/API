@@ -12,7 +12,6 @@
         public int Total { get; set; }
         public int Enroll { get; set; }
         public int GroupNum { get; set; }
-        public int OpenningSubmission { get; set; }
         public int MaxMembers { get; set; }
 
 
