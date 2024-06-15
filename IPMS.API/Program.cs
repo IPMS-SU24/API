@@ -63,17 +63,18 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.AddDI();
+builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess"));
 });
-builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
 {
     config.SignIn.RequireConfirmedEmail = false;
+    config.User.RequireUniqueEmail = true;
     config.SignIn.RequireConfirmedPhoneNumber = false;
 }).AddEntityFrameworkStores<IPMSDbContext>()
             .AddDefaultTokenProviders();

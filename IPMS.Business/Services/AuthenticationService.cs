@@ -95,7 +95,7 @@ namespace IPMS.Business.Services
         public async Task<TokenModel?> Login(LoginRequest loginModel)
         {
             var user = await _userManager.FindByEmailAsync(loginModel.Email);
-            if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password))
+            if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password) && await _userManager.IsEmailConfirmedAsync(user))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
                 var authClaims = new List<Claim>
