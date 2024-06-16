@@ -16,7 +16,7 @@ if [ "$(docker ps -a -q -f name=$REPOSITORY_NAME)" ]; then
 fi
 
 # Thực hiện start Docker container và map cổng 80 trên máy host với cổng 300 trên container
-docker run -d --name $REPOSITORY_NAME -p 80:80 $DOCKER_IMAGE
+docker run -e TZ=Asia/Ho_Chi_Minh -d --name $REPOSITORY_NAME -p 80:80 $DOCKER_IMAGE
 
 # Kiểm tra xem container đã khởi chạy thành công hay không
 if [ $? -eq 0 ]; then
