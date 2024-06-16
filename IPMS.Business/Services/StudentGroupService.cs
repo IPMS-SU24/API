@@ -329,14 +329,14 @@ namespace IPMS.Business.Services
 
         public async Task RequestToJoinGroup(JoinGroupRequest request, Guid studentId)
         {
-            var projectTo = await _commonServices.GetProject(request.GroupId);
             var memberHistory = new MemberHistory()
             {
                 ReporterId = studentId,
+                IPMSClassId = (await _commonServices.GetCurrentClass(studentId)).Id,
                 ProjectToId = request.GroupId
             };
             await _unitOfWork.MemberHistoryRepository.InsertAsync(memberHistory);
-            var studentForNoti = await _unitOfWork.ProjectRepository.Get().Where(x => x.Id == projectTo.Id)
+            var studentForNoti = await _unitOfWork.ProjectRepository.Get().Where(x => x.Id == request.GroupId)
                                                                     .Include(x => x.Students).SelectMany(x => x.Students,
                                                                     (project, student) => new
                                                                     {
