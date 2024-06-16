@@ -73,5 +73,10 @@ namespace IPMS.Business.Repository
                 _context.Entry(entity).State = EntityState.Detached;
             }
         }
+
+        public void Attach(TEntity updateEntity)
+        {
+            dbSet.Attach(updateEntity);
+        }
     }
 }
