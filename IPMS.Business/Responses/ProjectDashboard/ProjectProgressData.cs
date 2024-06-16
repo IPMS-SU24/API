@@ -24,7 +24,7 @@ namespace IPMS.Business.Responses.ProjectDashboard
         }
         public string TopicName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
     }
     public class BorrowInformation
     {
@@ -34,7 +34,7 @@ namespace IPMS.Business.Responses.ProjectDashboard
         {
             get => AssessmentStatus.GetAttributeOfType<DisplayAttribute>().Name ?? string.Empty;
         }
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
         public List<BorrowIoTComponentInformation> IoTComponents { get; set; } = new();
     }
     public class BorrowIoTComponentInformation

@@ -11,6 +11,7 @@ namespace IPMS.Business.Interfaces.Repositories
         void Delete(TEntity deleteEntity);
         void HardDelete(TEntity deleteEntity);
         void Update(TEntity updateEntity);
+        void Attach(TEntity updateEntity);
         Task LoadExplicitProperty(TEntity entity, string propName);
     }
 }
