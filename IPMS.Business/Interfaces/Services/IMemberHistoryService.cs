@@ -8,6 +8,6 @@ namespace IPMS.Business.Interfaces.Services
     {
         Task<List<LoggedInUserHistoryResponse>> GetLoggedInUserHistories(Guid currentUserId);
         Task<ValidationResultModel> UpdateRequestStatusValidators(UpdateRequestStatusRequest request, Guid studentId);
-        Task UpdateRequestStatus(UpdateRequestStatusRequest request, Guid currentUserId);
+        Task UpdateRequestStatus(UpdateRequestStatusRequest request);
     }
 }

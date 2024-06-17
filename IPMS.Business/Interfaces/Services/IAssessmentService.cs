@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Responses.Assessment;
+﻿using IPMS.Business.Models;
+using IPMS.Business.Responses.Assessment;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace IPMS.Business.Interfaces.Services
 {
     public interface IAssessmentService
     {
-        public Task<AssessmentSubmissionProjectResponse> GetAssessmentById(Guid assessmentId, Guid currentUserId);
+        Task<AssessmentSubmissionProjectResponse> GetAssessmentById(Guid assessmentId);
+        Task<ValidationResultModel> GetAssessmentByIdValidators(Guid assessmentId);
     }
 }

@@ -1,8 +1,10 @@
 ﻿using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
 using IPMS.Business.Requests.ProjectSubmission;
 using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
@@ -12,12 +14,14 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly IPresignedUrlService _presignedUrl;
+        private readonly IHttpContextAccessor _context;
 
-        public ProjectSubmissionService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrl) 
+        public ProjectSubmissionService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrl, IHttpContextAccessor context) 
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _presignedUrl = presignedUrl;
+            _context  = context;
         }
 
         public async Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId)
@@ -27,10 +31,11 @@ namespace IPMS.Business.Services
                 request.SearchValue = "";
             }
             request.SearchValue = request.SearchValue.Trim().ToLower();
-            Guid projectId = (await _commonServices.GetProject(currentUserId))!.Id;
+            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
+
 
             IQueryable<ProjectSubmission> projectSubmissions = _unitOfWork.ProjectSubmissionRepository
-                                                  .Get().Where(x => x.ProjectId == projectId
+                                                  .Get().Where(x => x.ProjectId == project.Id
                                                             && (x.SubmissionModule!.Name.ToLower().Contains(request.SearchValue)
                                                                 || x.SubmissionModule.Assessment!.Name.ToLower().Contains(request.SearchValue)))
                                                   .Include(x => x.SubmissionModule).ThenInclude(x => x!.Assessment)
@@ -57,7 +62,7 @@ namespace IPMS.Business.Services
             }
 
             var groupNewest = _unitOfWork.ProjectSubmissionRepository // IsNewest base on all of submission in submission module
-                                                  .Get().Where(x => x.ProjectId == projectId)
+                                                  .Get().Where(x => x.ProjectId == project.Id)
                                                   .GroupBy(x => x.SubmissionModuleId)
                                                     .Select(group => new
                                                     {
@@ -83,19 +88,32 @@ namespace IPMS.Business.Services
             
             return response;
         }
+        public async Task<ValidationResultModel> UpdateProjectSubmissionValidators(UpdateProjectSubmissionRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+            var submissionModule = _unitOfWork.SubmissionModuleRepository.Get().FirstOrDefault(sm => sm.Id.Equals(request.SubmissionModuleId)); // Find submission module
+            if (submissionModule == null)
+            {
+                result.Message = "Submission module does not exist";
+                return result;
+            }
 
+            if (submissionModule.EndDate < request.SubmissionDate) // Validation submit time
+            {
+                result.Message = "Cannot submit at this time";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
         public async Task<bool> UpdateProjectSubmission(UpdateProjectSubmissionRequest request, Guid currentUserId)
         {
-            try
-            {
-                var submissionModule = _unitOfWork.SubmissionModuleRepository.Get().FirstOrDefault(sm => sm.Id.Equals(request.SubmissionModuleId)); // Find submission module
 
-                if (submissionModule.EndDate < request.SubmissionDate) // Validation submit time
-                {
-                    return false;
-                }
-
-                ProjectSubmission? submission = _unitOfWork.ProjectSubmissionRepository.Get().FirstOrDefault(ps => ps.Id.Equals(request.Id));
+                ProjectSubmission? submission = await _unitOfWork.ProjectSubmissionRepository.Get().FirstOrDefaultAsync(ps => ps.Id.Equals(request.Id));
 
                 if (submission != null) // It's mean that have submission before, so that update
                 {
@@ -126,12 +144,6 @@ namespace IPMS.Business.Services
                     return true;
 
                 }
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-
 
         }
     }
