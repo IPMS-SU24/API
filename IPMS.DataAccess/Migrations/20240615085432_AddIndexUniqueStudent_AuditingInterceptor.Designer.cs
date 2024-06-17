@@ -3,6 +3,7 @@ using System;
 using IPMS.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IPMS.DataAccess.Migrations
 {
     [DbContext(typeof(IPMSDbContext))]
-    partial class IPMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240615085432_AddIndexUniqueStudent_AuditingInterceptor")]
+    partial class AddIndexUniqueStudent_AuditingInterceptor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,16 +246,16 @@ namespace IPMS.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("BorrowIoTComponentDeadline")
+                    b.Property<DateTime>("BorrowIoTComponentDeadline")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ChangeGroupDeadline")
+                    b.Property<DateTime>("ChangeGroupDeadline")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ChangeTopicDeadline")
+                    b.Property<DateTime>("ChangeTopicDeadline")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("CreateGroupDeadline")
+                    b.Property<DateTime>("CreateGroupDeadline")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("CreatedAt")

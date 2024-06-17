@@ -8,6 +8,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<List<Student>> GetStudiesIn(Guid currentUserId);
         Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn, Guid currentSemesterId);
         Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn);
+        Task<IPMSClass?> GetCurrentClass(Guid studentId);
         Task<(DateTime StartDate, DateTime EndDate)> GetAssessmentTime(Guid assessmentId, IUnitOfWork unitOfWork);
         Task<Project?> GetProject(Guid currentUserId);
         Task<Topic?> GetProjectTopic(Guid projectId);

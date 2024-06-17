@@ -95,7 +95,7 @@ namespace IPMS.Business.Services
         public async Task<TokenModel?> Login(LoginRequest loginModel)
         {
             var user = await _userManager.FindByEmailAsync(loginModel.Email);
-            if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password))
+            if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password) && await _userManager.IsEmailConfirmedAsync(user))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
                 var authClaims = new List<Claim>
@@ -160,9 +160,9 @@ namespace IPMS.Business.Services
             {
                 return null;
             }
-            string username = principal.Identity.Name;
+            string email = principal.FindFirst(x=>x.Type == ClaimTypes.Email).Value;
 
-            var user = await _userManager.FindByNameAsync(username);
+            var user = await _userManager.FindByEmailAsync(email);
             var oldActiveRefreshToken = user.RefreshTokens.Where(x => x.IsActive && x.Token == refreshToken).FirstOrDefault();
 
             if (user == null || oldActiveRefreshToken == null || user.IsDeleted)

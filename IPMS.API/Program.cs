@@ -9,6 +9,7 @@ using IPMS.API.Filters;
 using IPMS.Business.Common.Extensions;
 using IPMS.Business.Models;
 using IPMS.DataAccess;
+using IPMS.DataAccess.Common;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -43,12 +44,6 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
-builder.Services.AddHttpLogging(logging =>
-{
-    logging.LoggingFields = HttpLoggingFields.RequestPath | HttpLoggingFields.RequestBody | HttpLoggingFields.RequestQuery;
-    logging.RequestBodyLogLimit = 4096;
-    logging.ResponseBodyLogLimit = 4096;
-});
 builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env");
 builder.Services.AddFluentValidationAutoValidation(option =>
 {
@@ -63,17 +58,19 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.AddDI();
+builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess"));
+    options.AddInterceptors(new AuditingSaveChangesInterceptor());
 });
-builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddIdentity<IPMSUser, IdentityRole<Guid>>(config =>
 {
     config.SignIn.RequireConfirmedEmail = false;
+    config.User.RequireUniqueEmail = true;
     config.SignIn.RequireConfirmedPhoneNumber = false;
 }).AddEntityFrameworkStores<IPMSDbContext>()
             .AddDefaultTokenProviders();
@@ -148,7 +145,7 @@ app.UseCors(options => options.AllowAnyMethod()
                 .AllowAnyHeader()
                 .SetIsOriginAllowed(origin => true) // allow any origin
                 .AllowCredentials());
-app.UseHttpLogging();
+app.UseRequestResponseMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 

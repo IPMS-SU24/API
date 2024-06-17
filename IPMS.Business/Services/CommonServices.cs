@@ -187,5 +187,11 @@ namespace IPMS.Business.Services
             if (topic != null) return AssessmentStatus.Done;
             return AssessmentStatus.Expired;
         }
+
+        public async Task<IPMSClass?> GetCurrentClass(Guid studentId)
+        {
+            var studiesIn = await GetStudiesIn(studentId);
+            return await GetCurrentClass(studiesIn.Select(x => x.ClassId));
+        }
     }
 }
