@@ -8,6 +8,7 @@ using IPMS.Business.Requests.MemberHistory;
 using IPMS.Business.Responses.MemberHistory;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
@@ -20,13 +21,15 @@ namespace IPMS.Business.Services
         private readonly ICommonServices _commonServices;
         private readonly UserManager<IPMSUser> _userManager;
         private readonly IStudentGroupService _studentGroupService;
+        private readonly IHttpContextAccessor _context;
         private MemberHistory history { get; set; }
-        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, IStudentGroupService studentGroupService)
+        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, IStudentGroupService studentGroupService, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _userManager = userManager;
             _studentGroupService = studentGroupService;
+            _context = context;
         }
         private async Task<Guid> GetLeaderId(Guid projectId)
         {
@@ -44,17 +47,14 @@ namespace IPMS.Business.Services
             // Will not kick user
 
             // Find current class
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
-            var studiesIn = (await _commonServices.GetStudiesIn(currentUserId)).Select(s => s.ClassId);
-            var currentClass = await _commonServices.GetCurrentClass(studiesIn, currentSemesterId);
-
-            if (currentClass == null)
+            IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
+            if (@class == null)
                 throw new DataNotFoundException("Current user isn't in any class");
 
             Guid leaderId = Guid.Empty; // default current user is freedom
 
             // Find current project
-            var project = await _commonServices.GetProject(currentUserId);  
+            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
 
             if (project != null) // user currently in project
             {
@@ -71,19 +71,19 @@ namespace IPMS.Business.Services
                 histories = await _unitOfWork.MemberHistoryRepository.Get().
                                             Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(mh.Id)
                                             || mh.ProjectFromId.Equals(project!.Id) || mh.ProjectToId.Equals(project.Id))
-                                                && mh.IPMSClassId.Equals(currentClass!.Id)).ToListAsync();
+                                                && mh.IPMSClassId.Equals(@class!.Id)).ToListAsync();
             }
             else // not a leader
             {
                 histories = await _unitOfWork.MemberHistoryRepository.Get().
                                             Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(mh.Id))
-                                                    && mh.IPMSClassId.Equals(currentClass!.Id)).ToListAsync();
+                                                    && mh.IPMSClassId.Equals(@class!.Id)).ToListAsync();
             }
 
             // if have any rejected - needn't update anything -> Just show current status
 
             // Update if expired
-            if (currentClass!.ChangeGroupDeadline <= DateTime.Now)
+            if (@class!.ChangeGroupDeadline <= DateTime.Now)
             {
                 int expiredReviews = histories.Count(h => (h.MemberSwapId != Guid.Empty && h.MemberSwapStatus == RequestStatus.Waiting)
                                                             || (h.ProjectFromId != Guid.Empty && h.ProjectFromStatus == RequestStatus.Waiting)
@@ -253,16 +253,15 @@ namespace IPMS.Business.Services
                 return result;
             }
             Project reqUserProject = await _commonServices.GetProject(reqUser.Id);
-
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
-            var studiesIn = (await _commonServices.GetStudiesIn(studentId)).Select(s => s.ClassId);
-            var currentClass = await _commonServices.GetCurrentClass(studiesIn, currentSemesterId); // need not to check current Class because checked when get project
-            if (currentClass.ChangeGroupDeadline < DateTime.Now)
+            
+            IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
+            // need not to check current Class because checked when get project
+            if (@class.ChangeGroupDeadline < DateTime.Now)
             {
                 result.Message = "Cannot review at this time";
                 return result;
             }
-            Project project = await _commonServices.GetProject(studentId);
+            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
 
             if (request.Type == "join")
             {
@@ -381,7 +380,7 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
-        public async Task UpdateRequestStatus(UpdateRequestStatusRequest request, Guid currentUserId)
+        public async Task UpdateRequestStatus(UpdateRequestStatusRequest request)
         {
             if (request.Type == "join")
             {

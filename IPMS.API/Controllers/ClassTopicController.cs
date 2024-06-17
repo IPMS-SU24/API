@@ -41,9 +41,7 @@ namespace IPMS.API.Controllers
         [HttpPut]
         public async Task<IActionResult> PickTopic([FromBody] Guid topicId)
         {
-            Guid currentUserId = HttpContext.User.Claims.GetUserId();
-
-            bool isPickedSuccessfully = await _classTopicService.PickTopic(currentUserId, topicId);
+            bool isPickedSuccessfully = await _classTopicService.PickTopic(topicId);
 
             var response = new IPMSResponse<object>(); // Default is success
 

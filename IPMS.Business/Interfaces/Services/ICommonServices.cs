@@ -1,5 +1,6 @@
 ﻿using IPMS.Business.Common.Enums;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace IPMS.Business.Interfaces.Services
 {
@@ -20,5 +21,9 @@ namespace IPMS.Business.Interfaces.Services
         Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId);
         Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid lecturerId);
         AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime changeTopicDeadline, DateTime changeGroupDeadline);
+        Task SetCommonSessionUserEntity(Guid currentUserId);
+        IPMSClass? GetClass();
+        Project? GetProject();
+
     }
 }

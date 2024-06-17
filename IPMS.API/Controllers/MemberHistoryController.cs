@@ -29,9 +29,7 @@ namespace IPMS.API.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateRequestStatus([FromBody] UpdateRequestStatusRequest request)
         {
-            Guid currentUserId = HttpContext.User.Claims.GetUserId();
-
-            await _memberHistoryService.UpdateRequestStatus(request, currentUserId);
+            await _memberHistoryService.UpdateRequestStatus(request);
             return Ok();
         }
     }

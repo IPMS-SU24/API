@@ -4,10 +4,9 @@ using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Extensions;
-using System;
-using System.Collections.Generic;
+using System.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -19,14 +18,15 @@ namespace IPMS.Business.Services
         private List<Student>? StudiesIn { get; set; }
         private Topic? ProjectTopic { get; set; }
         private IEnumerable<ProjectSubmission>? ProjectSubmissions { get; set; }
-
-        public CommonServices(IUnitOfWork unitOfWork)
+        private readonly IHttpContextAccessor _context;
+        public CommonServices(IUnitOfWork unitOfWork, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
+            _context = context;
         }
         public async Task<List<Student>> GetStudiesIn(Guid currentUserId)
         {
-            if(StudiesIn == null)
+            if (StudiesIn == null)
             {
                 StudiesIn = await _unitOfWork.StudentRepository.Get() // Find Student from current User 
                                                        .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
@@ -121,7 +121,7 @@ namespace IPMS.Business.Services
 
         public async Task<IEnumerable<ProjectSubmission>> GetProjectSubmissions(Guid projectId)
         {
-            if(ProjectSubmissions == null)
+            if (ProjectSubmissions == null)
             {
                 ProjectSubmissions = await _unitOfWork.ProjectSubmissionRepository
                                                     .Get().Where(x => x.ProjectId == projectId)
@@ -192,6 +192,46 @@ namespace IPMS.Business.Services
         {
             var studiesIn = await GetStudiesIn(studentId);
             return await GetCurrentClass(studiesIn.Select(x => x.ClassId));
+        }
+
+        public async Task SetCommonSessionUserEntity(Guid currentUserId)
+        {
+            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+
+            var studiesIn = await _unitOfWork.StudentRepository.Get() // Find Student from current User 
+                                                       .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
+
+            if (studiesIn.Count() != 0)
+            {
+                IPMSClass? currentClass = await _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
+                                                                      .FirstOrDefaultAsync(c => studiesIn.Select(si => si.ClassId).Contains(c.Id)
+                                                                      && c.SemesterId.Equals(currentSemesterId));
+                if (currentClass != null)
+                {
+                    _context.HttpContext.Session.SetObject("Class", currentClass);
+                    var currentStudyIn = studiesIn.FirstOrDefault(s => s.ClassId.Equals(currentClass.Id)); // Get current studying
+                    if (currentStudyIn != null)
+                    {
+                        var project = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(p => p.Id.Equals(currentStudyIn.ProjectId)); // get current project
+                        if (project != null)
+                        {
+                            _context.HttpContext.Session.SetObject("Project", project);
+                        }
+                    }
+                }
+
+            }
+
+        }
+
+        public IPMSClass? GetClass()
+        {
+            return _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
+        }
+
+        public Project? GetProject()
+        {
+            return _context.HttpContext.Session.GetObject<Project?>("Project");
         }
     }
 }

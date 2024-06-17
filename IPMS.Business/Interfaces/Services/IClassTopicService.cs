@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Requests.ClassTopic;
+﻿using IPMS.Business.Models;
+using IPMS.Business.Requests.ClassTopic;
 using IPMS.Business.Responses.ClassTopic;
 using IPMS.Business.Responses.Topic;
 using IPMS.DataAccess.Models;
@@ -14,6 +15,7 @@ namespace IPMS.Business.Interfaces.Services
     {
         IQueryable<ClassTopic> GetClassTopics(GetClassTopicRequest request);
         Task<IQueryable<TopicIotComponentReponse>> GetClassTopicsAvailable(Guid currentUserId, GetClassTopicRequest request);
-        Task<bool> PickTopic(Guid currentUserId, Guid topicId);
+        Task<bool> PickTopic(Guid topicId);
+        Task<ValidationResultModel> PickTopicValidators(Guid topicId);
     }
 }
