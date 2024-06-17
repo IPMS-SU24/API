@@ -135,12 +135,15 @@ namespace IPMS.Business.Services
                     });
                     await _userManager.UpdateAsync(user);
                 }
+                await _commonService.SetCommonSessionUserEntity(user.Id);
 
                 return new TokenModel
                 {
                     AccessToken = accessToken,
                     RefreshToken = refreshToken,
                 };
+
+
             }
             return null;
         }

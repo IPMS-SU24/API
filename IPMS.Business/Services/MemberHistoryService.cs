@@ -8,6 +8,7 @@ using IPMS.Business.Requests.MemberHistory;
 using IPMS.Business.Responses.MemberHistory;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
@@ -20,13 +21,15 @@ namespace IPMS.Business.Services
         private readonly ICommonServices _commonServices;
         private readonly UserManager<IPMSUser> _userManager;
         private readonly IStudentGroupService _studentGroupService;
+        private readonly IHttpContextAccessor _context;
         private MemberHistory history { get; set; }
-        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, IStudentGroupService studentGroupService)
+        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, IStudentGroupService studentGroupService, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _userManager = userManager;
             _studentGroupService = studentGroupService;
+            _context = context;
         }
         private async Task<Guid> GetLeaderId(Guid projectId)
         {

@@ -1,11 +1,9 @@
 ﻿using IPMS.API.Common.Enums;
+using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
-using IPMS.Business.Requests;
 using IPMS.Business.Requests.Authentication;
-using IPMS.DataAccess.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -16,7 +14,6 @@ namespace IPMS.API.Controllers
         public AuthenticationController(IAuthenticationService authenticationService)
         {
             _authenticationService = authenticationService;
-
         }
         [HttpPost]
         [Route("login")]

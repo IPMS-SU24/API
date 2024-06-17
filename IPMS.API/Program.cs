@@ -56,6 +56,13 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
+
+});
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(10);
 });
 builder.Services.AddDI();
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
@@ -148,6 +155,6 @@ app.UseCors(options => options.AllowAnyMethod()
 app.UseRequestResponseMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseSession(); 
 app.MapControllers();
 app.Run();
