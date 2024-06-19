@@ -94,6 +94,11 @@ namespace IPMS.Business.Services
             return GetAllTopics().ApplyFilter(request).AsNoTracking();
         }
 
+        public IQueryable<Topic> GetSuggestedTopics()
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task RegisterTopic(RegisterTopicRequest request, Guid leaderId)
         {
             //Create new Topic

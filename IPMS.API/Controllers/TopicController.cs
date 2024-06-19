@@ -6,6 +6,8 @@ using IPMS.Business.Requests.Topic;
 using IPMS.API.Responses;
 using Microsoft.AspNetCore.Mvc;
 using IPMS.Business.Common.Enums;
+using IPMS.Business.Responses.Report;
+using IPMS.DataAccess.Models;
 
 namespace IPMS.API.Controllers
 {
@@ -20,6 +22,14 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> GetTopics([FromQuery] GetTopicRequest request)
         {
             var response = await _topicService.GetApprovedTopics(request).GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
+
+        [HttpGet("suggested")]
+        public async Task<IActionResult> GetSuggestedTopics()
+        {
+            var responseData =  _topicService.GetSuggestedTopics();
+            var response = new IPMSResponse<IQueryable<Topic>> { Data = responseData };
             return GetActionResponse(response);
         }
         [EnumAuthorize(UserRole.Leader)]
