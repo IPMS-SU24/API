@@ -42,7 +42,14 @@ namespace IPMS.Business.Responses.ProjectDashboard
         public Guid Id { get; set; }
         public string Name { get; set; }
         public int Quantity { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
+    }
+
+    public class ReportIoTComponentInformation
+    {
+        public List<BorrowIoTComponentInformation> IoTComponents { get; set; } = new();
+        public DateTime? CreatedAt { get; set; }
+
     }
     public class AssessmentInformation
     {
