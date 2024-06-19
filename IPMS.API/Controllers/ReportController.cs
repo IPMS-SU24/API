@@ -36,11 +36,11 @@ namespace IPMS.API.Controllers
         }
         [EnumAuthorize(UserRole.Student)]
         [HttpGet("student-report")]
-        public async Task<IActionResult> GetStudentReport()
+        public async Task<IActionResult> GetStudentReport([FromQuery] StudentReportRequest request)
         {
             var reporterId = HttpContext.User.Claims.GetUserId();
-            var responseData = await _reportService.GetReportType();
-            var response = new IPMSResponse<IEnumerable<ReportTypeResponse>> { Data = responseData };
+            var responseData = await _reportService.GetStudentReport(request, reporterId);
+            var response = new IPMSResponse<IEnumerable<StudentReportResponse>> { Data = responseData };
             return GetActionResponse(response);
         }
     }
