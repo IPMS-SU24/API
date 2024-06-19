@@ -14,6 +14,5 @@ namespace IPMS.DataAccess.Models
         public Guid? ReportTypeId { get; set; }
         public virtual IPMSUser? Reporter { get; set; }
         public virtual ReportType? ReportType { get; set; }
-        public virtual DateTime CreateAt { get; set; } = DateTime.Now;
     }
 }
