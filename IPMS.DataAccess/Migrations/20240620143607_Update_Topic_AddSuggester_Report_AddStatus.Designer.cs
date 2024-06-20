@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IPMS.DataAccess.Migrations
 {
     [DbContext(typeof(IPMSDbContext))]
-    [Migration("20240619173434_Update_Topic_AddSuggester_Report_AddStatus")]
+    [Migration("20240620143607_Update_Topic_AddSuggester_Report_AddStatus")]
     partial class Update_Topic_AddSuggester_Report_AddStatus
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

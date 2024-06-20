@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace IPMS.DataAccess.Migrations
 {
-    public partial class Update_Topic_AddSuggester_Report_AddStatus_AddCreatedAt : Migration
+    public partial class Update_Topic_AddSuggester_Report_AddStatus : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,13 +14,6 @@ namespace IPMS.DataAccess.Migrations
                 table: "Topic",
                 type: "uuid",
                 nullable: true);
-
-            migrationBuilder.AddColumn<DateTime>(
-                name: "CreateAt",
-                table: "Report",
-                type: "timestamp with time zone",
-                nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
 
             migrationBuilder.AddColumn<int>(
                 name: "Status",
@@ -56,10 +49,6 @@ namespace IPMS.DataAccess.Migrations
             migrationBuilder.DropColumn(
                 name: "SuggesterId",
                 table: "Topic");
-
-            migrationBuilder.DropColumn(
-                name: "CreateAt",
-                table: "Report");
 
             migrationBuilder.DropColumn(
                 name: "Status",

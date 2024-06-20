@@ -10,7 +10,7 @@ namespace IPMS.DataAccess
         public IPMSDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<IPMSDbContext>();
-            optionsBuilder.UseNpgsql(GetConnectionString());
+            optionsBuilder.UseNpgsql("Host=impg.cb2se0y46l0z.ap-southeast-1.rds.amazonaws.com; Database=ipms; Username=postgres; Password=LW6tdUDvSKLcTxa");
 
             return new IPMSDbContext(optionsBuilder.Options);
         }
