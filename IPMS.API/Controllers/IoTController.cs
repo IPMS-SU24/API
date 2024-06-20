@@ -44,10 +44,27 @@ namespace IPMS.API.Controllers
             }
             return GetActionResponse(response);
         }
+
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] GetIoTComponentRequest request)
         {
             var response = await _IoTDataService.GetAll(request).GetPaginatedResponse();
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Student)]
+        [HttpGet("report")]
+        public async Task<IActionResult> GetReportIoTComponents()
+        {
+            var data = await _borrowIoTService.GetGetReportIoTComponents();
+            var response = new IPMSResponse<IEnumerable<ReportIoTComponentInformation>>()
+            {
+                Data = data
+            };
+            if (data == null)
+            {
+                response.Status = ResponseStatus.BadRequest;
+            }
             return GetActionResponse(response);
         }
     }

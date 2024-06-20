@@ -9,6 +9,8 @@ using IPMS.Business.Requests.IoTComponent;
 using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Common.Exceptions;
 using IPMS.DataAccess.Common.Enums;
+using Microsoft.AspNetCore.Http;
+using System.Xml.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -17,11 +19,14 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly IMapper _mapper;
-        public BorrowIoTService(IUnitOfWork unitOfWork, ICommonServices commonServices, IMapper mapper)
+        private readonly IHttpContextAccessor _context;
+
+        public BorrowIoTService(IUnitOfWork unitOfWork, ICommonServices commonServices, IMapper mapper, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _mapper = mapper;
+            _context = context;
         }
 
         public async Task<bool> CheckIoTValid(IoTModelRequest request, Guid leaderId)
@@ -63,6 +68,35 @@ namespace IPMS.Business.Services
             }
             result.AddRange(await Task.WhenAll(mapComponentTasks));
             return result;
+        }
+
+        public async Task<IEnumerable<ReportIoTComponentInformation>> GetGetReportIoTComponents()
+        {
+            IEnumerable<ReportIoTComponentInformation> report = new List<ReportIoTComponentInformation>();
+            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
+
+            if (project == null)
+            {
+                return report;
+            }
+            var components = await  _unitOfWork.ComponentsMasterRepository.Get()
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(project.Id))
+                                    .Include(cm => cm.Component).ToListAsync();
+            
+
+            report = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
+                .Select(g => new ReportIoTComponentInformation
+                {
+                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    IoTComponents = g.Select(g => new BorrowIoTComponentInformation
+                    {
+                        Id = g.Id,
+                        Name = g.Component!.Name,
+                        Quantity = g.Quantity
+                    }).ToList()
+
+                }).ToList();
+            return report;   
         }
 
         public async Task RegisterIoTForProject(Guid leaderId, IEnumerable<IoTModelRequest> borrowIoTModels)

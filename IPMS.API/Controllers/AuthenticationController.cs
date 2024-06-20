@@ -4,6 +4,7 @@ using IPMS.API.Responses;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -23,11 +24,12 @@ namespace IPMS.API.Controllers
             var response = new IPMSResponse<TokenModel>
             {
                 Data = userResult
-            };
+        };
             if(userResult == null)
             {
                 response.Status = ResponseStatus.Unauthorized;
             }
+
             return GetActionResponse(response);
         }
         [HttpPost]

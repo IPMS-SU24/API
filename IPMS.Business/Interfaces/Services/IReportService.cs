@@ -7,7 +7,9 @@ namespace IPMS.Business.Interfaces.Services
     public interface IReportService
     {
         Task<IEnumerable<ReportTypeResponse>> GetReportType();
+
         Task SendReport(SendReportRequest request, Guid reporterId);
+        Task<IEnumerable<StudentReportResponse>> GetStudentReport(StudentReportRequest request, Guid reporterId);
         Task<ValidationResultModel> CheckValidReport(SendReportRequest request, Guid reporterId);
     }
 }

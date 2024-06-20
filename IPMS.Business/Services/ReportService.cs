@@ -41,6 +41,36 @@ namespace IPMS.Business.Services
             return _mapper.Map<IEnumerable<ReportTypeResponse>>(reportTypes);
         }
 
+        public async Task<IEnumerable<StudentReportResponse>> GetStudentReport(StudentReportRequest request, Guid reporterId)
+        {
+            var searchValue = request.SearchValue;
+            if (searchValue == null)
+            {
+                searchValue = "";
+            }
+            searchValue = searchValue.Trim().ToLower();
+
+            IEnumerable<StudentReportResponse> reports = new List<StudentReportResponse>();
+            var preReports = await _unitOfWork.ReportRepository.Get() // get report of current user with title or description contains searchValue
+                            .Where(r => r.ReporterId.Equals(reporterId) 
+                                && (r.Content.ToLower().Contains(searchValue) || r.Title.ToLower().Contains(searchValue)))
+                            .Include(r => r.ReportType).ToListAsync();
+
+            reports = preReports.Select(pr => new StudentReportResponse
+            {
+                Id = pr.Id,
+                ReportType = pr.ReportType.Name,
+                Title = pr.Title,
+                Description = pr.Content,
+                Response = pr.ResponseContent,
+                Status = pr.Status,
+                CreateAt = pr.CreatedAt,
+
+            });
+            return reports;
+
+        }
+
         public async Task SendReport(SendReportRequest request, Guid reporterId)
         {
             var reportForSave = _mapper.Map<Report>(request, opts =>
