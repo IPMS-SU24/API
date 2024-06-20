@@ -6,6 +6,9 @@ using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Responses.ProjectDashboard;
 using Microsoft.AspNetCore.Mvc;
 using IPMS.API.Common.Enums;
+using IPMS.Business.Requests.ProjectPreference;
+using IPMS.Business.Responses.ProjectPreference;
+using IPMS.DataAccess.Models;
 
 namespace IPMS.API.Controllers
 {
@@ -54,6 +57,20 @@ namespace IPMS.API.Controllers
                 response.Status = ResponseStatus.BadRequest;
             }
             return GetActionResponse(response);
+        }
+
+        /// <summary>
+        /// Get Project Preferences
+        /// https://docs.google.com/spreadsheets/d/1DalhYS3NT9XpwzBuaYKZrFrGB5L8H5cQ5mDva8T1ito/edit?gid=0#gid=0
+        /// </summary>
+        [EnumAuthorize(UserRole.Student)]
+        [HttpGet("preferences")]
+        public async Task<IActionResult> GetProjectPreferences([FromQuery] ProjectPreferenceRequest request)
+        {
+            var projectPreferences = await _projectService.GetProjectPreferences(request);
+            var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(response);
+            
         }
     }
 }
