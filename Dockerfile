@@ -17,7 +17,7 @@ RUN dotnet build "./IPMS.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./IPMS.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
+ENV ASPNETCORE_URLS = "https://+:443"
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
