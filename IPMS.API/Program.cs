@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -65,9 +66,13 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true; // Make the session cookie HTTP only
     options.Cookie.IsEssential = true; // Mark the session cookie as essential
     options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
 });
 builder.Services.AddDI();
+builder.Services.Configure<ForwardedHeadersOptions>(opts =>
+{
+    opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
@@ -150,6 +155,7 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseCors(options => options.AllowAnyMethod()
                 .AllowAnyHeader()
