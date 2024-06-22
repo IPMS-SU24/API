@@ -63,7 +63,7 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(10);
-    options.Cookie.HttpOnly = true; // Make the session cookie HTTP only
+    options.Cookie.HttpOnly = false; // Make the session cookie HTTP only
     options.Cookie.IsEssential = true; // Mark the session cookie as essential
     options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
