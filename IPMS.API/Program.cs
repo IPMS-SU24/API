@@ -12,6 +12,7 @@ using IPMS.DataAccess;
 using IPMS.DataAccess.Common;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
@@ -63,8 +64,6 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(10);
     options.Cookie.HttpOnly = true; // Make the session cookie HTTP only
     options.Cookie.IsEssential = true; // Mark the session cookie as essential
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 builder.Services.AddDI();
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
