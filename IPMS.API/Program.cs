@@ -63,16 +63,10 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(10);
-    options.Cookie.HttpOnly = false; // Make the session cookie HTTP only
+    options.Cookie.HttpOnly = true; // Make the session cookie HTTP only
     options.Cookie.IsEssential = true; // Mark the session cookie as essential
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
 });
 builder.Services.AddDI();
-builder.Services.Configure<ForwardedHeadersOptions>(opts =>
-{
-    opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-});
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
@@ -155,7 +149,6 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
-app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseCors(options => options.AllowAnyMethod()
                 .AllowAnyHeader()
