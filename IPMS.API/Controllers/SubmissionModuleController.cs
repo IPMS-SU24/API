@@ -21,20 +21,11 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> ConfigureSubmissionModule([FromBody] ConfigureSubmissionModuleRequest request)
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
-            var response = new IPMSResponse<bool>
-            {
-                Data = await _submissionModuleService.UpdateSubmissionModule(request, currentUserId)
-
-            };
-
-            if (response.Data == false)
-            {
-                response.Status = ResponseStatus.BadRequest;
-            }
-            return GetActionResponse(response);
+            await _submissionModuleService.ConfigureSubmissionModule(request, currentUserId)
+            return Ok();
         }
 
 
-      
+
     }
 }
