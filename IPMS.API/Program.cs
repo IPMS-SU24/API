@@ -59,10 +59,9 @@ builder.Services.AddRouting(options =>
 
 });
 builder.Services.AddDistributedMemoryCache();
-
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(10);
+    options.IdleTimeout = TimeSpan.FromHours(int.Parse(builder.Configuration.GetSection("JWT")["TokenExpiryTimeInHour"]));
     options.Cookie.HttpOnly = true; // Make the session cookie HTTP only
     options.Cookie.IsEssential = true; // Mark the session cookie as essential
     options.Cookie.SameSite = SameSiteMode.None; // Allows the cookie to be sent with cross-site requests
