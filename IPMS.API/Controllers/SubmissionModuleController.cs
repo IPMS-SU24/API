@@ -5,6 +5,7 @@ using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.SubmissionModule;
+using IPMS.Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -21,11 +22,17 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> ConfigureSubmissionModule([FromBody] ConfigureSubmissionModuleRequest request)
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
-            await _submissionModuleService.ConfigureSubmissionModule(request, currentUserId)
+            await _submissionModuleService.ConfigureSubmissionModule(request, currentUserId);
             return Ok();
         }
-
-
-
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet]
+        public async Task<IActionResult> GetAssessmentSubmissionModuleByClass([FromQuery] GetSubmissionModuleByClassRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var submissionModules = await _submissionModuleService.GetAssessmentSubmissionModuleByClass(request, currentUserId);
+            var response = await submissionModules.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(response);
+        }
     }
 }

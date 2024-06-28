@@ -5,9 +5,9 @@ using IPMS.Business.Requests.SubmissionModule;
 
 namespace IPMS.API.Validators.Submission
 {
-    public class ConfigSubmissionModuleValidator : AbstractValidator<ConfigureSubmissionModuleRequest>
+    public class ConfigureSubmissionModuleValidator : AbstractValidator<ConfigureSubmissionModuleRequest>
     {
-        public ConfigSubmissionModuleValidator(ISubmissionModuleService submissionModuleService, IHttpContextAccessor context)
+        public ConfigureSubmissionModuleValidator(ISubmissionModuleService submissionModuleService, IHttpContextAccessor context)
         {
             var lecturerId = context.HttpContext.User.Claims.GetUserId();
             RuleFor(x => x.SubmissionModules.Select(sm => sm.StartDate)).NotEmpty();

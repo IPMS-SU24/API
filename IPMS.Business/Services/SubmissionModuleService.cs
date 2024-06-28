@@ -1,12 +1,11 @@
-﻿
-using IPMS.Business.Common.Utils;
+﻿using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.SubmissionModule;
+using IPMS.Business.Responses.SubmissionModule;
 using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Xml.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -14,6 +13,7 @@ namespace IPMS.Business.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private List<SubmissionModule> _submissionModules = new();
+        private List<Assessment> _assessments = new();
         private Guid _currentSemesterId;
         public SubmissionModuleService(IUnitOfWork unitOfWork)
         {
@@ -135,5 +135,80 @@ namespace IPMS.Business.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
+        public async Task<ValidationResultModel> GetAssessmentSubmissionModuleByClassValidator(GetSubmissionModuleByClassRequest request, Guid currentUserId)
+        {
+            _currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+        
+            
+
+            Semester semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(_currentSemesterId));
+            if (semester == null)
+            {
+                result.Message = "Semester does not exist!";
+                return result;
+            }
+            _assessments = await _unitOfWork.AssessmentRepository.Get().Where(a => a.SyllabusId.Equals(semester.SyllabusId)).ToListAsync();
+            if (_assessments.Count == 0)
+            {
+                result.Message = "Assessment does not exist!";
+                return result;
+            }
+
+            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.classId)
+                                            && c.LecturerId.Equals(currentUserId)
+                                            && c.SemesterId.Equals(_currentSemesterId));
+            if (@class == null) // validate class
+            {
+                result.Message = "Class does not exist!";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+
+        }
+        public async Task<IEnumerable<GetAssessmentSubmissionModuleByClassResponse>> GetAssessmentSubmissionModuleByClass(GetSubmissionModuleByClassRequest request, Guid currentUserId)
+        {
+            IEnumerable<GetAssessmentSubmissionModuleByClassResponse> assessments = new List<GetAssessmentSubmissionModuleByClassResponse>();   
+            
+            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.SemesterId.Equals(_currentSemesterId)
+                                            && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
+            List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.CommitteeId.Equals(currentUserId)).ToListAsync();
+
+            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(request.classId) && ct.ProjectId != Guid.Empty).ToListAsync(); //get class topics have picked == project in class
+
+            foreach (var assessment in _assessments)
+            {
+                List<ProjectSubmissionModule> modules = _submissionModules.Where(sm => sm.AssessmentId.Equals(assessment.Id)).Select(sm => new ProjectSubmissionModule
+                {
+                    ModuleId = sm.Id,
+                    Title = sm.Name,
+                    Graded = graded.Count(g => sm.ProjectSubmissions.Any(ps => g.SubmissionId.Equals(ps.Id))),
+                    Submissions = sm.ProjectSubmissions.Count(),
+                    Total = classTopics.Count(),
+                    StartDate = sm.StartDate,
+                    EndDate = sm.EndDate,
+                    Percentage = sm.Percentage
+
+                }).ToList();
+                GetAssessmentSubmissionModuleByClassResponse submission = new GetAssessmentSubmissionModuleByClassResponse
+                {
+                    AssessmentId = assessment.Id,
+                    Title = assessment.Name,
+                    Percentage = assessment.Percentage,
+                    Modules = modules
+                };
+                assessments.Append(submission);
+            }
+
+            return assessments;
+        }
+
+        
     }
 }

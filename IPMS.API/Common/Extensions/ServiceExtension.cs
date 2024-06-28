@@ -38,6 +38,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IReportTypeRepository, ReportTypeRepository>();
             services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<IMemberHistoryRepository, MemberHistoryRepository>();
+            services.AddScoped<ILecturerGradeRepository, LecturerGradeRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Depenency Injection
