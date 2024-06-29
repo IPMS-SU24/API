@@ -35,7 +35,7 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(new IPMSResponse<object>());
         }
-        //[Authorize]
+        [EnumAuthorize(UserRole.Lecturer)]
         [HttpPost("[action]")]
         public async Task<IActionResult> MembersInGroup([FromBody] MemberInGroupRequest request)
         {
