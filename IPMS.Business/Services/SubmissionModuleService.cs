@@ -32,7 +32,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            decimal isPerSumEqHundred = request.SubmissionModules.Sum(sm => sm.Percentage);
+            decimal isPerSumEqHundred = request.SubmissionModules.Where(sm => sm.IsDeleted == false).Sum(sm => sm.Percentage);
             if (isPerSumEqHundred != 100) // sub percentage != 100
             {
                 result.Message = "Sum of percentage is different 100%";
@@ -85,7 +85,7 @@ namespace IPMS.Business.Services
 
                 if (submissionModule.ModuleId != Guid.Empty)
                 {
-                    var isExisted = _submissionModules.FirstOrDefault(sm => sm.Equals(submissionModule.ModuleId));
+                    var isExisted = _submissionModules.FirstOrDefault(sm => sm.Id.Equals(submissionModule.ModuleId));
                     if (isExisted == null) // submission module is not existed
                     {
                         result.Message = "Module is not existed to update";
@@ -119,7 +119,9 @@ namespace IPMS.Business.Services
                     };
                     await _unitOfWork.SubmissionModuleRepository.InsertAsync(subModule);
 
-                } else // update
+
+                }
+                else // update
                 {
                     SubmissionModule subModule = _submissionModules.FirstOrDefault(sm => sm.Id.Equals(submissionModule.ModuleId));
                     subModule.Name = submissionModule.ModuleName;
@@ -130,10 +132,11 @@ namespace IPMS.Business.Services
                     subModule.IsDeleted = submissionModule.IsDeleted;
                     _unitOfWork.SubmissionModuleRepository.Update(subModule);
 
+
                 }
             }
-
             await _unitOfWork.SaveChangesAsync();
+
         }
         public async Task<ValidationResultModel> GetAssessmentSubmissionModuleByClassValidator(GetSubmissionModuleByClassRequest request, Guid currentUserId)
         {
@@ -174,7 +177,7 @@ namespace IPMS.Business.Services
         }
         public async Task<IEnumerable<GetAssessmentSubmissionModuleByClassResponse>> GetAssessmentSubmissionModuleByClass(GetSubmissionModuleByClassRequest request, Guid currentUserId)
         {
-            IEnumerable<GetAssessmentSubmissionModuleByClassResponse> assessments = new List<GetAssessmentSubmissionModuleByClassResponse>();   
+            List<GetAssessmentSubmissionModuleByClassResponse> assessments = new List<GetAssessmentSubmissionModuleByClassResponse>();   
             
             _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.SemesterId.Equals(_currentSemesterId)
                                             && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
@@ -189,7 +192,7 @@ namespace IPMS.Business.Services
                     ModuleId = sm.Id,
                     Title = sm.Name,
                     Graded = graded.Count(g => sm.ProjectSubmissions.Any(ps => g.SubmissionId.Equals(ps.Id))),
-                    Submissions = sm.ProjectSubmissions.Count(),
+                    Submissions = sm.ProjectSubmissions.GroupBy(ps => ps.ProjectId).Count(),
                     Total = classTopics.Count(),
                     StartDate = sm.StartDate,
                     EndDate = sm.EndDate,
@@ -203,7 +206,7 @@ namespace IPMS.Business.Services
                     Percentage = assessment.Percentage,
                     Modules = modules
                 };
-                assessments.Append(submission);
+                assessments.Add(submission);
             }
 
             return assessments;
