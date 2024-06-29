@@ -33,9 +33,9 @@ namespace IPMS.API.Controllers
             {
                 Data = await _classService.GetGroupsInClass(classId)
             };
-            return GetActionResponse(new IPMSResponse<object>());
+            return GetActionResponse(response);
         }
-        //[Authorize]
+        [EnumAuthorize(UserRole.Lecturer)]
         [HttpPost("[action]")]
         public async Task<IActionResult> MembersInGroup([FromBody] MemberInGroupRequest request)
         {
