@@ -33,7 +33,7 @@ namespace IPMS.API.Controllers
             {
                 Data = await _classService.GetGroupsInClass(classId)
             };
-            return GetActionResponse(new IPMSResponse<object>());
+            return GetActionResponse(response);
         }
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpPost("[action]")]
