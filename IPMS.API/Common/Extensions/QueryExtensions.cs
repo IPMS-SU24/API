@@ -5,7 +5,7 @@ namespace IPMS.API.Common.Extensions
 {
     public static partial class QueryExtensions
     {
-        public static async Task<IPMSResponse<IEnumerable<T>>> GetPaginatedResponse<T>(this IEnumerable<T> source, int page = 1, int pageSize = 10)
+        public static async Task<PaginationResponse<IEnumerable<T>>> GetPaginatedResponse<T>(this IEnumerable<T> source, int page = 1, int pageSize = 10)
         {
             var paginatedResult = await source.ToPagedListAsync(page, pageSize);
             return new PaginationResponse<IEnumerable<T>>
