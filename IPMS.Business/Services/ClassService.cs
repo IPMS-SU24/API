@@ -104,10 +104,26 @@ namespace IPMS.Business.Services
         }
         public async Task<MemberInGroupResponse> GetMemberInGroupAsync(MemberInGroupRequest request)
         {
+            var memberInfos = _userManager.Users.ApplyFilter(request);
+            if(request.GroupFilter != null && request.GroupFilter.Any())
+            {
+                // If not contain No Group filter
+                if (!request.GroupFilter.Remove(NoGroup.Id))
+                {
+                    memberInfos = memberInfos.Include(x => x.Students.Where(stu => stu.ProjectId != null && request.GroupFilter.Contains(stu.ProjectId.Value))).ThenInclude(x => x.Project);
+                    memberInfos = memberInfos.Where(x => x.Students.First().ProjectId != null && request.GroupFilter.Contains(x.Students.First().ProjectId.Value));
+                }
+                else
+                {
+                    memberInfos = memberInfos.Include(x => x.Students.Where(stu =>stu.ProjectId == null || request.GroupFilter.Contains(stu.ProjectId.Value))).ThenInclude(x => x.Project);
+                    memberInfos = memberInfos.Where(x => x.Students.First().ProjectId == null || request.GroupFilter.Contains(x.Students.First().ProjectId.Value));
+                }
+            }
+            
             return new MemberInGroupResponse()
             {
                 TotalMember =  await _unitOfWork.StudentRepository.Get().CountAsync(x=>x.ClassId == request.Students.ClassId),
-                MemberInfo = _userManager.Users.ApplyFilter(request).Include(x=>x.Students).ThenInclude(x=>x.Project).Select(x=>new MemberInGroupData
+                MemberInfo = memberInfos.Select(x=>new MemberInGroupData
                 {
                     Id = x.Id,
                     GroupName = x.Students.First().ProjectId != null ? x.Students.First().Project.GroupName : NoGroup.Name,
