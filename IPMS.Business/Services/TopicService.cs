@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using IPMS.Business.Models;
 using AutoMapper;
 using IPMS.DataAccess.Common.Enums;
+using System.Security.Claims;
 
 namespace IPMS.Business.Services
 {
@@ -97,6 +98,62 @@ namespace IPMS.Business.Services
         public IQueryable<Topic> GetSuggestedTopics()
         {
             throw new NotImplementedException();
+        }
+        public async Task<ValidationResultModel> LecturerRegisterNewTopicValidator(RegisterTopicRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Not found IoT Component"
+            };
+            //Check must have IoT
+            if (!request.IoTComponents.Any())
+            {
+                result.Message = "Must have IoT in Topic";
+                return result;
+            }
+            //Check IoT Exist
+            var IoTComponents = await _unitOfWork.IoTComponentRepository.Get().Select(x => x.Id).ToListAsync();
+            if (IoTComponents != null && IoTComponents.Any())
+            {
+                foreach (var component in request.IoTComponents)
+                {
+                    if (!IoTComponents.Contains(component.ComponentId))
+                    {
+                        return result;
+                    }
+                    if (component.Quantity <= 0)
+                    {
+                        result.Message = "IoT Component Quantity Must be Greater Than 0";
+                        return result;
+                    }
+                    if (request.IoTComponents.Count(x => x.ComponentId == component.ComponentId) > 1)
+                    {
+                        result.Message = "Duplicate IoT Component";
+                        return result;
+                    }
+                }
+                result.Message = string.Empty;
+                result.Result = true;
+                return result;
+            }
+            return result;
+        }
+        public async Task LecturerRegisterNewTopic(RegisterTopicRequest request, Guid lecturerId)
+        {
+            //Create new Topic
+            var newTopic = _mapper.Map<Topic>(request);
+            newTopic.OwnerId = lecturerId;
+            await _unitOfWork.TopicRepository.InsertAsync(newTopic);
+            //Add IoT Component to ComponentMaster
+            var componentMasters = _mapper.Map<List<ComponentsMaster>>(request.IoTComponents, opts =>
+            {
+                opts.Items[nameof(ComponentsMaster.MasterId)] = newTopic.Id;
+                opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Topic;
+            });
+            await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters);
+
+            await _unitOfWork.SaveChangesAsync();
+
         }
 
         public async Task RegisterTopic(RegisterTopicRequest request, Guid leaderId)

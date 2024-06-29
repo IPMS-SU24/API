@@ -10,6 +10,8 @@ namespace IPMS.Business.Interfaces.Services
         IQueryable<Topic> GetSuggestedTopics();
         IQueryable<Topic> GetApprovedTopics(GetTopicRequest request);
         Task RegisterTopic(RegisterTopicRequest request, Guid leaderId);
+        Task<ValidationResultModel> LecturerRegisterNewTopicValidator(RegisterTopicRequest request);
+        Task LecturerRegisterNewTopic(RegisterTopicRequest request, Guid lecturerId);
         Task<ValidationResultModel> CheckRegisterValid(RegisterTopicRequest request, Guid leaderId);
     }
 }
