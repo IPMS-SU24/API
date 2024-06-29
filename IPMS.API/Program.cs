@@ -159,5 +159,6 @@ app.UseRequestResponseMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession(); 
+app.UseAddStudentSessionIfNotExistMiddleware();
 app.MapControllers();
 app.Run();

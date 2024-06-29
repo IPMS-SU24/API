@@ -11,6 +11,9 @@ namespace IPMS.API.Common.Extensions
         public static IApplicationBuilder UseRequestResponseMiddleware(this IApplicationBuilder app)
         {
             return app.UseMiddleware<RequestResponseLoggingMiddleware>();
+        }public static IApplicationBuilder UseAddStudentSessionIfNotExistMiddleware(this IApplicationBuilder app)
+        {
+            return app.UseMiddleware<AddStudentSessionIfNotExistMiddleware>();
         }
     }
 }

@@ -52,6 +52,13 @@ namespace IPMS.Business.Services
                 result.Message = "Student is not studying";
                 return result;
             }
+            var projectInClassCount = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == currentClass.Id).Select(x=>x.ProjectId).Distinct().CountAsync();
+            var topicOfClassCount = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ClassId == currentClass.Id).CountAsync();
+            if(projectInClassCount == topicOfClassCount)
+            {
+                result.Message = "Class cannot create more project";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;
@@ -109,48 +116,19 @@ namespace IPMS.Business.Services
             var leaderList = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList();
             //Get Groups
             var groupsInClass = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null).Include(x => x.Project).GroupBy(x => new { x.Project!.Id, x.Project!.GroupName })
+                                                                        .Select(x => new ClassGroupInfo
+                                                                        {
+                                                                            Id = x.Key.Id,
+                                                                            GroupName = x.Key.GroupName,
+                                                                            Members = x.Select(y => new GroupMemberInfo
+                                                                            {
+                                                                                Id = y.InformationId,
 
-                //    _unitOfWork.ClassTopicRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null).Include(x => x.Project)
-                //    .Select(x => new
-                //    {
-                //        ProjectId = x.Project!.Id,
-                //        x.Project.GroupName
-                //    })
-                //    .Join(_unitOfWork.StudentRepository.Get().Include(x => x.Information),
-                //            project => project.ProjectId,
-                //            student => student.ProjectId,
-                //            (project, student) => new
-                //            {
-                //                project.ProjectId,
-                //                project.GroupName,
-                //                StudentId = student.Id,
-                //                Name = student.Information!.FullName
-                //            }).ToList();
-                //var 
-
-
-                //.SelectMany(x => x.ToList(),
-                //(project, student) => new
-                //{
-                //    project.Key.Id,
-                //    project.Key.GroupName,
-                //    StudentId = student.InformationId,
-                //    IsLeader = leaderList.Contains(student.InformationId!.Value),
-                //    Name = student.Information!.FullName
-                //}).ToList();
-                .Select(x => new ClassGroupInfo
-                {
-                    Id = x.Key.Id,
-                    GroupName = x.Key.GroupName,
-                    Members = x.Select(y => new GroupMemberInfo
-                    {
-                        Id = y.InformationId,
-
-                        IsLeader = leaderList.Contains(y.InformationId),
-                        Name = y.Information.FullName
-                    }).ToList(),
-                    IsYourGroup = x.Any(y => y.InformationId == studentId),
-                }).ToListAsync();
+                                                                                IsLeader = leaderList.Contains(y.InformationId),
+                                                                                Name = y.Information.FullName
+                                                                            }).ToList(),
+                                                                            IsYourGroup = x.Any(y => y.InformationId == studentId),
+                                                                        }).ToListAsync();
             return new()
             {
                 Class = new()
