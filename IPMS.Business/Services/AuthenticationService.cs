@@ -183,7 +183,7 @@ namespace IPMS.Business.Services
                 Expires = DateTime.Now.AddDays(_jwtConfig.RefreshTokenValidityInDays)
             });
             await _userManager.UpdateAsync(user);
-
+            await _commonService.SetCommonSessionUserEntity(user.Id);
             return new TokenModel
             {
                 AccessToken = newAccessToken,

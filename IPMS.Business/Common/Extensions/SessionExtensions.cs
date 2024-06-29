@@ -1,7 +1,7 @@
-﻿
+﻿using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 
-namespace Microsoft.AspNetCore.Http
+namespace IPMS.Business.Common.Extensions
 {
     public static class SessionExtensions
     {

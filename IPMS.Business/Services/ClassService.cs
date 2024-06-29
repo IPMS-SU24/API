@@ -1,10 +1,14 @@
-﻿using IPMS.Business.Common.Singleton;
+﻿using AutoFilterer.Extensions;
+using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Singleton;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
+using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
@@ -12,9 +16,11 @@ namespace IPMS.Business.Services
     public class ClassService : IClassService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public ClassService(IUnitOfWork unitOfWork)
+        private readonly UserManager<IPMSUser> _userManager;
+        public ClassService(IUnitOfWork unitOfWork, UserManager<IPMSUser> userManager)
         {
             _unitOfWork = unitOfWork;
+            _userManager = userManager;
         }
         public async Task<ValidationResultModel> CheckSetMaxMemberRequestValid(Guid lecturerId, SetMaxMemberRequest request)
         {
@@ -80,6 +86,35 @@ namespace IPMS.Business.Services
                 c.MaxMember = request.MaxMember;
             }
             await _unitOfWork.SaveChangesAsync();
+        }
+        public async Task<IList<ClassGroupResponse>> GetGroupsInClass(Guid classId)
+        {
+            var result =  await _unitOfWork.ProjectRepository.Get().Include(x=>x.Students).Where(x=>x.Students.First().ClassId == classId)
+                                                                          .Select(x=> new ClassGroupResponse
+                                                                          {
+                                                                              Id= x.Id,
+                                                                              Name= x.GroupName
+                                                                          }).ToListAsync();
+            result.Add(new ClassGroupResponse()
+            {
+                Id = NoGroup.Id,
+                Name = NoGroup.Name,
+            });
+            return result;
+        }
+        public async Task<MemberInGroupResponse> GetMemberInGroupAsync(MemberInGroupRequest request)
+        {
+            return new MemberInGroupResponse()
+            {
+                TotalMember =  await _unitOfWork.StudentRepository.Get().CountAsync(x=>x.ClassId == request.Students.ClassId),
+                MemberInfo = _userManager.Users.ApplyFilter(request).Include(x=>x.Students).ThenInclude(x=>x.Project).Select(x=>new MemberInGroupData
+                {
+                    Id = x.Id,
+                    GroupName = x.Students.First().ProjectId != null ? x.Students.First().Project.GroupName : NoGroup.Name,
+                    StudentId = x.UserName,
+                    StudentName = x.FullName
+                })
+            };
         }
     }
 }

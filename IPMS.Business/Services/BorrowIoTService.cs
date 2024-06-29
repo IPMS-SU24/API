@@ -11,6 +11,7 @@ using IPMS.Business.Common.Exceptions;
 using IPMS.DataAccess.Common.Enums;
 using Microsoft.AspNetCore.Http;
 using System.Xml.Linq;
+using IPMS.Business.Common.Extensions;
 
 namespace IPMS.Business.Services
 {
