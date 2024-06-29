@@ -10,10 +10,9 @@ namespace IPMS.Business.Requests.Class
     public class MemberInGroupRequest : FilterBase
     {
         [JsonIgnore]
-        public MemberGroupFilterer? Students => new MemberGroupFilterer
+        public MemberGroupFilterer Students => new MemberGroupFilterer()
         {
-            ProjectId = GroupFilter,
-            ClassId = ClassId,
+            ClassId = ClassId
         };
         [IgnoreFilter]
         public Guid ClassId { get; set; }
@@ -28,8 +27,6 @@ namespace IPMS.Business.Requests.Class
     }
     public class MemberGroupFilterer : FilterBase
     {
-        [ArraySearchFilter]
-        public ICollection<Guid>? ProjectId { get; set; }
         public Guid ClassId { get; set; }
     }
 }
