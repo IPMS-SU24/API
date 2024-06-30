@@ -180,7 +180,7 @@ namespace IPMS.Business.Services
             }
 
             List<ClassTopic> classTopics = await _unitOfWork.ClassTopicRepository.Get()
-                                                    .Where(ct => ct.ClassId.Equals(request.ClassId))
+                                                    .Where(ct => ct.ClassId.Equals(request.ClassId) && ct.ProjectId != null)
                                                     .Include(ct => ct.Topic)
                                                     .Include(ct => ct.Project).ThenInclude(p => p.Students).ThenInclude(s => s.Information)
                                                     .ToListAsync();
