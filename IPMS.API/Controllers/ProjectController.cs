@@ -78,12 +78,11 @@ namespace IPMS.API.Controllers
         /// Get Groups Overview
         /// https://docs.google.com/spreadsheets/d/1t42RvlPCnbrJbrkG5fl_qfXpaK0XuR3loOi-S3R9Fok/edit?gid=0#gid=0
         /// </summary>
-        [EnumAuthorize(UserRole.Student)]
+        [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet("groups-overview")]
         public async Task<IActionResult> GetProjectsOverview([FromQuery] GetProjectsOverviewRequest request)
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
-
             var projectPreferences = await _projectService.GetProjectsOverview(request, currentUserId);
             var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return Ok(response);
