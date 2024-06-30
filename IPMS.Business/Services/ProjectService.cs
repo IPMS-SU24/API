@@ -1,15 +1,20 @@
 ﻿using AutoMapper;
+using AutoMapper.Execution;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Requests.Project;
 using IPMS.Business.Requests.ProjectPreference;
+using IPMS.Business.Responses.Project;
 using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Responses.ProjectPreference;
 using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
 using System.Xml.Linq;
 
 namespace IPMS.Business.Services
@@ -158,6 +163,45 @@ namespace IPMS.Business.Services
                 Id = assessment.Id,
                 AssessmentStatus = await _commonServices.GetAssessmentStatus(assessment.Id, submissionsOfAssessment)
             };
+        }
+
+        public async Task<IEnumerable<GetProjectsOverviewResponse>> GetProjectsOverview(GetProjectsOverviewRequest request, Guid currentUserId)
+        {
+            List<GetProjectsOverviewResponse> projectsOverview = new List<GetProjectsOverviewResponse>();
+            if (request.ClassId == null || request.ClassId == Guid.Empty)
+            {
+                return projectsOverview;
+            }
+            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
+            
+            if (@class == null) // check class is existed
+            {
+                return projectsOverview;
+            }
+
+            List<ClassTopic> classTopics = await _unitOfWork.ClassTopicRepository.Get()
+                                                    .Where(ct => ct.ClassId.Equals(request.ClassId))
+                                                    .Include(ct => ct.Topic)
+                                                    .Include(ct => ct.Project).ThenInclude(p => p.Students).ThenInclude(s => s.Information)
+                                                    .ToListAsync();
+
+            var allLeaders = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList(); // Find leader of project
+
+            foreach (var classTopic in classTopics)
+            {
+                GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
+                {
+                    Id = (Guid)classTopic.ProjectId!,
+                    GroupName = classTopic.Project!.GroupName,
+                    Members = classTopic.Project.Students.Count(),
+                    LeaderName = classTopic.Project.Students.FirstOrDefault(s => allLeaders.Contains(s.Id))!.Information.FullName,
+                    TopicName = classTopic.Topic!.Name
+                };
+                projectsOverview.Add(prjOverview);
+            }
+
+            return projectsOverview;
+
         }
     }
 }
