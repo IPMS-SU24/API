@@ -43,7 +43,7 @@ namespace IPMS.API.Controllers
 
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpPost("lecturer-registration")]
-        public async Task<IActionResult> LecturerRegisterNewTopic([FromBody] RegisterTopicRequest request)
+        public async Task<IActionResult> LecturerRegisterNewTopic([FromBody] LecturerRegisterTopicRequest request)
         {
             var leaderId = User.Claims.GetUserId();
             await _topicService.LecturerRegisterNewTopic(request, leaderId);

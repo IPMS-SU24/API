@@ -16,6 +16,14 @@ namespace IPMS.API.MappingProfiles.Topics
                 {
                     dest.Status = RequestStatus.Waiting;
                 });
+
+            CreateMap<LecturerRegisterTopicRequest, Topic>()
+               .ForMember(dest => dest.Name, opts => opts.MapFrom(src => src.TopicName))
+               .ForMember(dest => dest.Detail, opts => opts.MapFrom(src => src.FileName))
+               .AfterMap((src, dest) =>
+               {
+                   dest.Status = RequestStatus.Approved;
+               });
         }
     }
 }

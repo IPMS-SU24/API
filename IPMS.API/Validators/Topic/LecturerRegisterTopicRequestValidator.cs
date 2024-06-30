@@ -6,7 +6,7 @@ using IPMS.Business.Services;
 
 namespace IPMS.API.Validators.Topic
 {
-    public class LecturerRegisterTopicRequestValidator : AbstractValidator<RegisterTopicRequest>
+    public class LecturerRegisterTopicRequestValidator : AbstractValidator<LecturerRegisterTopicRequest>
     {
         public LecturerRegisterTopicRequestValidator(ITopicService topicService, IHttpContextAccessor context)
         {

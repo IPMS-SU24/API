@@ -99,7 +99,7 @@ namespace IPMS.Business.Services
         {
             throw new NotImplementedException();
         }
-        public async Task<ValidationResultModel> LecturerRegisterNewTopicValidator(RegisterTopicRequest request)
+        public async Task<ValidationResultModel> LecturerRegisterNewTopicValidator(LecturerRegisterTopicRequest request)
         {
             var result = new ValidationResultModel
             {
@@ -138,7 +138,7 @@ namespace IPMS.Business.Services
             }
             return result;
         }
-        public async Task LecturerRegisterNewTopic(RegisterTopicRequest request, Guid lecturerId)
+        public async Task LecturerRegisterNewTopic(LecturerRegisterTopicRequest request, Guid lecturerId)
         {
             //Create new Topic
             var newTopic = _mapper.Map<Topic>(request);
