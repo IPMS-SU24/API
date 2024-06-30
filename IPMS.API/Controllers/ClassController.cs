@@ -40,7 +40,7 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> MembersInGroup([FromBody] MemberInGroupRequest request)
         {
             var resultQuery = await _classService.GetMemberInGroupAsync(request);
-            var memberInfoResponse = await resultQuery.MemberInfo.GetPaginatedResponse();
+            var memberInfoResponse = await resultQuery.MemberInfo.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             var response = new PaginationResponse<object>()
             {
                 PageSize = memberInfoResponse.PageSize,
