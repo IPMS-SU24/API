@@ -12,6 +12,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<ProjectProgressData> GetProjectProgressData(Guid currentUserId);
         Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferences(ProjectPreferenceRequest request);
         Task<IEnumerable<GetProjectsOverviewResponse>> GetProjectsOverview(GetProjectsOverviewRequest request, Guid currentUserId);
+        Task<GetProjectDetailResponse> GetProjectDetail(GetProjectDetailRequest request, Guid currentUserId);
 
     }
 }

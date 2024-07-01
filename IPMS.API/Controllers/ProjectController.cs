@@ -88,5 +88,20 @@ namespace IPMS.API.Controllers
             return Ok(response);
 
         }
+
+        /// <summary>
+        /// Get Group Detail
+        /// https://docs.google.com/spreadsheets/d/1GY5tV2-HfVOyjpk551m1cZl5MegS31kw9PA7ZBumv-s/edit?gid=0#gid=0
+        /// </summary>
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("group-detail")]
+        public async Task<IActionResult> GetProjectDetail([FromQuery] GetProjectDetailRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var projectPreferences = await _projectService.GetProjectDetail(request, currentUserId);
+         //   var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(projectPreferences);
+
+        }
     }
 }
