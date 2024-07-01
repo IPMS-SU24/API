@@ -1,19 +1,12 @@
-﻿using IPMS.Business.Common.Singleton;
-using IPMS.Business.Interfaces;
-using IPMS.Business.Interfaces.Repositories;
+﻿using IPMS.API.Middlewares;
+using IPMS.Business;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Repositories;
 using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Repository;
 using IPMS.Business.Repositories;
 using IPMS.Business.Repository;
 using IPMS.Business.Services;
-using IPMS.Business;
-using IPMS.Business.Repositories;
-using IPMS.Business;
 using Microsoft.AspNetCore.Authorization;
-using IPMS.API.Middlewares;
-using Amazon.S3;
 
 namespace IPMS.API.Common.Extensions
 {
@@ -47,6 +40,7 @@ namespace IPMS.API.Common.Extensions
             services.AddSingleton<IAuthorizationMiddlewareResultHandler, IPMSAuthorizationMiddlewareResultHandler>();
 
             //Add Service
+            services.AddTransient<IBackgoundJobService,BackgroundJobService>();
             services.AddScoped<ITopicService, TopicService>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IProjectDashboardService, ProjectDashboardService>();

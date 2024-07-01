@@ -15,7 +15,7 @@ namespace IPMS.API.Validators.Topic
                 var validationResult = await topicService.PickTopicValidators(x);
                 if (!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.Message);
+                    validationContext.AddBusinessFailure(validationResult.Message);
                 }
             });
         }

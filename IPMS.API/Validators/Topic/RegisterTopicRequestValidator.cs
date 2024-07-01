@@ -18,7 +18,7 @@ namespace IPMS.API.Validators.Topic
                 var validationResult = await topicService.CheckRegisterValid(x, leaderId);
                 if (!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.Message);
+                    validationContext.AddBusinessFailure(validationResult.Message);
                 }
             });
         }

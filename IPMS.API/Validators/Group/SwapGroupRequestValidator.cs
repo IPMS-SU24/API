@@ -15,7 +15,7 @@ namespace IPMS.API.Validators.Group
                 var validationResult = await studentGroupService.CheckValidRequestSwap(x,studentId);
                 if (!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.Message);
+                    validationContext.AddBusinessFailure(validationResult.Message);
                 }
             });
         }
