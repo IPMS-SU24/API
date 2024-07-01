@@ -4,6 +4,7 @@ namespace IPMS.DataAccess.Models
 {
     public class IPMSUser : IdentityUser<Guid>
     {
+        public override string? PhoneNumber { get; set; }
         public virtual ICollection<Student> Students { get; set; } = new List<Student>();
         public virtual ICollection<Committee> Committees { get; set; } = new List<Committee>();
         public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
