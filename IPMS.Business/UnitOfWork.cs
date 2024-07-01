@@ -2,12 +2,15 @@
 using IPMS.Business.Interfaces.Repositories;
 using IPMS.Business.Repository;
 using IPMS.DataAccess;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Data.Common;
 
 namespace IPMS.Business
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly IPMSDbContext _context;
+        private IDbContextTransaction _objTran;
         public ISemesterRepository SemesterRepository { get; }
         public IClassTopicRepository ClassTopicRepository { get; }
         public ITopicRepository TopicRepository { get; }
@@ -87,6 +90,35 @@ namespace IPMS.Business
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public async Task CreateTransactionAsync()
+        {
+           _objTran = await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitAsync()
+        {
+            await _objTran.CommitAsync();
+        }
+
+        public async Task RollbackAsync()
+        {
+            await _objTran.RollbackAsync();
+        }
+        public async Task RollbackTransactionOnFailAsync(Func<Task> resultBody)
+        {
+            try
+            {
+                await CreateTransactionAsync();
+                await resultBody();
+                await CommitAsync();
+            }
+            catch (DbException ex)
+            {
+                await RollbackAsync();
+            }
+
         }
     }
 }

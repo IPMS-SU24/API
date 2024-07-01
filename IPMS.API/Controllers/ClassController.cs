@@ -54,5 +54,22 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);   
         }
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> AddStudents([FromBody] AddStudentsToClassRequest request)
+        {
+            await _classService.AddStudentAsync(request);
+            return GetActionResponse(new IPMSResponse<object>());   
+        }
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("{classId}/[action]")]
+        public async Task<IActionResult> ImportStudentStatus(Guid classId)
+        {
+            var response = new IPMSResponse<string>()
+            {
+                Data = await _classService.GetImportStudentStatusAsync(classId)
+            };
+            return GetActionResponse(response);   
+        }
     }
 }

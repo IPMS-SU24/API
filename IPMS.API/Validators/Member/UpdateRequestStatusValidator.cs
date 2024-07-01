@@ -20,7 +20,7 @@ namespace IPMS.API.Validators.Member
                 var validationResult = await memberHistoryService.UpdateRequestStatusValidators(x, studentId);
                 if (!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.Message);
+                    validationContext.AddBusinessFailure(validationResult.Message);
                 }
             });
         }
