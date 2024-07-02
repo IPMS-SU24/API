@@ -1,4 +1,5 @@
 ﻿using IPMS.Business.Common.Enums;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Authentication;
@@ -189,6 +190,23 @@ namespace IPMS.Business.Services
                 AccessToken = newAccessToken,
                 RefreshToken = newRefreshToken
             };
+        }
+        public async Task ConfirmEmailAsync(Guid userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if(user == null)
+            {
+                throw new DataNotFoundException();
+            }
+            if(await _userManager.IsEmailConfirmedAsync(user))
+            {
+                throw new EmailConfirmException("Email is already confirmed");
+            }
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+            {
+                throw new EmailConfirmException("Token is invalid");
+            }
         }
     }
 }

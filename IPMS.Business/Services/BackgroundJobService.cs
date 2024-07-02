@@ -11,6 +11,7 @@ using IPMS.Business.Common.Utils;
 using IPMS.Business.Common.Exceptions;
 using IPMSBackgroundService.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace IPMS.Business.Services
 {
@@ -20,16 +21,19 @@ namespace IPMS.Business.Services
         private readonly MailServer _mailServer;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMessageService _messageService;
-        public BackgroundJobService(UserManager<IPMSUser> userManager, MailServer mailServer, IUnitOfWork unitOfWork, IMessageService messageService)
+        private readonly IHttpContextAccessor _httpContext;
+
+        public BackgroundJobService(UserManager<IPMSUser> userManager, MailServer mailServer, IUnitOfWork unitOfWork, IMessageService messageService, IHttpContextAccessor httpContext)
         {
             _userManager = userManager;
             _mailServer = mailServer;
             _unitOfWork = unitOfWork;
             _messageService = messageService;
+            _httpContext = httpContext;
         }
         [AutomaticRetry(Attempts = 5)]
         [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
-        public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId)
+        public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string serverDomain)
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
@@ -53,21 +57,23 @@ namespace IPMS.Business.Services
                         SecurityStamp = Guid.NewGuid().ToString()
 
                     };
-                    existUser = stuAccount;
                     var result = await _userManager.CreateAsync(stuAccount, password);
                     if (!result.Succeeded)
                     {
                         throw new CannotCreateAccountException();
                     }
+                    existUser = await _userManager.FindByEmailAsync(student.Email);
                     //Send mail confirm
                     try
                     {
+                        var confirmEmailToken = await _userManager.GenerateEmailConfirmationTokenAsync(existUser);
+                        var confirmURL = PathUtils.GetConfirmURL(serverDomain, existUser.Id, confirmEmailToken);
                         EmailSendOperation emailSendOperation = await _mailServer.Client.SendAsync(
                             WaitUntil.Completed,
                             "DoNotReply@5c9fc577-26d6-49e3-98e1-62c04cc4e4e0.azurecomm.net",
                             student.Email,
                             ConfirmEmailTemplate.Subject,
-                            ConfirmEmailTemplate.GetBody("confirmURL", password));
+                            ConfirmEmailTemplate.GetBody(confirmURL, password));
                         EmailSendResult statusMonitor = emailSendOperation.Value;
 
                         if (statusMonitor.Status == EmailSendStatus.Failed)

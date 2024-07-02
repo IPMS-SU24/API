@@ -7,11 +7,13 @@
             <div style=""border-bottom:1px solid #eee"">
               <a href="""" style=""font-size:1.4em;color: #FF5B21;text-decoration:none;font-weight:600"">IPMS</a>
             </div>
+            <div>
             <p style=""font-size:1.1em"">Hi,</p>
             <p>You are added in new IOT102 Class. We have just create an IPMS account to use our system for manage your project with default password:{0}.
                 Please confirm your email by click the following button:
             </p>
             <h2 style=""background: #FF5B21;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;""><a href=""{1}"">Confirm Account</a></h2>
+            </div>            
             <p style=""font-size:0.9em;"">Best regards,<br />IPMS</p>
             <hr style=""border:none;border-top:1px solid #eee"" />
             <div style=""float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300"">

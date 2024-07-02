@@ -12,6 +12,8 @@ using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -24,13 +26,15 @@ namespace IPMS.Business.Services
         private readonly UserManager<IPMSUser> _userManager;
         private readonly IBackgoundJobService _backgoundJobService;
         private readonly IPresignedUrlService _presignedUrlService;
+        private readonly IHttpContextAccessor _contextAccessor;
 
-        public ClassService(IUnitOfWork unitOfWork, UserManager<IPMSUser> userManager, IBackgoundJobService backgoundJobService, IPresignedUrlService presignedUrlService)
+        public ClassService(IUnitOfWork unitOfWork, UserManager<IPMSUser> userManager, IBackgoundJobService backgoundJobService, IPresignedUrlService presignedUrlService, IHttpContextAccessor contextAccessor)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _backgoundJobService = backgoundJobService;
             _presignedUrlService = presignedUrlService;
+            _contextAccessor = contextAccessor;
         }
         public async Task<ValidationResultModel> CheckSetMaxMemberRequestValid(Guid lecturerId, SetMaxMemberRequest request)
         {
@@ -204,7 +208,7 @@ namespace IPMS.Business.Services
                         throw new ExcelMapperConvertException("File format is not valid!");
                     }
                     //Create student account
-                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId));
+                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId, _contextAccessor.HttpContext.Request.Host.Value));
                     var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == classId);
                     @class!.JobImportId = int.Parse(jobId);
                     _unitOfWork.IPMSClassRepository.Update(@class);
