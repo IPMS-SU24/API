@@ -49,5 +49,11 @@ namespace IPMS.API.Controllers
             }
             return GetActionResponse(response);
         }
+        [HttpGet("email-confirmation")]
+        public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
+        {
+            await _authenticationService.ConfirmEmailAsync(userId, token);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }
