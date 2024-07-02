@@ -9,7 +9,7 @@
             </div>
             <div>
             <p style=""font-size:1.1em"">Hi,</p>
-            <p>You are added in new IOT102 Class. We have just create an IPMS account to use our system for manage your project with default password:{0}.
+            <p>You are added in new IOT102 Class. We have just create an IPMS account to use our system for manage your project with default password:<b>{0}</b>.
                 Please confirm your email by click the following button:
             </p>
             <h2 style=""background: #FF5B21;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;""><a href=""{1}"">Confirm Account</a></h2>
