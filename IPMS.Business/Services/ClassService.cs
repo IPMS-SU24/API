@@ -49,7 +49,7 @@ namespace IPMS.Business.Services
             }
             var now = DateTime.Now;
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-            var minAccepptedStartDate = currentSemester.StartDate;
+            var minAccepptedStartDate = currentSemester.StartDate.AddHours(-1).Date;
             var requestClasses = await _unitOfWork.IPMSClassRepository.Get().Include(c => c.Semester)
                                                                         .Where
                                                                         (
@@ -62,6 +62,7 @@ namespace IPMS.Business.Services
                                                                             c.LecturerId == lecturerId
                                                                         )
                                                                         .CountAsync();
+
             if (requestClasses < request.ClassIds.Count())
             {
                 result.Message = "Request contains class cannot modify max member or class is not existed";
