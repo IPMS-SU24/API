@@ -12,7 +12,6 @@ using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
-using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
@@ -209,13 +208,13 @@ namespace IPMS.Business.Services
                     {
                         throw new ExcelMapperConvertException("File format is not valid!");
                     }
+                    //Create student account
+                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId, _contextAccessor.HttpContext.Request.Host.Value));
+                    var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == classId);
+                    @class!.JobImportId = int.Parse(jobId);
+                    _unitOfWork.IPMSClassRepository.Update(@class);
+                    await _unitOfWork.SaveChangesAsync();
                 }
-                //Create student account
-                var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(students, classId, _contextAccessor.HttpContext.Request.Host.Value));
-                var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == classId);
-                @class!.JobImportId = int.Parse(jobId);
-                _unitOfWork.IPMSClassRepository.Update(@class);
-                await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {

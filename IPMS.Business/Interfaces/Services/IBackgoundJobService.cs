@@ -4,6 +4,6 @@ namespace IPMS.Business.Interfaces.Services
 {
     public interface IBackgoundJobService
     {
-        Task ProcessAddStudentToClass(List<StudentDataRow> students, Guid classId, string serverDomain);
+        Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string serverDomain);
     }
 }
