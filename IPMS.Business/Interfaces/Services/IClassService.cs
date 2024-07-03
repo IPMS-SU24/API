@@ -11,7 +11,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<IList<ClassGroupResponse>> GetGroupsInClass(Guid classId);
         Task<MemberInGroupResponse> GetMemberInGroupAsync(MemberInGroupRequest request);
         Task AddStudentAsync(AddStudentsToClassRequest request);
-        Task<string> GetImportStudentStatusAsync(Guid classId);
         Task<ValidationResultModel> CheckImportStudentValidAsync(AddStudentsToClassRequest request, Guid lecturerId);
+        Task<List<JobImportStatusResponse>?> GetImportStudentStatusAsync(Guid classId);
     }
 }

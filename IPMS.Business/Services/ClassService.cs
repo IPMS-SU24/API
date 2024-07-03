@@ -94,12 +94,12 @@ namespace IPMS.Business.Services
             {
                 Message = "Cannot import students to class"
             };
-            if(!await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x=>x.Id == request.ClassId && x.LecturerId == lecturerId))
+            if (!await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x => x.Id == request.ClassId && x.LecturerId == lecturerId))
             {
                 result.Message = "Class is not exist or belong to another lecturer";
                 return result;
             }
-            if(await _unitOfWork.StudentRepository.Get().AnyAsync(x=>x.ClassId == request.ClassId) && !request.IsOverwrite!.Value)
+            if (await _unitOfWork.StudentRepository.Get().AnyAsync(x => x.ClassId == request.ClassId) && !request.IsOverwrite!.Value)
             {
                 result.Message = "Exist students in class";
                 return result;
@@ -123,11 +123,11 @@ namespace IPMS.Business.Services
         }
         public async Task<IList<ClassGroupResponse>> GetGroupsInClass(Guid classId)
         {
-            var result =  await _unitOfWork.ProjectRepository.Get().Include(x=>x.Students).Where(x=>x.Students.First().ClassId == classId)
-                                                                          .Select(x=> new ClassGroupResponse
+            var result = await _unitOfWork.ProjectRepository.Get().Include(x => x.Students).Where(x => x.Students.First().ClassId == classId)
+                                                                          .Select(x => new ClassGroupResponse
                                                                           {
-                                                                              Id= x.Id,
-                                                                              Name= x.GroupName
+                                                                              Id = x.Id,
+                                                                              Name = x.GroupName
                                                                           }).ToListAsync();
             result.Add(new ClassGroupResponse()
             {
@@ -139,7 +139,7 @@ namespace IPMS.Business.Services
         public async Task<MemberInGroupResponse> GetMemberInGroupAsync(MemberInGroupRequest request)
         {
             var memberInfos = _userManager.Users.ApplyFilter(request);
-            if(request.GroupFilter != null && request.GroupFilter.Any())
+            if (request.GroupFilter != null && request.GroupFilter.Any())
             {
                 // If not contain No Group filter
                 if (!request.GroupFilter.Remove(NoGroup.Id))
@@ -149,15 +149,15 @@ namespace IPMS.Business.Services
                 }
                 else
                 {
-                    memberInfos = memberInfos.Include(x => x.Students.Where(stu =>stu.ProjectId == null || request.GroupFilter.Contains(stu.ProjectId.Value))).ThenInclude(x => x.Project);
+                    memberInfos = memberInfos.Include(x => x.Students.Where(stu => stu.ProjectId == null || request.GroupFilter.Contains(stu.ProjectId.Value))).ThenInclude(x => x.Project);
                     memberInfos = memberInfos.Where(x => x.Students.First().ProjectId == null || request.GroupFilter.Contains(x.Students.First().ProjectId.Value));
                 }
             }
-            
+
             return new MemberInGroupResponse()
             {
-                TotalMember =  await _unitOfWork.StudentRepository.Get().CountAsync(x=>x.ClassId == request.Students.ClassId),
-                MemberInfo = memberInfos.Select(x=>new MemberInGroupData
+                TotalMember = await _unitOfWork.StudentRepository.Get().CountAsync(x => x.ClassId == request.Students.ClassId),
+                MemberInfo = memberInfos.Select(x => new MemberInGroupData
                 {
                     Id = x.Id,
                     GroupName = x.Students.First().ProjectId != null ? x.Students.First().Project.GroupName : NoGroup.Name,
@@ -172,15 +172,25 @@ namespace IPMS.Business.Services
             await ProcessImportStudentAsync(importFileUrl, request.ClassId);
         }
 
-        public async Task<string> GetImportStudentStatusAsync(Guid classId)
+        public async Task<List<JobImportStatusResponse>?> GetImportStudentStatusAsync(Guid classId)
         {
-            var importJobId = await _unitOfWork.IPMSClassRepository.Get().Where(x=>x.Id== classId).Select(x => x.JobImportId).FirstOrDefaultAsync();
-            if (importJobId == null)
+            var importJobIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == classId).Select(x => new { x.JobImportId, x.Information.FullName, x.Information.Email }).ToListAsync();
+            if (importJobIds == null || !importJobIds.Any())
             {
-                return "Not Yet";
+                return null;
             }
-            var jobState = JobStorage.Current.GetConnection().GetStateData(importJobId.ToString());
-            return jobState.Name;
+            var jobConnection = JobStorage.Current.GetConnection();
+            var states = new List<JobImportStatusResponse>();
+            foreach (var job in importJobIds)
+            {
+                states.Add(new JobImportStatusResponse()
+                {
+                    JobStatus = jobConnection.GetStateData(job.JobImportId.ToString())?.Name ?? "Not Yet",
+                    StudentName = job.FullName,
+                    StudentEmail = job.Email
+                });
+            }
+            return states;
         }
         private async Task ProcessImportStudentAsync(string importFileUrl, Guid classId)
         {
@@ -210,10 +220,7 @@ namespace IPMS.Business.Services
                     }
                     //Create student account
                     var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId, _contextAccessor.HttpContext.Request.Host.Value));
-                    var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == classId);
-                    @class!.JobImportId = int.Parse(jobId);
-                    _unitOfWork.IPMSClassRepository.Update(@class);
-                    await _unitOfWork.SaveChangesAsync();
+                    BackgroundJob.ContinueJobWith<IBackgoundJobService>(jobId, importService => importService.AddJobIdToStudent(jobId, classId, student.Email));
                 }
             }
             catch (Exception ex)

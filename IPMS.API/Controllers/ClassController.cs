@@ -67,9 +67,11 @@ namespace IPMS.API.Controllers
         [HttpGet("{classId}/[action]")]
         public async Task<IActionResult> ImportStudentStatus(Guid classId)
         {
-            var response = new IPMSResponse<string>()
+            var states = await _classService.GetImportStudentStatusAsync(classId);
+            dynamic dataResponse = states != null ? states : "Processing";
+            var response = new IPMSResponse<dynamic>()
             {
-                Data = await _classService.GetImportStudentStatusAsync(classId)
+                Data = dataResponse
             };
             return GetActionResponse(response);   
         }

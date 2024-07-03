@@ -12,6 +12,8 @@ using IPMS.Business.Common.Exceptions;
 using IPMSBackgroundService.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using MathNet.Numerics.Distributions;
+using NPOI.Util;
 
 namespace IPMS.Business.Services
 {
@@ -31,6 +33,18 @@ namespace IPMS.Business.Services
             _messageService = messageService;
             _httpContext = httpContext;
         }
+
+        public async Task AddJobIdToStudent(string jobId,Guid classId, string email)
+        {
+            await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
+            {
+                var studentInserted = await _unitOfWork.StudentRepository.Get().Include(x => x.Information).FirstOrDefaultAsync(x => x.ClassId == classId && x.Information.Email == email);
+                studentInserted!.JobImportId = int.Parse(jobId);
+                _unitOfWork.StudentRepository.Update(studentInserted);
+                await _unitOfWork.SaveChangesAsync();
+            });
+        }
+
         [AutomaticRetry(Attempts = 5)]
         [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
         public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string serverDomain)
