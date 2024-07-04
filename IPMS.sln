@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPMS.Business", "IPMS.Busin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPMS.UnitTests", "IPMS.UnitTests\IPMS.UnitTests.csproj", "{BF071077-18FC-4BE3-8A70-977439BB6AEE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPMS.NotificationStorage", "IPMS.NotificationStorage\IPMS.NotificationStorage.csproj", "{17BEAC10-B881-4735-9E3F-2C44B9C82674}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{BF071077-18FC-4BE3-8A70-977439BB6AEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF071077-18FC-4BE3-8A70-977439BB6AEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF071077-18FC-4BE3-8A70-977439BB6AEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17BEAC10-B881-4735-9E3F-2C44B9C82674}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17BEAC10-B881-4735-9E3F-2C44B9C82674}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17BEAC10-B881-4735-9E3F-2C44B9C82674}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17BEAC10-B881-4735-9E3F-2C44B9C82674}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
