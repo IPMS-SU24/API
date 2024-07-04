@@ -57,6 +57,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<ISemesterService, SemesterService>();
             services.AddScoped<IClassService, ClassService>();
             services.AddScoped<ISubmissionModuleService, SubmissionModuleService>();
+            services.AddScoped<INotificationStorageService, NotificationStorageService>();
         }
     }
 }

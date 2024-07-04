@@ -29,6 +29,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\IPMS.DataAccess\IPMS.DataAccess.csproj" />
+		<ProjectReference Include="..\IPMS.NotificationStorage\IPMS.NotificationStorage.csproj" />
 	</ItemGroup>
 
 </Project>
