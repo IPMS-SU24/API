@@ -16,8 +16,6 @@ namespace IPMS.Business.Interfaces.Services
         Task RequestToSwapGroup(SwapGroupRequest request, Guid studentId);
         Task RequestToJoinGroup(JoinGroupRequest request, Guid studentId);
         Task AssignLeader(AssignLeaderRequest request, Guid studentId);
-        Task<ValidationResultModel> RemoveMemberValidators(Guid studentId);
-        Task RemoveMember(Guid studentId);
         Task<ValidationResultModel> AddMemberValidators(Guid studentId, Guid projectId);
         Task AddMember(Guid studentId, Guid projectId);
     }

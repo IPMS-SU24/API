@@ -20,6 +20,7 @@ namespace IPMS.Business.Responses.Project
     }
     public class IotBorrow
     {
+        public DateTime CreateAt { get; set; }
         public List<IotItem> Items { get; set; } = new();
     }
     public class IotItem
