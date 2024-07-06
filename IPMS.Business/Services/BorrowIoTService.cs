@@ -12,6 +12,8 @@ using IPMS.DataAccess.Common.Enums;
 using Microsoft.AspNetCore.Http;
 using System.Xml.Linq;
 using IPMS.Business.Common.Extensions;
+using IPMS.Business.Responses.IoT;
+using IPMS.Business.Responses.Project;
 
 namespace IPMS.Business.Services
 {
@@ -44,7 +46,7 @@ namespace IPMS.Business.Services
             var iot = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.ComponentId);
             if (iot == null) return false;
             //Check iot in iot list of Topic
-            var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id).Select(x => x.TopicId).FirstOrDefaultAsync();
+            var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id).Select(x => x.TopicId).FirstOrDefaultAsync(); //checked project get topic
             var isInTopicComponent = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents()
                                                                                     .Where(x => x.MasterId == topicId && x.ComponentId == request.ComponentId).AnyAsync();
             if (!isInTopicComponent) return false;
@@ -60,7 +62,7 @@ namespace IPMS.Business.Services
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var studiesIn = await _commonServices.GetStudiesIn(leaderId);
             var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId), currentSemester.Id);
-            var componentTopics = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Where(x => x.MasterId == request.TopicId).Include(x=>x.Component).ToListAsync();
+            var componentTopics = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Where(x => x.MasterId == request.TopicId).Include(x => x.Component).ToListAsync();
             if (!componentTopics.Any()) throw new DataNotFoundException("Not Found Component for Topic");
             var mapComponentTasks = new List<Task<BorrowIoTComponentInformation>>();
             foreach (var component in componentTopics)
@@ -69,6 +71,72 @@ namespace IPMS.Business.Services
             }
             result.AddRange(await Task.WhenAll(mapComponentTasks));
             return result;
+        }
+
+        public async Task<IEnumerable<GetBorrowIoTComponentsResponse>> GetBorrowIoTComponents(GetBorrowIoTComponentsRequest request, Guid lecturerId)
+        {
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+
+            var classes = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)
+                                                && c.Semester.Id.Equals(currentSemester.Id))
+                                            .Include(c => c.Topics)
+                                            .ThenInclude(ct => ct.Project)
+                                            .ToListAsync();
+
+            if (request.ClassIds.Count != 0) // filter
+            {
+                classes = classes.Where(c => request.ClassIds.Contains(c.Id)).ToList();
+            }
+
+
+            var components = await _unitOfWork.ComponentsMasterRepository.Get() // get components
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project)
+                                    .Include(cm => cm.Component).ToListAsync();
+
+
+            List<ProjectInformation> projects = new List<ProjectInformation>();
+            foreach (var @class in classes) // prepare information
+            {
+                projects.AddRange(@class.Topics.Where(ct => ct.ProjectId != null).Select(ct => new ProjectInformation
+                {
+                    ProjectId = ct.ProjectId,
+                    GroupName = ct.Project.GroupName,
+                    ClassName = @class.Name
+                }).ToList());
+            }
+
+            List<GetBorrowIoTComponentsResponse> borrowComponents = new();
+            
+            foreach (var prj in projects)
+            {
+                var prjComponents = components.Where(c => c.MasterId.Equals(prj.ProjectId)); // get borrow component base on projects
+
+                borrowComponents.AddRange( prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour }) // add to response
+                .Select(g => new GetBorrowIoTComponentsResponse
+                {
+                    ClassName = prj.ClassName,
+                    GroupName = prj.GroupName,
+                    CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    Items = g.Select(g => new IotItem
+                    {
+                        Id = g.Id,
+                        Name = g.Component!.Name,
+                        Quantity = g.Quantity,
+                        Status = g.Status
+                        
+                    }).ToList()
+
+                }).ToList());
+            }
+            if (request.OrderBy)
+            {
+                borrowComponents = borrowComponents.OrderByDescending(bC => bC.CreateAt).ToList();
+            } else
+            {
+                borrowComponents = borrowComponents.OrderBy(bC => bC.CreateAt).ToList();
+            }
+
+            return borrowComponents;
         }
 
         public async Task<IEnumerable<ReportIoTComponentInformation>> GetGetReportIoTComponents()
@@ -80,10 +148,10 @@ namespace IPMS.Business.Services
             {
                 return report;
             }
-            var components = await  _unitOfWork.ComponentsMasterRepository.Get()
+            var components = await _unitOfWork.ComponentsMasterRepository.Get()
                                     .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(project.Id))
                                     .Include(cm => cm.Component).ToListAsync();
-            
+
 
             report = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
                 .Select(g => new ReportIoTComponentInformation
@@ -97,7 +165,7 @@ namespace IPMS.Business.Services
                     }).ToList()
 
                 }).ToList();
-            return report;   
+            return report;
         }
 
         public async Task RegisterIoTForProject(Guid leaderId, IEnumerable<IoTModelRequest> borrowIoTModels)
