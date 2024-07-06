@@ -163,6 +163,7 @@ namespace IPMS.Business.Services
             var studiesIn = await _commonService.GetStudiesIn(leaderId);
             var @class = await _commonService.GetCurrentClass(studiesIn.Select(x => x.ClassId));
             newTopic.OwnerId = @class.LecturerId;
+            newTopic.SuggesterId = leaderId;
             await _unitOfWork.TopicRepository.InsertAsync(newTopic);
             var project = await _commonService.GetProject(leaderId);
             //Add IoT Component to ComponentMaster
