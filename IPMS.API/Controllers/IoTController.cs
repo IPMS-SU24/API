@@ -70,20 +70,13 @@ namespace IPMS.API.Controllers
 
 
         [EnumAuthorize(UserRole.Lecturer)]
-        [HttpGet("review-iots-borrow")]
-        public async Task<IActionResult> GetBorrowIoTComponents()
+        [HttpPost("review-iots-borrow")]
+        public async Task<IActionResult> GetBorrowIoTComponents([FromBody] GetBorrowIoTComponentsRequest request)
         {
             var currentUserId = HttpContext.User.Claims.GetUserId();
-            var data = await _borrowIoTService.GetGetReportIoTComponents();
-            var response = new IPMSResponse<IEnumerable<ReportIoTComponentInformation>>()
-            {
-                Data = data
-            };
-            if (data == null)
-            {
-                response.Status = ResponseStatus.BadRequest;
-            }
-            return GetActionResponse(response);
+            var data = await _borrowIoTService.GetBorrowIoTComponents(request, currentUserId);
+            var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(response);
         }
     }
 }
