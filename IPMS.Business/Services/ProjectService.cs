@@ -193,7 +193,7 @@ namespace IPMS.Business.Services
                     Id = (Guid)classTopic.ProjectId!,
                     GroupName = classTopic.Project!.GroupName,
                     Members = classTopic.Project.Students.Count(),
-                    LeaderName = classTopic.Project.Students.FirstOrDefault(s => allLeaders.Contains(s.Id))!.Information.FullName,
+                    LeaderName = classTopic.Project.Students.FirstOrDefault(s => allLeaders.Contains(s.InformationId))!.Information.FullName,
                     TopicName = classTopic.Topic!.Name
                 };
                 projectsOverview.Add(prjOverview);
@@ -207,7 +207,7 @@ namespace IPMS.Business.Services
                     Id = (Guid)project.Id!,
                     GroupName = project.GroupName,
                     Members = project.Students.Count(),
-                    LeaderName = project.Students.FirstOrDefault(s => allLeaders.Contains(s.Id))!.Information.FullName,
+                    LeaderName = project.Students.FirstOrDefault(s => allLeaders.Contains(s.InformationId))!.Information.FullName,
                     TopicName = ""
                 };
                 projectsOverview.Add(prjOverview);
@@ -264,6 +264,7 @@ namespace IPMS.Business.Services
             var iotBorrows = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
                 .Select(g => new IotBorrow
                 {
+                    CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
                     Items = g.Select(g => new IotItem
                     {
                         Id = g.Id,

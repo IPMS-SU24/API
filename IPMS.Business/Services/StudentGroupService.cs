@@ -379,30 +379,6 @@ namespace IPMS.Business.Services
             };
             await _messageService.SendMessage(message);
         }
-        public async Task<ValidationResultModel> RemoveMemberValidators(Guid studentId)
-        {
-            var result = new ValidationResultModel
-            {
-                Message = string.Empty,
-                Result = true
-            };
-            var project = await _commonServices.GetProject(studentId);
-            if (project == null)
-            {
-                result.Message = "Remove member did not successfully";
-                result.Result = false;
-                return result;
-            }
-
-            return result;
-        }
-        public async Task RemoveMember(Guid studentId) // need validation
-        {
-            var project = await _commonServices.GetProject(studentId);
-            _unitOfWork.ProjectRepository.Delete(project);
-            await _unitOfWork.SaveChangesAsync();
-        }
-
         public async Task<ValidationResultModel> AddMemberValidators(Guid studentId, Guid projectId)
         {
             var result = new ValidationResultModel
