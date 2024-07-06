@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Requests.Project;
+﻿using IPMS.Business.Models;
+using IPMS.Business.Requests.Project;
 using IPMS.Business.Requests.ProjectPreference;
 using IPMS.Business.Responses.Project;
 using IPMS.Business.Responses.ProjectDashboard;
@@ -13,6 +14,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferences(ProjectPreferenceRequest request);
         Task<IEnumerable<GetProjectsOverviewResponse>> GetProjectsOverview(GetProjectsOverviewRequest request, Guid currentUserId);
         Task<GetProjectDetailResponse> GetProjectDetail(GetProjectDetailRequest request, Guid currentUserId);
-
+        Task<ValidationResultModel> UpdateProjectPreferencesStatusValidators(UpdateProjectPreferenceStatusRequest request, Guid currentUserId);
+        Task UpdateProjectPreferencesStatus(UpdateProjectPreferenceStatusRequest request, Guid currentUserId);
     }
 }

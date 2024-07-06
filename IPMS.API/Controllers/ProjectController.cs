@@ -103,5 +103,19 @@ namespace IPMS.API.Controllers
             return Ok(projectPreferences);
 
         }
+
+        /// <summary>
+        /// Update Project Preferences Status
+        /// https://docs.google.com/spreadsheets/d/1GY5tV2-HfVOyjpk551m1cZl5MegS31kw9PA7ZBumv-s/edit?gid=0#gid=0
+        /// </summary>
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("preferences-status")]
+        public async Task<IActionResult> UpdateProjectStatusPreferences([FromBody] UpdateProjectPreferenceStatusRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            await _projectService.UpdateProjectPreferencesStatus(request, currentUserId);
+            return Ok();
+
+        }
     }
 }

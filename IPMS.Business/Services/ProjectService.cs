@@ -1,11 +1,10 @@
-﻿using Amazon.Runtime;
-using AutoMapper;
-using AutoMapper.Execution;
+﻿using AutoMapper;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
 using IPMS.Business.Requests.Project;
 using IPMS.Business.Requests.ProjectPreference;
 using IPMS.Business.Responses.Project;
@@ -16,9 +15,6 @@ using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
-using System.Collections;
-using System.Xml.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -328,6 +324,42 @@ namespace IPMS.Business.Services
             };
 
             return prjDetail;
+        }
+        public async Task<ValidationResultModel> UpdateProjectPreferencesStatusValidators(UpdateProjectPreferenceStatusRequest request, Guid currentUserId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            if (request.Projects.Count == 0)
+            {
+                result.Message = "Did not have any project to update";
+                return result;
+            }
+
+            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id) 
+                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
+            if (projects.Count != request.Projects.Count()) // check all request project need to be existed and have Id same lecturer Id updated
+            {
+                result.Message = "Have project invalid";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        public async Task UpdateProjectPreferencesStatus(UpdateProjectPreferenceStatusRequest request, Guid currentUserId)
+        {
+            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)
+                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
+            foreach(var project in projects) {
+                project.IsPublished = request.Projects.FirstOrDefault(p => p.ProjectId.Equals(project.Id)).IsPublished;
+                _unitOfWork.ProjectRepository.Update(project);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
