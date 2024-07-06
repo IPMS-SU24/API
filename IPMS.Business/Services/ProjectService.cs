@@ -361,5 +361,57 @@ namespace IPMS.Business.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferencesLecturer(ProjectPreferenceRequest request, Guid currentUserId)
+        {
+            var prjPref = new List<ProjectPreferenceResponse>();
+            IQueryable<Project> prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true || p.Topic.Class.LecturerId.Equals(currentUserId))
+                            .Include(p => p.Topic).ThenInclude(t => t.Topic)
+                            .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
+                            .Include(p => p.Submissions);
+
+            if (request.SearchValue != null) // search value base on topic name or description
+            {
+                request.SearchValue = request.SearchValue.Trim().ToLower();
+                prjQueryable = prjQueryable.Where(p => p.Topic.Topic.Name.ToLower().Contains(request.SearchValue)
+                                                        || p.Topic.Topic.Description.ToLower().Contains(request.SearchValue));
+            }
+
+            if (request.LecturerId != null && request.LecturerId != Guid.Empty) // search base on lecturerId
+            {
+                prjQueryable = prjQueryable.Where(p => p.Topic.Class.LecturerId.Equals(request.LecturerId));
+            }
+
+            if (request.SemesterCode != null) // search base on semester code - semester shortname
+            {
+                request.SemesterCode = request.SemesterCode.Trim().ToLower();
+                prjQueryable = prjQueryable.Where(p => p.Topic.Class.Semester.ShortName.ToLower().Contains(request.SemesterCode));
+
+            }
+
+            var projects = await prjQueryable.ToListAsync();
+
+            List<IPMSUser> users = _userManager.Users.ToList();
+
+            prjPref = projects.Select(p => new ProjectPreferenceResponse
+            {
+                ProjectId = p.Id,
+                TopicTitle = p.Topic.Topic.Name != null ? p.Topic.Topic.Name : "",
+                LecturerId = p.Topic.Class.LecturerId != Guid.Empty ? p.Topic.Class.LecturerId : Guid.Empty,
+                LecturerName = GetLecturerName(users, p.Topic.Class.LecturerId),
+                Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
+                SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
+                Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
+                ProjectSubmissions = p.Submissions.Select(ps => new ProjectSubmissionResponse
+                {
+                    Id = ps.Id,
+                    Name = ps.Name,
+                    SubmitTime = ps.SubmissionDate,
+                    Link = _presignedUrlService.GeneratePresignedDownloadUrl("PS_" + ps.Id + "_" + ps.Name) //Get base on name on S3 
+                }).ToList()
+            }).ToList();
+
+            return prjPref;
+        }
     }
 }

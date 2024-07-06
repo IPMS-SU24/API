@@ -117,5 +117,20 @@ namespace IPMS.API.Controllers
             return Ok();
 
         }
+
+        /// <summary>
+        /// Lecturer Get Project Preferences
+        /// https://docs.google.com/spreadsheets/d/1DalhYS3NT9XpwzBuaYKZrFrGB5L8H5cQ5mDva8T1ito/edit?gid=0#gid=0
+        /// </summary>
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("lecturer-preferences")]
+        public async Task<IActionResult> GetProjectPreferencesLecturer([FromQuery] ProjectPreferenceRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var projectPreferences = await _projectService.GetProjectPreferencesLecturer(request, currentUserId);
+            var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(response);
+
+        }
     }
 }
