@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using IPMS.API.Responses;
 using Microsoft.AspNetCore.Authorization;
 using IPMS.Business.Responses.Class;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace IPMS.API.Controllers
 {
@@ -51,6 +53,25 @@ namespace IPMS.API.Controllers
                     resultQuery.TotalMember,
                     MemberInfo = memberInfoResponse.Data
                 }
+            };
+            return GetActionResponse(response);   
+        }
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> AddStudents([FromBody] AddStudentsToClassRequest request)
+        {
+            await _classService.AddStudentAsync(request);
+            return GetActionResponse(new IPMSResponse<object>());   
+        }
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("{classId}/[action]")]
+        public async Task<IActionResult> ImportStudentStatus(Guid classId)
+        {
+            var states = await _classService.GetImportStudentStatusAsync(classId);
+            dynamic dataResponse = states != null ? states : "Processing";
+            var response = new IPMSResponse<dynamic>()
+            {
+                Data = dataResponse
             };
             return GetActionResponse(response);   
         }

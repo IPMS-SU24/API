@@ -3,14 +3,18 @@ using Amazon.SQS;
 using AutoFilterer.Swagger;
 using AutoMapper.Internal;
 using FluentValidation;
+using Hangfire;
+using Hangfire.PostgreSql;
 using IPMS.API.Common;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Filters;
 using IPMS.Business.Common.Extensions;
+using IPMS.Business.Common.Models;
 using IPMS.Business.Models;
 using IPMS.DataAccess;
 using IPMS.DataAccess.Common;
 using IPMS.DataAccess.Models;
+using IPMS.NotificationStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.DataProtection;
@@ -20,6 +24,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -67,13 +72,13 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = SameSiteMode.None; // Allows the cookie to be sent with cross-site requests
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
-builder.Services.AddDI();
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess"));
     options.AddInterceptors(new AuditingSaveChangesInterceptor());
 });
+builder.Services.AddScoped(x=> new IPMSNotificationStorageContext(builder.Configuration["IPMS_MONGO_URI"]));
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -88,6 +93,17 @@ builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
 builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.Configure<JWTConfig>(builder.Configuration.GetSection("JWT"));
+builder.Services.AddSingleton(x => new MailServer(builder.Configuration["MailServerConnection"]));
+builder.Services.AddDI();
+builder.Services.AddHangfire(configuration => configuration
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(opts =>
+        {
+            opts.UseNpgsqlConnection(builder.Configuration.GetConnectionString("IPMS"));
+        }));
+builder.Services.AddHangfireServer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.DescribeAllParametersInCamelCase();
@@ -158,7 +174,7 @@ app.UseCors(options => options.AllowAnyMethod()
 app.UseRequestResponseMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession(); 
+app.UseSession();
 app.UseAddStudentSessionIfNotExistMiddleware();
 app.MapControllers();
 app.Run();

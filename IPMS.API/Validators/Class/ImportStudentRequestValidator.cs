@@ -1,20 +1,19 @@
 ﻿using FluentValidation;
+using FluentValidation.Results;
 using IPMS.API.Common.Extensions;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.Class;
-using IPMS.Business.Services;
 
 namespace IPMS.API.Validators.Class
 {
-    public class SetMaxMemberRequestValidator : AbstractValidator<SetMaxMemberRequest>
+    public class ImportStudentRequestValidator : AbstractValidator<AddStudentsToClassRequest>
     {
-        public SetMaxMemberRequestValidator(IClassService classService, IHttpContextAccessor context)
+        public ImportStudentRequestValidator(IClassService classService, IHttpContextAccessor context)
         {
             var lecturerId = context.HttpContext.User.Claims.GetUserId();
-            RuleFor(x => x.MaxMember).GreaterThan(0);
-            RuleFor(x=>x).CustomAsync(async (x, validationContext, cancellationToken) =>
+            RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
-                var validationResult = await classService.CheckSetMaxMemberRequestValid(lecturerId,x);
+                var validationResult = await classService.CheckImportStudentValidAsync(x, lecturerId);
                 if (!validationResult.Result)
                 {
                     validationContext.AddBusinessFailure(validationResult.Message);

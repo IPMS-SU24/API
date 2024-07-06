@@ -9,5 +9,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<TokenModel?> Login(LoginRequest loginModel);
         Task<IdentityResult> AddLecturerAccount(AddLecturerAccountRequest registerModel);
         Task<TokenModel?> RefreshToken(TokenModel tokenModel);
+        Task ConfirmEmailAsync(Guid userId, string token);
     }
 }

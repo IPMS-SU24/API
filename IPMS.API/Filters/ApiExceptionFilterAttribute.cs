@@ -15,8 +15,44 @@ namespace IPMS.API.Filters
             _exceptionHandlers = new Dictionary<Type, Action<ExceptionContext>>
             {
                 { typeof(ValidationException), HandleValidationException },
-                { typeof(DataNotFoundException), HandleNotFoundException }
+                { typeof(DataNotFoundException), HandleNotFoundException },
+                { typeof(CannotImportStudentException), HandleCannotImportStudentException },
+                { typeof(EmailConfirmException), HandleEmailAlreadyConfirmException }
             };
+        }
+
+        private void HandleCannotImportStudentException(ExceptionContext context)
+        {
+            var exception = (CannotImportStudentException)context.Exception;
+
+            var details = new IPMSResponse<object>()
+            {
+                Status = ResponseStatus.BadRequest,
+                Errors = new Dictionary<string, string[]>()
+                {
+                    { "Invalid file",  new string[1]{ exception.Message} }
+                }
+            };
+
+            context.Result = new BadRequestObjectResult(details);
+
+            context.ExceptionHandled = true;
+        }private void HandleEmailAlreadyConfirmException(ExceptionContext context)
+        {
+            var exception = (EmailConfirmException)context.Exception;
+
+            var details = new IPMSResponse<object>()
+            {
+                Status = ResponseStatus.BadRequest,
+                Errors = new Dictionary<string, string[]>()
+                {
+                    { "Invalid request",  new string[1]{ exception.Message} }
+                }
+            };
+
+            context.Result = new BadRequestObjectResult(details);
+
+            context.ExceptionHandled = true;
         }
 
         private void HandleUnknownException(ExceptionContext context)

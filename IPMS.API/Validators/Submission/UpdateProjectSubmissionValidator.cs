@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using IPMS.API.Common.Extensions;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ProjectSubmission;
 
@@ -16,7 +17,7 @@ namespace IPMS.API.Validators.Submission
                 var validationResult = await topicService.UpdateProjectSubmissionValidators(x);
                 if (!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.Message);
+                    validationContext.AddBusinessFailure(validationResult.Message);
                 }
             });
         }

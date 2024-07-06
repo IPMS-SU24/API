@@ -48,10 +48,22 @@ namespace IPMS.Business.Repository
             }
             dbSet.Remove(entityToDelete);
         }
+        public virtual void DeleteRange(IEnumerable<TEntity> deleteEntities)
+        {
+            foreach (var deleteEntity in deleteEntities)
+            {
+                deleteEntity.IsDeleted = true;
+                Update(deleteEntity);
+            }
+        }
+
+        public virtual void HardDeleteRange(IEnumerable<TEntity> deleteEntities)
+        {
+            dbSet.RemoveRange(deleteEntities);
+        }
 
         public virtual void Update(TEntity entityToUpdate)
         {
-            dbSet.Attach(entityToUpdate);
             _context.Entry(entityToUpdate).State = EntityState.Modified;
         }
 

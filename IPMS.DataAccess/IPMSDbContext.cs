@@ -63,6 +63,7 @@ namespace IPMS.DataAccess
             modelBuilder.Entity<IPMSUser>(entity =>
             {
                 entity.ToTable("Account");
+                entity.Property(e => e.PhoneNumber).IsRequired(false);
                 entity.Ignore(c => c.AccessFailedCount);
                 entity.Ignore(c => c.LockoutEnabled);
                 entity.Ignore(c => c.LockoutEnd);

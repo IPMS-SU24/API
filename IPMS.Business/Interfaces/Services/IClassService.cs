@@ -10,5 +10,8 @@ namespace IPMS.Business.Interfaces.Services
         Task<ValidationResultModel> CheckSetMaxMemberRequestValid(Guid lecturerId, SetMaxMemberRequest request);
         Task<IList<ClassGroupResponse>> GetGroupsInClass(Guid classId);
         Task<MemberInGroupResponse> GetMemberInGroupAsync(MemberInGroupRequest request);
+        Task AddStudentAsync(AddStudentsToClassRequest request);
+        Task<ValidationResultModel> CheckImportStudentValidAsync(AddStudentsToClassRequest request, Guid lecturerId);
+        Task<List<JobImportStatusResponse>?> GetImportStudentStatusAsync(Guid classId);
     }
 }

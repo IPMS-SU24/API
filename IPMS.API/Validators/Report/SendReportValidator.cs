@@ -15,7 +15,7 @@ namespace IPMS.API.Validators.Report
                 var validationResult =  await reportService.CheckValidReport(x, reporterId);
                 if(!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.Message);
+                    validationContext.AddBusinessFailure(validationResult.Message);
                 }
             });
         }

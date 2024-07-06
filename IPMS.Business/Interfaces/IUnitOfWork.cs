@@ -18,9 +18,16 @@ namespace IPMS.Business.Interfaces
         IReportRepository ReportRepository { get; }
         IMemberHistoryRepository MemberHistoryRepository { get; }
         ILecturerGradeRepository LecturerGradeRepository { get; }
-        Task SaveChangesAsync();
-        void SaveChanges();
         IComponentsMasterRepository ComponentsMasterRepository { get; }
         IIoTComponentRepository IoTComponentRepository { get; }
+        //Start the database Transaction
+        Task CreateTransactionAsync();
+        //Commit the database Transaction
+        Task CommitAsync();
+        //Rollback the database Transaction
+        Task RollbackAsync();
+        Task SaveChangesAsync();
+        void SaveChanges();
+        Task RollbackTransactionOnFailAsync(Func<Task> resultBody);
     }
 }

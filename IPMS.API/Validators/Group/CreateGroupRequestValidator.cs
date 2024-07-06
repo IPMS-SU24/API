@@ -16,7 +16,7 @@ namespace IPMS.API.Validators.Group
                 var validationResult = await studentGroupService.CheckStudentValidForCreateGroup(studentId);
                 if (!validationResult.Result)
                 {
-                    validationContext.AddFailure(validationResult.Message);
+                    validationContext.AddBusinessFailure(validationResult.Message);
                 }
             });
         }
