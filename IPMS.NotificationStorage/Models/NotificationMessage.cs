@@ -11,5 +11,6 @@ namespace IPMS.NotificationStorage.Models
         public Guid AccountId { get; set; }
         public string Title { get; set; } = null!;
         public string Message { get; set; } = null!;
+        public DateTime DateSent { get; init; }
     }
 }
