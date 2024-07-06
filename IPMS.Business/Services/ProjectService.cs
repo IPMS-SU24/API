@@ -1,21 +1,20 @@
 ﻿using AutoMapper;
-using AutoMapper.Execution;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
 using IPMS.Business.Requests.Project;
 using IPMS.Business.Requests.ProjectPreference;
 using IPMS.Business.Responses.Project;
 using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Responses.ProjectPreference;
 using IPMS.Business.Responses.ProjectSubmission;
+using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
-using System.Xml.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -187,7 +186,7 @@ namespace IPMS.Business.Services
 
             var allLeaders = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList(); // Find leader of project
 
-            foreach (var classTopic in classTopics)
+            foreach (var classTopic in classTopics) // picked topic
             {
                 GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
                 {
@@ -200,8 +199,219 @@ namespace IPMS.Business.Services
                 projectsOverview.Add(prjOverview);
             }
 
-            return projectsOverview;
+            var projectNotPick = await GetProjectNotPickedTopic(request.ClassId); // not picked topic
+            foreach (var project in projectNotPick) 
+            {
+                GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
+                {
+                    Id = (Guid)project.Id!,
+                    GroupName = project.GroupName,
+                    Members = project.Students.Count(),
+                    LeaderName = project.Students.FirstOrDefault(s => allLeaders.Contains(s.Id))!.Information.FullName,
+                    TopicName = ""
+                };
+                projectsOverview.Add(prjOverview);
+            }
 
+            return projectsOverview;
+        }
+        private async Task<IEnumerable<Project>> GetProjectNotPickedTopic(Guid classId)
+        {
+            List<Project> projects = new List<Project>();
+            var prjPickedTopic = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(classId) // get project picked topic 
+                                                        && (ct.ProjectId != null))
+                                                .Select(ct => ct.ProjectId)
+                                                .ToListAsync();
+
+            var projectsId = await _unitOfWork.StudentRepository.Get().Where(s => s.ClassId.Equals(classId) // get through project not in project picked topic
+                                                    && prjPickedTopic.Contains(s.ProjectId) == false) 
+                                                .Select(s => s.ProjectId).Distinct()
+                                                .ToListAsync();
+
+            projects = await _unitOfWork.ProjectRepository.Get().Where(p => projectsId.Contains(p.Id)).Include(p => p.Students).ThenInclude(s => s.Information).ToListAsync();
+            return projects;
+        }
+        public async Task<GetProjectDetailResponse> GetProjectDetail(GetProjectDetailRequest request, Guid currentUserId)
+        {
+            GetProjectDetailResponse prjDetail = null;
+            if (request.ClassId == null || request.ClassId == Guid.Empty)
+            {
+                return prjDetail;
+            }
+
+            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
+            if (@class == null) // check class is existed
+            {
+                return prjDetail;
+            }
+
+            if (request.GroupId == null || request.GroupId == Guid.Empty)
+            {
+                return prjDetail;
+
+            }
+
+            ClassTopic classTopic = await _unitOfWork.ClassTopicRepository.Get()
+                                                    .Where(ct => ct.ClassId.Equals(request.ClassId) && ct.ProjectId.Equals(request.GroupId))
+                                                    .Include(ct => ct.Topic)
+                                                    .Include(ct => ct.Project).ThenInclude(p => p.Students).ThenInclude(s => s.Information)
+                                                    .FirstOrDefaultAsync();
+
+            var components = await _unitOfWork.ComponentsMasterRepository.Get()
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.GroupId))
+                                    .Include(cm => cm.Component).ToListAsync();
+
+            var iotBorrows = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
+                .Select(g => new IotBorrow
+                {
+                    Items = g.Select(g => new IotItem
+                    {
+                        Id = g.Id,
+                        Name = g.Component!.Name,
+                        Quantity = g.Quantity,
+                        Status = g.Status
+                    }).ToList()
+
+                }).ToList();
+
+            var allLeaders = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList(); // Find leader of project
+           
+            if (classTopic == null) // Expect cho nay viet 1 cai ham de lay project chua pick topic --> Lay 1 list xong where de view group tong quan dung luon
+            {
+                var projectNotPick = await GetProjectNotPickedTopic(request.ClassId);
+                var project = projectNotPick.FirstOrDefault(pnp => pnp.Id.Equals(request.GroupId));
+                if (project == null)
+                {
+                    return prjDetail;
+
+                }
+                var memsProject = project.Students.Select(s => new MemberPrjDetail
+                {
+                    Id = s.InformationId,
+                    StudentId = s.Id,
+                    Name = s.Information.FullName,
+                    isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
+
+                }).ToList();
+                prjDetail = new GetProjectDetailResponse
+                {
+                    GroupName = project.GroupName,
+                    TopicName = "",
+                    TopicStatus = RequestStatus.Waiting,
+                    Members = memsProject,
+                    IotBorrows = iotBorrows
+                };
+
+                return prjDetail;
+            }
+
+            var members = classTopic.Project.Students.Select(s => new MemberPrjDetail
+            {
+                Id = s.InformationId,
+                StudentId = s.Id,
+                Name = s.Information.FullName,
+                isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
+
+            }).ToList();
+
+            prjDetail = new GetProjectDetailResponse
+            {
+                GroupName = classTopic.Project.GroupName,
+                TopicName = classTopic.Topic != null ? classTopic.Topic.Name : "",
+                TopicStatus = classTopic.Topic != null ?  classTopic.Topic.Status : RequestStatus.Waiting,
+                Members = members,
+                IotBorrows = iotBorrows
+            };
+
+            return prjDetail;
+        }
+        public async Task<ValidationResultModel> UpdateProjectPreferencesStatusValidators(UpdateProjectPreferenceStatusRequest request, Guid currentUserId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            if (request.Projects.Count == 0)
+            {
+                result.Message = "Did not have any project to update";
+                return result;
+            }
+
+            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id) 
+                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
+            if (projects.Count != request.Projects.Count()) // check all request project need to be existed and have Id same lecturer Id updated
+            {
+                result.Message = "Have project invalid";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        public async Task UpdateProjectPreferencesStatus(UpdateProjectPreferenceStatusRequest request, Guid currentUserId)
+        {
+            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)
+                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
+            foreach(var project in projects) {
+                project.IsPublished = request.Projects.FirstOrDefault(p => p.ProjectId.Equals(project.Id)).IsPublished;
+                _unitOfWork.ProjectRepository.Update(project);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferencesLecturer(ProjectPreferenceRequest request, Guid currentUserId)
+        {
+            var prjPref = new List<ProjectPreferenceResponse>();
+            IQueryable<Project> prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true || p.Topic.Class.LecturerId.Equals(currentUserId))
+                            .Include(p => p.Topic).ThenInclude(t => t.Topic)
+                            .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
+                            .Include(p => p.Submissions);
+
+            if (request.SearchValue != null) // search value base on topic name or description
+            {
+                request.SearchValue = request.SearchValue.Trim().ToLower();
+                prjQueryable = prjQueryable.Where(p => p.Topic.Topic.Name.ToLower().Contains(request.SearchValue)
+                                                        || p.Topic.Topic.Description.ToLower().Contains(request.SearchValue));
+            }
+
+            if (request.LecturerId != null && request.LecturerId != Guid.Empty) // search base on lecturerId
+            {
+                prjQueryable = prjQueryable.Where(p => p.Topic.Class.LecturerId.Equals(request.LecturerId));
+            }
+
+            if (request.SemesterCode != null) // search base on semester code - semester shortname
+            {
+                request.SemesterCode = request.SemesterCode.Trim().ToLower();
+                prjQueryable = prjQueryable.Where(p => p.Topic.Class.Semester.ShortName.ToLower().Contains(request.SemesterCode));
+
+            }
+
+            var projects = await prjQueryable.ToListAsync();
+
+            List<IPMSUser> users = _userManager.Users.ToList();
+
+            prjPref = projects.Select(p => new ProjectPreferenceResponse
+            {
+                ProjectId = p.Id,
+                TopicTitle = p.Topic.Topic.Name != null ? p.Topic.Topic.Name : "",
+                LecturerId = p.Topic.Class.LecturerId != Guid.Empty ? p.Topic.Class.LecturerId : Guid.Empty,
+                LecturerName = GetLecturerName(users, p.Topic.Class.LecturerId),
+                Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
+                SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
+                Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
+                ProjectSubmissions = p.Submissions.Select(ps => new ProjectSubmissionResponse
+                {
+                    Id = ps.Id,
+                    Name = ps.Name,
+                    SubmitTime = ps.SubmissionDate,
+                    Link = _presignedUrlService.GeneratePresignedDownloadUrl("PS_" + ps.Id + "_" + ps.Name) //Get base on name on S3 
+                }).ToList()
+            }).ToList();
+
+            return prjPref;
         }
     }
 }

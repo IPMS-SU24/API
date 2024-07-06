@@ -4,6 +4,7 @@ namespace IPMS.Business.Responses.ProjectPreference
 {
     public class ProjectPreferenceResponse
     {
+        public Guid? ProjectId { get; set; }
         public string TopicTitle { get; set; }
         public Guid? LecturerId { get; set; }
         public string LecturerName { get; set; }
