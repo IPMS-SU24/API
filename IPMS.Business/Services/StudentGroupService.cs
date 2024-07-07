@@ -312,9 +312,12 @@ namespace IPMS.Business.Services
             {
                 ReporterId = studentId,
                 IPMSClassId = _commonServices.GetClass()!.Id,
-                ProjectToId = request.GroupId
+                ProjectToId = request.GroupId,
+                MemberSwapId = Guid.Empty,
+                ProjectFromId = Guid.Empty
             };
             await _unitOfWork.MemberHistoryRepository.InsertAsync(memberHistory);
+            await _unitOfWork.SaveChangesAsync();
             var studentForNoti = await _unitOfWork.ProjectRepository.Get().Where(x => x.Id == request.GroupId)
                                                                     .Include(x => x.Students).SelectMany(x => x.Students,
                                                                     (project, student) => new

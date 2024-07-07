@@ -1,7 +1,7 @@
 ﻿using IPMS.Business.Common.Enums;
+using IPMS.Business.Responses.Project;
 using Microsoft.OpenApi.Extensions;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace IPMS.Business.Responses.ProjectDashboard
 {
@@ -47,7 +47,7 @@ namespace IPMS.Business.Responses.ProjectDashboard
 
     public class ReportIoTComponentInformation
     {
-        public List<BorrowIoTComponentInformation> IoTComponents { get; set; } = new();
+        public List<IotItem> IoTComponents { get; set; } = new();
         public DateTime? CreatedAt { get; set; }
 
     }

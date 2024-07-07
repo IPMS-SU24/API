@@ -157,11 +157,12 @@ namespace IPMS.Business.Services
                 .Select(g => new ReportIoTComponentInformation
                 {
                     CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
-                    IoTComponents = g.Select(g => new BorrowIoTComponentInformation
+                    IoTComponents = g.Select(g => new IotItem
                     {
                         Id = g.Id,
                         Name = g.Component!.Name,
-                        Quantity = g.Quantity
+                        Quantity = g.Quantity,
+                        Status = g.Status
                     }).ToList()
 
                 }).ToList();
