@@ -14,10 +14,13 @@ namespace IPMS.Business.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public ReportService(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly IPresignedUrlService _presignedUrlService;
+
+        public ReportService(IUnitOfWork unitOfWork, IMapper mapper, IPresignedUrlService presignedUrlService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _presignedUrlService = presignedUrlService;
         }
 
         public async Task<ValidationResultModel> CheckValidReport(SendReportRequest request, Guid reporterId)
@@ -65,6 +68,7 @@ namespace IPMS.Business.Services
                 Response = pr.ResponseContent,
                 Status = pr.Status,
                 CreateAt = pr.CreatedAt,
+                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(pr.FileName)
 
             });
             return reports;
