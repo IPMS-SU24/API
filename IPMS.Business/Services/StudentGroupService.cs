@@ -161,7 +161,8 @@ namespace IPMS.Business.Services
                 MemberSwapId = request.MemberId,
                 ReporterId = studentId,
                 ProjectFromId = reporterProject.Id,
-                ProjectToId = memberSwapForProject.Id
+                ProjectToId = memberSwapForProject.Id,
+                IPMSClassId = _commonServices.GetClass()!.Id
             };
             var sendMessageTasks = new List<Task>();
             //Add leaderId to notification
@@ -310,7 +311,7 @@ namespace IPMS.Business.Services
             var memberHistory = new MemberHistory()
             {
                 ReporterId = studentId,
-                IPMSClassId = (await _commonServices.GetCurrentClass(studentId)).Id,
+                IPMSClassId = _commonServices.GetClass()!.Id,
                 ProjectToId = request.GroupId
             };
             await _unitOfWork.MemberHistoryRepository.InsertAsync(memberHistory);
