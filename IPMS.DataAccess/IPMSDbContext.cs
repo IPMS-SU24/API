@@ -81,7 +81,7 @@ namespace IPMS.DataAccess
                     .ToTable("Assessment")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
@@ -176,7 +176,7 @@ namespace IPMS.DataAccess
                     .ToTable("IoTComponent")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
             });
@@ -187,7 +187,7 @@ namespace IPMS.DataAccess
                     .ToTable("IPMSClass")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
                 entity.HasIndex(e => e.Name).IsUnique();
@@ -315,7 +315,7 @@ namespace IPMS.DataAccess
                     .ToTable("Semester")
                     .HasKey(e => e.Id);
                 entity.HasIndex(e=>e.ShortName).IsUnique();
-                entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
                 entity.Property(e => e.ShortName).HasMaxLength(50);
@@ -334,7 +334,7 @@ namespace IPMS.DataAccess
 
                 entity.Property(e => e.Percentage).HasPrecision(3, 0);
 
-                entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
@@ -360,7 +360,7 @@ namespace IPMS.DataAccess
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
                 entity.HasIndex(e => e.Id).IsUnique();
-                entity.Property(e => e.Description).HasMaxLength(10000);
+                entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
@@ -373,8 +373,8 @@ namespace IPMS.DataAccess
                     .ToTable("Topic")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Description).HasMaxLength(10000);
-                entity.Property(e => e.Detail).HasMaxLength(10000);
+                entity.Property(e => e.Description);
+                entity.Property(e => e.Detail);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
@@ -405,6 +405,21 @@ namespace IPMS.DataAccess
                 entity.HasOne(e => e.Favorite)
                     .WithMany(p => p.Topics)
                     .HasForeignKey("FavoriteId")
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<ClassModuleDeadline>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity.HasOne(e => e.SubmissionModule)
+                    .WithMany(p => p.ClassModuleDeadlines)
+                    .HasForeignKey(x=>x.SubmissionModuleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Class)
+                    .WithMany(p => p.ClassModuleDeadlines)
+                    .HasForeignKey(x=>x.ClassId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
             // define your filter expression tree
