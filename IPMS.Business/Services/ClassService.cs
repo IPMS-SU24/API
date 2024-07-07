@@ -172,7 +172,7 @@ namespace IPMS.Business.Services
             await ProcessImportStudentAsync(importFileUrl, request.ClassId);
         }
 
-        public async Task<List<JobImportStatusResponse>?> GetImportStudentStatusAsync(Guid classId)
+        public async Task<JobImportStatusResponse?> GetImportStudentStatusAsync(Guid classId)
         {
             var importJobIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == classId).Select(x => new { x.JobImportId, x.Information.FullName, x.Information.Email }).ToListAsync();
             if (importJobIds == null || !importJobIds.Any())
@@ -180,17 +180,22 @@ namespace IPMS.Business.Services
                 return null;
             }
             var jobConnection = JobStorage.Current.GetConnection();
-            var states = new List<JobImportStatusResponse>();
+            var states = new List<JobImportStatusRecord>();
+            var processingStatus = "Processing";
             foreach (var job in importJobIds)
             {
-                states.Add(new JobImportStatusResponse()
+                states.Add(new JobImportStatusRecord()
                 {
-                    JobStatus = jobConnection.GetStateData(job.JobImportId.ToString())?.Name ?? "Not Yet",
+                    JobStatus = jobConnection.GetStateData(job.JobImportId.ToString())?.Name ?? processingStatus,
                     StudentName = job.FullName,
                     StudentEmail = job.Email
                 });
             }
-            return states;
+            return states.Any() ? new JobImportStatusResponse
+            {
+                IsDone = !states.Any(x => x.JobStatus == processingStatus),
+                States = states
+            } : null;
         }
         private async Task ProcessImportStudentAsync(string importFileUrl, Guid classId)
         {

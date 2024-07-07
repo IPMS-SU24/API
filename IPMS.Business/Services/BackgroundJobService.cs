@@ -45,8 +45,6 @@ namespace IPMS.Business.Services
             });
         }
 
-        [AutomaticRetry(Attempts = 5)]
-        [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
         public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string serverDomain)
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>

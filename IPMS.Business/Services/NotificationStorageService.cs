@@ -22,7 +22,7 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException();
             }
-            return response;
+            return response.OrderByDescending(x=>x.DateSent).ToList();
         }
 
         public async Task SaveUserTokenAsync(UserToken userToken)
