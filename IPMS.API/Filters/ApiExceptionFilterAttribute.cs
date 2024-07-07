@@ -9,7 +9,9 @@ namespace IPMS.API.Filters
     public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
     {
         private readonly IDictionary<Type, Action<ExceptionContext>> _exceptionHandlers;
-        public ApiExceptionFilterAttribute()
+        private readonly ILogger<ApiExceptionFilterAttribute> _logger;
+
+        public ApiExceptionFilterAttribute(ILogger<ApiExceptionFilterAttribute> logger)
         {
             // Register known exception types and handlers.
             _exceptionHandlers = new Dictionary<Type, Action<ExceptionContext>>
@@ -19,12 +21,13 @@ namespace IPMS.API.Filters
                 { typeof(CannotImportStudentException), HandleCannotImportStudentException },
                 { typeof(EmailConfirmException), HandleEmailAlreadyConfirmException }
             };
+            _logger = logger;
         }
 
         private void HandleCannotImportStudentException(ExceptionContext context)
         {
             var exception = (CannotImportStudentException)context.Exception;
-
+            _logger.LogError(exception.InnerException, exception.Message);
             var details = new IPMSResponse<object>()
             {
                 Status = ResponseStatus.BadRequest,

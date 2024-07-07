@@ -1,4 +1,5 @@
-﻿using IPMS.API.Middlewares;
+﻿using IPMS.API.Filters;
+using IPMS.API.Middlewares;
 using IPMS.Business;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Repositories;
@@ -58,6 +59,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IClassService, ClassService>();
             services.AddScoped<ISubmissionModuleService, SubmissionModuleService>();
             services.AddScoped<INotificationStorageService, NotificationStorageService>();
+            services.AddScoped<ApiExceptionFilterAttribute>();
         }
     }
 }

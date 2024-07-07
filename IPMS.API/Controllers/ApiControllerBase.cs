@@ -1,10 +1,11 @@
 ﻿using IPMS.API.Filters;
 using IPMS.API.Responses;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace IPMS.API.Controllers
 {
-    [ApiExceptionFilter]
+    [ServiceFilter(typeof(ApiExceptionFilterAttribute))]
     [ValidateModelState]
     [ApiController]
     [Route("api/v1/[controller]/")]
