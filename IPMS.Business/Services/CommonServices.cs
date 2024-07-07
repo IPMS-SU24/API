@@ -50,15 +50,6 @@ namespace IPMS.Business.Services
             var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
             return await GetCurrentClass(studiesIn, currentSemesterId);
         }
-        public async Task<(DateTime StartDate, DateTime EndDate)> GetAssessmentTime(Guid assessmentId, IUnitOfWork unitOfWork)
-        {
-            var assessmentModules = await unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == assessmentId).ToListAsync();
-            return new()
-            {
-                StartDate = assessmentModules.Max(x => x.StartDate),
-                EndDate = assessmentModules.Max(x => x.StartDate)
-            };
-        }
 
         public async Task<Project?> GetProject(Guid currentUserId)
         {
@@ -97,7 +88,7 @@ namespace IPMS.Business.Services
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
         {
             var now = DateTime.Now;
-            var time = await GetAssessmentTime(assessmentId);
+            var time = await GetAssessmentTime(assessmentId, GetClass()!.Id);
             //Case 1: Start Time in the future => status NotYet
             if (time.startDate > now)
             {
@@ -137,7 +128,7 @@ namespace IPMS.Business.Services
             var isBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == projectId).AnyAsync();
             if (isBorrowed && @class.BorrowIoTComponentDeadline < now) return AssessmentStatus.Done;
             if (@class.BorrowIoTComponentDeadline > now && @class.ChangeTopicDeadline < now) return AssessmentStatus.InProgress;
-            if (!isBorrowed && @class.BorrowIoTComponentDeadline > now) return AssessmentStatus.Expired;
+            if (!isBorrowed && @class.BorrowIoTComponentDeadline < now) return AssessmentStatus.Expired;
             return AssessmentStatus.NotYet;
         }
 
@@ -161,14 +152,13 @@ namespace IPMS.Business.Services
                                                                                       (@class, classTopic) => classTopic.ProjectId.Value).ToListAsync();
         }
 
-        public async Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId)
+        public async Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId, Guid classId)
         {
-            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-            var modules = currentSemester!.Modules.Where(x => x.AssessmentId == assessmentId);
-            var assessment = currentSemester.Syllabus!.Assessments.FirstOrDefault(x => x.Id == assessmentId);
+            var modules = _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.ClassModuleDeadlines.Where(x=>x.ClassId == classId))
+                                                                .Where(x => x.AssessmentId == assessmentId).SelectMany(x=>x.ClassModuleDeadlines);
             //Check Assessment Deadline, Start Date
-            var deadline = modules.MaxBy(x => x.EndDate)!.EndDate;
-            var start = modules.MinBy(x => x.StartDate)!.StartDate;
+            var deadline = modules.Max(x => x.EndDate);
+            var start = modules.Min(x => x.StartDate);
             return new()
             {
                 startDate = start,
@@ -233,6 +223,11 @@ namespace IPMS.Business.Services
         public Project? GetProject()
         {
             return _context.HttpContext.Session.GetObject<Project?>("Project");
+        }
+
+        public async Task<List<IPMSClass>> GetAllCurrentClassesOfLecturer(Guid lecturerId)
+        {
+            return (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Classes.Where(x => x.LecturerId == lecturerId).ToList();
         }
     }
 }

@@ -105,12 +105,11 @@ namespace IPMS.Business.Services
         }
         public async Task<ProjectProgressData> GetProjectProgressData(Guid currentUserId)
         {
-            var project = await _commonServices.GetProject(currentUserId);
+            var project = _commonServices.GetProject();
             if (project == null) throw new DataNotFoundException("Not found Project");
             var topic = await _commonServices.GetProjectTopic(project.Id);
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-            var studiesIn = await _commonServices.GetStudiesIn(currentUserId);
-            var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x=>x.ClassId), currentSemester.Id);
+            var @class = _commonServices.GetClass();
             var componentBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == project.Id).Include(x => x.Component).ToListAsync();
             var response = new ProjectProgressData
             {
@@ -150,7 +149,7 @@ namespace IPMS.Business.Services
         }
         private async Task<AssessmentInformation> MapAssessmentInformation(Assessment assessment, List<ProjectSubmission> submissionsOfAssessment)
         {
-            var assessmentDeadline = (await _commonServices.GetAssessmentTime(assessment.Id));
+            var assessmentDeadline = (await _commonServices.GetAssessmentTime(assessment.Id, _commonServices.GetClass()!.Id));
             return new AssessmentInformation
             {
                 Name = assessment.Name ?? string.Empty,

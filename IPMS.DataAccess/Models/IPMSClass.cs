@@ -17,6 +17,7 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<Committee> Committees {get; set;} = new List<Committee>();
         public virtual ICollection<Student> Students { get; set; } = new List<Student>();
         public virtual ICollection<ClassTopic> Topics {get; set;} = new List<ClassTopic>();
+        public virtual ICollection<ClassModuleDeadline> ClassModuleDeadlines { get; set; } = new List<ClassModuleDeadline>();
     }
 }
     

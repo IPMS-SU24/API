@@ -52,10 +52,10 @@ namespace IPMS.Business.Services
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
                 var existStudentInClass = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == classId).ToListAsync();
-                await _unitOfWork.SaveChangesAsync();
                 if (existStudentInClass != null)
                 {
                     _unitOfWork.StudentRepository.HardDeleteRange(existStudentInClass);
+                    await _unitOfWork.SaveChangesAsync();
                 }
                 //Check mail is exist
                 var existUser = await _userManager.FindByEmailAsync(student.Email);

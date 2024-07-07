@@ -3,6 +3,7 @@ using System;
 using IPMS.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IPMS.DataAccess.Migrations
 {
     [DbContext(typeof(IPMSDbContext))]
-    partial class IPMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240706180757_RemoveDesMaxLength")]
+    partial class RemoveDesMaxLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,42 +63,6 @@ namespace IPMS.DataAccess.Migrations
                     b.HasIndex("SyllabusId");
 
                     b.ToTable("Assessment", (string)null);
-                });
-
-            modelBuilder.Entity("IPMS.DataAccess.Models.ClassModuleDeadline", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ClassId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastModified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("SubmissionModuleId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClassId");
-
-                    b.HasIndex("SubmissionModuleId");
-
-                    b.ToTable("ClassModuleDeadline");
                 });
 
             modelBuilder.Entity("IPMS.DataAccess.Models.ClassTopic", b =>
@@ -746,6 +712,9 @@ namespace IPMS.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -766,6 +735,9 @@ namespace IPMS.DataAccess.Migrations
 
                     b.Property<Guid?>("SemesterId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1031,25 +1003,6 @@ namespace IPMS.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Syllabus");
-                });
-
-            modelBuilder.Entity("IPMS.DataAccess.Models.ClassModuleDeadline", b =>
-                {
-                    b.HasOne("IPMS.DataAccess.Models.IPMSClass", "Class")
-                        .WithMany("ClassModuleDeadlines")
-                        .HasForeignKey("ClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("IPMS.DataAccess.Models.SubmissionModule", "SubmissionModule")
-                        .WithMany("ClassModuleDeadlines")
-                        .HasForeignKey("SubmissionModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Class");
-
-                    b.Navigation("SubmissionModule");
                 });
 
             modelBuilder.Entity("IPMS.DataAccess.Models.ClassTopic", b =>
@@ -1401,8 +1354,6 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.IPMSClass", b =>
                 {
-                    b.Navigation("ClassModuleDeadlines");
-
                     b.Navigation("Committees");
 
                     b.Navigation("Students");
@@ -1459,8 +1410,6 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.SubmissionModule", b =>
                 {
-                    b.Navigation("ClassModuleDeadlines");
-
                     b.Navigation("ProjectSubmissions");
                 });
 

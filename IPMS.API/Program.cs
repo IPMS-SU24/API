@@ -16,15 +16,10 @@ using IPMS.DataAccess.Common;
 using IPMS.DataAccess.Models;
 using IPMS.NotificationStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.CookiePolicy;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.HttpLogging;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -49,7 +44,10 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
-builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env");
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env");
+}
 builder.Services.AddFluentValidationAutoValidation(option =>
 {
     option.OverrideDefaultResultFactoryWith<IPMSResultFactory>();
