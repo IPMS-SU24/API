@@ -9,11 +9,9 @@ namespace IPMS.Business.Interfaces.Repositories
         Task InsertAsync(TEntity entity);
         Task InsertRangeAsync(IEnumerable<TEntity> entities);
         void Delete(TEntity deleteEntity);
-        void HardDelete(TEntity deleteEntity);
         void Update(TEntity updateEntity);
         void Attach(TEntity updateEntity);
         Task LoadExplicitProperty(TEntity entity, string propName);
         void DeleteRange(IEnumerable<TEntity> deleteEntities);
-        void HardDeleteRange(IEnumerable<TEntity> deleteEntities);
     }
 }

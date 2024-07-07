@@ -213,6 +213,12 @@ namespace IPMS.Business.Services
                 var excelMapper = new ExcelMapper(tempFile);
                 var students = excelMapper.Fetch<StudentDataRow>().ToList();
                 var validationResults = new List<ValidationResult>();
+                var existStudentInClass = await _unitOfWork.StudentRepository.Get().Include(x=>x.Information).Where(x => x.ClassId == classId && students.Select(x=>x.StudentId).Contains(x.Information.UserName)).ToListAsync();
+                if (existStudentInClass != null)
+                {
+                    _unitOfWork.StudentRepository.DeleteRange(existStudentInClass);
+                    await _unitOfWork.SaveChangesAsync();
+                }
                 foreach (var student in students)
                 {
                     validationResults.Clear();
@@ -225,7 +231,6 @@ namespace IPMS.Business.Services
                     }
                     //Create student account
                     var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId, _contextAccessor.HttpContext.Request.Host.Value));
-                    BackgroundJob.ContinueJobWith<IBackgoundJobService>(jobId, importService => importService.AddJobIdToStudent(jobId, classId, student.Email));
                 }
             }
             catch (Exception ex)

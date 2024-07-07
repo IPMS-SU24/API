@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using MathNet.Numerics.Distributions;
 using NPOI.Util;
+using IPMS.Business.Common.Hangfire;
 
 namespace IPMS.Business.Services
 {
@@ -49,12 +50,6 @@ namespace IPMS.Business.Services
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
-                var existStudentInClass = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == classId).ToListAsync();
-                if (existStudentInClass != null)
-                {
-                    _unitOfWork.StudentRepository.HardDeleteRange(existStudentInClass);
-                    await _unitOfWork.SaveChangesAsync();
-                }
                 //Check mail is exist
                 var existUser = await _userManager.FindByEmailAsync(student.Email);
                 //If not exist => create account
@@ -108,11 +103,28 @@ namespace IPMS.Business.Services
                         Title = "New Class Assigned"
                     });
                 }
-                await _unitOfWork.StudentRepository.InsertAsync(new Student
+                var existStudent = await _unitOfWork.StudentRepository.Get().IgnoreQueryFilters()
+                                                                            .FirstOrDefaultAsync(x => 
+                                                                                                x.InformationId == existUser.Id &&
+                                                                                                x.ClassId == classId);
+                if (existStudent != null)
                 {
-                    ClassId = classId,
-                    InformationId = existUser.Id
-                });
+                    existStudent.IsDeleted = false;
+                    existStudent.ProjectId = null;
+                    existStudent.ContributePercentage = null;
+                    existStudent.FinalGrade = null;
+                    existStudent.JobImportId = int.Parse(JobContext.CurrentJobId);
+                    _unitOfWork.StudentRepository.Update(existStudent);
+                }
+                else
+                {
+                    await _unitOfWork.StudentRepository.InsertAsync(new Student
+                    {
+                        ClassId = classId,
+                        InformationId = existUser.Id,
+                        JobImportId = int.Parse(JobContext.CurrentJobId)
+                    });
+                }
                 await _unitOfWork.SaveChangesAsync();
             });
         }

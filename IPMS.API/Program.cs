@@ -9,6 +9,7 @@ using IPMS.API.Common;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Filters;
 using IPMS.Business.Common.Extensions;
+using IPMS.Business.Common.Hangfire;
 using IPMS.Business.Common.Models;
 using IPMS.Business.Models;
 using IPMS.DataAccess;
@@ -155,6 +156,7 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAutoMapper(cfg => cfg.Internal().MethodMappingEnabled = false, Assembly.GetExecutingAssembly());
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+GlobalConfiguration.Configuration.UseFilter(new JobContext());
 var app = builder.Build();
 app.UseGlobalExceptionHandling();
 // Configure the HTTP request pipeline.
