@@ -160,12 +160,11 @@ namespace IPMS.Business.Services
         {
             //Create new Topic
             var newTopic = _mapper.Map<Topic>(request);
-            var studiesIn = await _commonService.GetStudiesIn(leaderId);
-            var @class = await _commonService.GetCurrentClass(studiesIn.Select(x => x.ClassId));
+            var @class = _commonService.GetClass();
             newTopic.OwnerId = @class.LecturerId;
-            newTopic.SuggesterId = leaderId;
+            var project = _commonService.GetProject();
+            newTopic.SuggesterId = project!.Id;
             await _unitOfWork.TopicRepository.InsertAsync(newTopic);
-            var project = await _commonService.GetProject(leaderId);
             //Add IoT Component to ComponentMaster
             var componentMasters = _mapper.Map<List<ComponentsMaster>>(request.IoTComponents, opts =>
             {

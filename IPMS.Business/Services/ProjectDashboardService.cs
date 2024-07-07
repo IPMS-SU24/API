@@ -27,19 +27,19 @@ namespace IPMS.Business.Services
         {
             var currentStudent = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(x => x.InformationId == studentId) ?? throw new DataNotFoundException();
             var currentSemester = await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork);
-            //Get all modules of semester
-            var modules = currentSemester?.CurrentSemester?.Syllabus?.Assessments
-                                                           .SelectMany(x => x.Modules).Where(x => x.EndDate > DateTime.Now).ToList();
             var projectSubmissions = await _unitOfWork.ProjectSubmissionRepository.Get()
                                                       .Where(x => x.ProjectId == currentStudent.ProjectId && x.Name != null)
                                                       .Select(x => x.SubmissionModuleId).ToListAsync();
-            var nearDeadlineSubmissions = modules.SkipWhile(x => projectSubmissions.Contains(x.Id)).Select(x=>new NearDealineSubmission
-            {
-                AssessmentId = x.AssessmentId.ToString()!,
-                EndDate = x.EndDate,
-                Name = x.Name,
-                SubmissionModuleId = x.Id.ToString()
-            });
+            var nearDeadlineSubmissions = currentSemester?.CurrentSemester?.Syllabus?.Assessments
+                                                           .SelectMany(x => x.Modules).SelectMany(x => x.ClassModuleDeadlines)
+                                                           .Where(x => x.EndDate > DateTime.Now && x.ClassId == _commonService.GetClass()!.Id)
+                                                           .SkipWhile(x => projectSubmissions.Contains(x.SubmissionModuleId)).Select(x => new NearDealineSubmission
+                                                           {
+                                                               AssessmentId = x.SubmissionModule.AssessmentId.ToString()!,
+                                                               EndDate = x.EndDate,
+                                                               Name = x.SubmissionModule.Name,
+                                                               SubmissionModuleId = x.Id.ToString()
+                                                           });
             return new NearSubmissionDeadlineData
             {
                 Submissions = nearDeadlineSubmissions.ToList()

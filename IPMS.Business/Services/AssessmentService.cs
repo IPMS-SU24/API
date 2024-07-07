@@ -79,28 +79,29 @@ namespace IPMS.Business.Services
                                                                 .Where(sm => sm.AssessmentId.Equals(assessmentId)
                                                                         && sm.SemesterId.Equals(currentSemesterId)
                                                                         && sm.LectureId.Equals(@class.LecturerId))
-                                                                .Include(sm => sm.ProjectSubmissions.Where(pm => pm.ProjectId.Equals(project.Id))).ToList();
+                                                                .Include(sm => sm.ProjectSubmissions.Where(pm => pm.ProjectId.Equals(project.Id)))
+                                                                .Include(sm => sm.ClassModuleDeadlines.Where(cl => cl.ClassId == @class.Id)).Select(sm => new SubmissionModuleResponse
+                                                                {
+                                                                    ModuleId = sm.Id,
+                                                                    Name = sm.Name,
+                                                                    StartDate = sm.ClassModuleDeadlines.First().StartDate,
+                                                                    EndDate = sm.ClassModuleDeadlines.First().EndDate,
+                                                                    Description = sm.Description,
+                                                                    ProjectSubmissions = sm.ProjectSubmissions.Select(ps => new ProjectSubmissionResponse
+                                                                    {
+                                                                        Id = ps.Id,
+                                                                        Name = ps.Name,
+                                                                        SubmitTime = ps.SubmissionDate,
+                                                                        Link = _presignedUrlService.GeneratePresignedDownloadUrl("PS_" + ps.Id + "_" + ps.Name) //Get base on name on S3 
+
+                                                                    }).ToList()
+                                                                }).ToList();
 
             AssessmentSubmissionProjectResponse response = new AssessmentSubmissionProjectResponse
             {
                 Id = assessment.Id,
                 Name = assessment.Name,
-                SubmissionModules = submissionsModule.Select(sm => new SubmissionModuleResponse
-                {
-                    ModuleId = sm.Id,
-                    Name = sm.Name,
-                    StartDate = sm.StartDate,
-                    EndDate = sm.EndDate,
-                    Description = sm.Description,
-                    ProjectSubmissions = sm.ProjectSubmissions.Select(ps => new ProjectSubmissionResponse
-                    {
-                        Id = ps.Id,
-                        Name = ps.Name,
-                        SubmitTime = ps.SubmissionDate,
-                        Link = _presignedUrlService.GeneratePresignedDownloadUrl("PS_" + ps.Id + "_" + ps.Name) //Get base on name on S3 
-                       
-                    }).ToList()
-                }).ToList()
+                SubmissionModules = submissionsModule
             };
             return response;
         }

@@ -12,12 +12,14 @@ namespace IPMS.Business.Services
     public class SubmissionModuleService : ISubmissionModuleService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICommonServices _commonServices;
         private List<SubmissionModule> _submissionModules = new();
         private List<Assessment> _assessments = new();
         private Guid _currentSemesterId;
-        public SubmissionModuleService(IUnitOfWork unitOfWork)
+        public SubmissionModuleService(IUnitOfWork unitOfWork, ICommonServices commonServices)
         {
             _unitOfWork = unitOfWork;
+            _commonServices = commonServices;
         }
         public async Task<ValidationResultModel> ConfigureSubmissionModuleValidator(ConfigureSubmissionModuleRequest request, Guid currentUserId)
         {
@@ -100,6 +102,7 @@ namespace IPMS.Business.Services
         }
         public async Task ConfigureSubmissionModule(ConfigureSubmissionModuleRequest request, Guid currentUserId)
         {
+            var classes = await _commonServices.GetAllCurrentClassesOfLecturer(currentUserId);
             foreach (var submissionModule in request.SubmissionModules)
             {
                 if (submissionModule.ModuleId == Guid.Empty) // create
@@ -111,11 +114,14 @@ namespace IPMS.Business.Services
                         Name = submissionModule.ModuleName,
                         Description = submissionModule.Description,
                         Percentage = submissionModule.Percentage,
-                        StartDate = submissionModule.StartDate,
-                        EndDate = submissionModule.EndDate,
                         SemesterId = _currentSemesterId,
                         AssessmentId = request.AssessmentId,
                         LectureId = currentUserId,
+                        ClassModuleDeadlines = classes.Select(@class=> new ClassModuleDeadline
+                        {
+                            ClassId = @class.Id,
+                            SubmissionModuleId = id
+                        }).ToList()
                     };
                     await _unitOfWork.SubmissionModuleRepository.InsertAsync(subModule);
 
@@ -127,8 +133,6 @@ namespace IPMS.Business.Services
                     subModule.Name = submissionModule.ModuleName;
                     subModule.Description = submissionModule.Description;
                     subModule.Percentage = submissionModule.Percentage;
-                    subModule.StartDate = submissionModule.StartDate;
-                    subModule.EndDate = submissionModule.EndDate;
                     subModule.IsDeleted = submissionModule.IsDeleted;
                     _unitOfWork.SubmissionModuleRepository.Update(subModule);
 
@@ -177,9 +181,8 @@ namespace IPMS.Business.Services
         }
         public async Task<IEnumerable<GetAssessmentSubmissionModuleByClassResponse>> GetAssessmentSubmissionModuleByClass(GetSubmissionModuleByClassRequest request, Guid currentUserId)
         {
-            List<GetAssessmentSubmissionModuleByClassResponse> assessments = new List<GetAssessmentSubmissionModuleByClassResponse>();   
-            
-            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.SemesterId.Equals(_currentSemesterId)
+            List<GetAssessmentSubmissionModuleByClassResponse> assessments = new List<GetAssessmentSubmissionModuleByClassResponse>();
+            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.ClassModuleDeadlines.Where(y=>y.ClassId == request.classId)).Where(sm => sm.SemesterId.Equals(_currentSemesterId)
                                             && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
             List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.CommitteeId.Equals(currentUserId)).ToListAsync();
 
@@ -194,8 +197,8 @@ namespace IPMS.Business.Services
                     Graded = graded.Count(g => sm.ProjectSubmissions.Any(ps => g.SubmissionId.Equals(ps.Id))),
                     Submissions = sm.ProjectSubmissions.GroupBy(ps => ps.ProjectId).Count(),
                     Total = classTopics.Count(),
-                    StartDate = sm.StartDate,
-                    EndDate = sm.EndDate,
+                    StartDate = sm.ClassModuleDeadlines.First().StartDate,
+                    EndDate = sm.ClassModuleDeadlines.First().EndDate,
                     Percentage = sm.Percentage
 
                 }).ToList();
