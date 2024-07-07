@@ -164,6 +164,7 @@ namespace IPMS.Business.Services
                 ProjectToId = memberSwapForProject.Id,
                 IPMSClassId = _commonServices.GetClass()!.Id
             };
+            await _unitOfWork.SaveChangesAsync();
             var sendMessageTasks = new List<Task>();
             //Add leaderId to notification
             foreach (var member in reporterProject.Students)
