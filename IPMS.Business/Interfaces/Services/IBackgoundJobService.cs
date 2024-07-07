@@ -8,6 +8,8 @@ namespace IPMS.Business.Interfaces.Services
         [AutomaticRetry(Attempts = 5)]
         [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
         Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string serverDomain);
+        [AutomaticRetry(Attempts = 5)]
+        [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
         Task AddJobIdToStudent(string jobId, Guid classId, string email);
     }
 }

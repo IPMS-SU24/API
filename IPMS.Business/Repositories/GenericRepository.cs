@@ -36,28 +36,9 @@ namespace IPMS.Business.Repository
 
         public virtual void Delete(TEntity deleteEntity)
         {
-            deleteEntity.IsDeleted = true;
-            Update(deleteEntity);
-        }
-
-        public virtual void HardDelete(TEntity entityToDelete)
-        {
-            if (_context.Entry(entityToDelete).State == EntityState.Detached)
-            {
-                dbSet.Attach(entityToDelete);
-            }
-            dbSet.Remove(entityToDelete);
+            dbSet.Remove(deleteEntity);
         }
         public virtual void DeleteRange(IEnumerable<TEntity> deleteEntities)
-        {
-            foreach (var deleteEntity in deleteEntities)
-            {
-                deleteEntity.IsDeleted = true;
-                Update(deleteEntity);
-            }
-        }
-
-        public virtual void HardDeleteRange(IEnumerable<TEntity> deleteEntities)
         {
             dbSet.RemoveRange(deleteEntities);
         }
