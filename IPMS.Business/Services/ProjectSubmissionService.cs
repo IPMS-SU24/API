@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Common.Extensions;
+﻿using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Extensions;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
@@ -32,9 +33,7 @@ namespace IPMS.Business.Services
                 request.SearchValue = "";
             }
             request.SearchValue = request.SearchValue.Trim().ToLower();
-            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
-
-
+            Project project = _commonServices.GetProject() ?? throw new DataNotFoundException();
             IQueryable<ProjectSubmission> projectSubmissions = _unitOfWork.ProjectSubmissionRepository
                                                   .Get().Where(x => x.ProjectId == project.Id
                                                             && (x.SubmissionModule!.Name.ToLower().Contains(request.SearchValue)
