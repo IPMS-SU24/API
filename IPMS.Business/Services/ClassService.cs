@@ -230,7 +230,7 @@ namespace IPMS.Business.Services
                         throw new ExcelMapperConvertException("File format is not valid!");
                     }
                     //Create student account
-                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId, _contextAccessor.HttpContext.Request.Host.Value));
+                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId));
                 }
             }
             catch (Exception ex)

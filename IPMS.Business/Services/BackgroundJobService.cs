@@ -46,7 +46,7 @@ namespace IPMS.Business.Services
             });
         }
 
-        public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string serverDomain)
+        public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId)
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
@@ -74,7 +74,7 @@ namespace IPMS.Business.Services
                     try
                     {
                         var confirmEmailToken = await _userManager.GenerateEmailConfirmationTokenAsync(existUser);
-                        var confirmURL = PathUtils.GetConfirmURL(serverDomain, existUser.Id, confirmEmailToken);
+                        var confirmURL = PathUtils.GetConfirmURL(existUser.Id, confirmEmailToken);
                         EmailSendOperation emailSendOperation = await _mailServer.Client.SendAsync(
                             WaitUntil.Completed,
                             "DoNotReply@5c9fc577-26d6-49e3-98e1-62c04cc4e4e0.azurecomm.net",
