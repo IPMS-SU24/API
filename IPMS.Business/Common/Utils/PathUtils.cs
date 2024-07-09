@@ -5,7 +5,7 @@ namespace IPMS.Business.Common.Utils
 {
     public static class PathUtils
     {
-        private static string confirmEmailPath = "email-confirmation";
+        private static string confirmEmailPath = "email-confirm";
         public static string GetConfirmURL(Guid userId, string token)
         {
             var url= $"https://portal.i-pma.click/{confirmEmailPath}";
