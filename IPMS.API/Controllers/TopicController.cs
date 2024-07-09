@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Responses.Report;
 using IPMS.DataAccess.Models;
+using IPMS.Business.Responses.Topic;
 
 namespace IPMS.API.Controllers
 {
@@ -28,8 +29,8 @@ namespace IPMS.API.Controllers
         [HttpGet("suggested")]
         public async Task<IActionResult> GetSuggestedTopics()
         {
-            var responseData =  _topicService.GetSuggestedTopics();
-            var response = new IPMSResponse<IQueryable<Topic>> { Data = responseData };
+            var responseData = await _topicService.GetSuggestedTopics();
+            var response = new IPMSResponse<IEnumerable<SuggestedTopicsResponse>> { Data = responseData };
             return GetActionResponse(response);
         }
         [EnumAuthorize(UserRole.Leader)]

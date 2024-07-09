@@ -8,6 +8,10 @@ using IPMS.Business.Models;
 using AutoMapper;
 using IPMS.DataAccess.Common.Enums;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using IPMS.Business.Common.Extensions;
+using IPMS.Business.Responses.Topic;
+using System.Runtime.InteropServices;
 
 namespace IPMS.Business.Services
 {
@@ -17,12 +21,19 @@ namespace IPMS.Business.Services
         private readonly ICommonServices _commonService;
         private readonly IMapper _mapper;
         private readonly IMessageService _messageService;
-        public TopicService(IUnitOfWork unitOfWork, ICommonServices commonServices, IMapper mapper, IMessageService messageService)
+        private readonly IHttpContextAccessor _context;
+        private readonly IPresignedUrlService _presignedUrlService;
+
+        public TopicService(IUnitOfWork unitOfWork, ICommonServices commonServices, 
+                    IMapper mapper, IMessageService messageService, IHttpContextAccessor context,
+                    IPresignedUrlService presignedUrlService)
         {
             _unitOfWork = unitOfWork;
             _commonService = commonServices;
             _mapper = mapper;
             _messageService = messageService;
+            _context = context;
+            _presignedUrlService = presignedUrlService;
         }
 
         public async Task<ValidationResultModel> CheckRegisterValid(RegisterTopicRequest request, Guid leaderId)
@@ -95,9 +106,37 @@ namespace IPMS.Business.Services
             return GetAllTopics().ApplyFilter(request).AsNoTracking();
         }
 
-        public IQueryable<Topic> GetSuggestedTopics()
+        public async Task<IEnumerable<SuggestedTopicsResponse>> GetSuggestedTopics()
         {
-            throw new NotImplementedException();
+            List<SuggestedTopicsResponse> topics = new List<SuggestedTopicsResponse>();
+            List<Topic> preTopics = new List<Topic>();
+            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
+            if (project == null)
+            {
+                return topics;
+            }
+            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => t.SuggesterId.Equals(project.Id)).ToListAsync();
+            var components =await  _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic).Include(cm => cm.Component).ToListAsync();
+            foreach (var pre in preTopics)
+            {
+                var topic = new SuggestedTopicsResponse
+                {
+                    Id = pre.Id,
+                    Title = pre.Name,
+                    Description = pre.Description,
+                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(pre.Detail),
+                    Status = pre.Status,
+                    Iots = components.Where(c => c.MasterId.Equals(pre.Id)).Select(c => new TopicIoT
+                    {
+                        Name = c.Component.Name,
+                        Quantity = c.Quantity
+
+                    }).ToList()
+
+                };
+                topics.Add(topic);
+            }
+            return topics;
         }
         public async Task<ValidationResultModel> LecturerRegisterNewTopicValidator(LecturerRegisterTopicRequest request)
         {
