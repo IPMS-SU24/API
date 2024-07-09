@@ -231,8 +231,6 @@ namespace IPMS.DataAccess
                     .ToTable("Project")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.GroupName).HasMaxLength(50);
-
                 entity.Property(e => e.Grade).HasPrecision(4, 2);
 
                 entity.HasOne(e => e.Owner)

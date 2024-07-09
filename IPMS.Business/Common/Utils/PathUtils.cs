@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
+using static System.Net.WebRequestMethods;
 
 namespace IPMS.Business.Common.Utils
 {
     public static class PathUtils
     {
-        private static string confirmEmailPath = "api/v1/authentication/email-confirmation";
-        public static string GetConfirmURL(string serverDomain, Guid userId, string token)
+        private static string confirmEmailPath = "email-confirmation";
+        public static string GetConfirmURL(Guid userId, string token)
         {
-            var url= $"https://{serverDomain}/{confirmEmailPath}";
+            var url= $"https://portal.i-pma.click/{confirmEmailPath}";
             var queryParams = new Dictionary<string, string>()
             {
                 {"userId",userId.ToString()},

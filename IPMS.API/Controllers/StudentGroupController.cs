@@ -36,11 +36,15 @@ namespace IPMS.API.Controllers
         }
         [EnumAuthorize(UserRole.Student)]
         [HttpPost]
-        public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request)
-
+        public async Task<IActionResult> CreateGroup()
         {
             var studentId = User.Claims.GetUserId();
-            var response = await _studentGroupService.CreateGroup(request,studentId);
+            var validator = new CreateGroupRequestValidator(_studentGroupService);
+            validator.Validate(new CreateGroupValidateRequest
+            {
+                StudentId = studentId
+            });
+            var response = await _studentGroupService.CreateGroup(studentId);
             return GetActionResponse(new IPMSResponse<CreateGroupResponse>
             {
                 Data = response

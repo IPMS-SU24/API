@@ -37,7 +37,7 @@ namespace IPMS.Business.Services
 
         public async Task<string?> GetProjectName(Guid currentUserId)
         {
-            return (await _commonServices.GetProject(currentUserId))?.GroupName;
+            return $"{_commonServices.GetProject()?.GroupNum}";
         }
 
         public async Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferences(ProjectPreferenceRequest request)
@@ -113,7 +113,7 @@ namespace IPMS.Business.Services
             var componentBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == project.Id).Include(x => x.Component).ToListAsync();
             var response = new ProjectProgressData
             {
-                ProjectName = project!.GroupName ?? string.Empty,
+                ProjectName = project != null ? $"Group {project.GroupNum}" : string.Empty,
                 ProjectId = project!.Id,
                 TopicInfo = new()
                 {
@@ -190,7 +190,7 @@ namespace IPMS.Business.Services
                 GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
                 {
                     Id = (Guid)classTopic.ProjectId!,
-                    GroupName = classTopic.Project!.GroupName,
+                    GroupName = $"Group {classTopic.Project!.GroupNum}",
                     Members = classTopic.Project.Students.Count(),
                     LeaderName = classTopic.Project.Students.FirstOrDefault(s => allLeaders.Contains(s.InformationId))!.Information.FullName,
                     TopicName = classTopic.Topic!.Name
@@ -204,7 +204,7 @@ namespace IPMS.Business.Services
                 GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
                 {
                     Id = (Guid)project.Id!,
-                    GroupName = project.GroupName,
+                    GroupName = $"Group {project.GroupNum}",
                     Members = project.Students.Count(),
                     LeaderName = project.Students.FirstOrDefault(s => allLeaders.Contains(s.InformationId))!.Information.FullName,
                     TopicName = ""
@@ -295,7 +295,7 @@ namespace IPMS.Business.Services
                 }).ToList();
                 prjDetail = new GetProjectDetailResponse
                 {
-                    GroupName = project.GroupName,
+                    GroupName = $"Group {project.GroupNum}",
                     TopicName = "",
                     TopicStatus = RequestStatus.Waiting,
                     Members = memsProject,
@@ -316,7 +316,7 @@ namespace IPMS.Business.Services
 
             prjDetail = new GetProjectDetailResponse
             {
-                GroupName = classTopic.Project.GroupName,
+                GroupName = $"Group {classTopic.Project.GroupNum}",
                 TopicName = classTopic.Topic != null ? classTopic.Topic.Name : "",
                 TopicStatus = classTopic.Topic != null ?  classTopic.Topic.Status : RequestStatus.Waiting,
                 Members = members,

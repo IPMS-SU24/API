@@ -5,7 +5,7 @@ namespace IPMS.DataAccess.Models
 {
     public class Project : BaseModel
     {
-        public string GroupName { get; set; }
+        public int GroupNum { get; set; } = 1;
         public bool IsPublished { get; set; } = false;
         public decimal? Grade { get; set; }
         public Guid? OwnerId { get; set; }

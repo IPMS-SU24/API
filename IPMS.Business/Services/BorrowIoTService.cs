@@ -100,7 +100,7 @@ namespace IPMS.Business.Services
                 projects.AddRange(@class.Topics.Where(ct => ct.ProjectId != null).Select(ct => new ProjectInformation
                 {
                     ProjectId = ct.ProjectId,
-                    GroupName = ct.Project.GroupName,
+                    GroupName = $"Group {ct.Project.GroupNum}",
                     ClassName = @class.Name
                 }).ToList());
             }

@@ -199,7 +199,7 @@ namespace IPMS.Business.Services
             GeneralObjectInformation information = new GeneralObjectInformation
             {
                 Id = project.Id,
-                Name = project.GroupName
+                Name = $"Group {project.GroupNum}"
             };
 
             if (status != null)
