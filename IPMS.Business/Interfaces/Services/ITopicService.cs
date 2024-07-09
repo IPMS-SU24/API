@@ -1,5 +1,6 @@
 ﻿using IPMS.Business.Models;
 using IPMS.Business.Requests.Topic;
+using IPMS.Business.Responses.Topic;
 using IPMS.DataAccess.Models;
 
 namespace IPMS.Business.Interfaces.Services
@@ -7,7 +8,7 @@ namespace IPMS.Business.Interfaces.Services
     public interface ITopicService
     {
         IQueryable<Topic> GetAllTopics();
-        IQueryable<Topic> GetSuggestedTopics();
+        Task<IEnumerable<SuggestedTopicsResponse>> GetSuggestedTopics();
         IQueryable<Topic> GetApprovedTopics(GetTopicRequest request);
         Task RegisterTopic(RegisterTopicRequest request, Guid leaderId);
         Task<ValidationResultModel> LecturerRegisterNewTopicValidator(LecturerRegisterTopicRequest request);
