@@ -127,7 +127,7 @@ namespace IPMS.Business.Services
                                                                           .Select(x => new ClassGroupResponse
                                                                           {
                                                                               Id = x.Id,
-                                                                              Name = x.GroupName
+                                                                              Name = $"Group {x.GroupNum}"
                                                                           }).ToListAsync();
             result.Add(new ClassGroupResponse()
             {
@@ -160,7 +160,7 @@ namespace IPMS.Business.Services
                 MemberInfo = memberInfos.Select(x => new MemberInGroupData
                 {
                     Id = x.Id,
-                    GroupName = x.Students.First().ProjectId != null ? x.Students.First().Project.GroupName : NoGroup.Name,
+                    GroupName = x.Students.First().ProjectId != null ? $"{x.Students.First().Project.GroupNum}" : NoGroup.Name,
                     StudentId = x.UserName,
                     StudentName = x.FullName
                 })

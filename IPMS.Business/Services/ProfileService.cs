@@ -34,7 +34,7 @@ namespace IPMS.Business.Services
                 Email = user.Email,
                 ClassName = @class?.Name,
                 SemesterName = semesterName,
-                GroupName = _commonServices.GetProject()?.GroupName
+                GroupName = $"{_commonServices.GetProject()?.GroupNum}"
             };
         }
     }

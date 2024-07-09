@@ -65,16 +65,19 @@ namespace IPMS.Business.Services
         }
 
 
-        public async Task<CreateGroupResponse> CreateGroup(CreateGroupRequest request, Guid studentId)
+        public async Task<CreateGroupResponse> CreateGroup(Guid studentId)
         {
             //Get Student
             var studiesIn = await _commonServices.GetStudiesIn(studentId);
-            var currentClass = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId));
-            var student = studiesIn.Where(x => x.ClassId == currentClass.Id).FirstOrDefault();
+            var currentClass = _commonServices.GetClass();
+            var student = studiesIn.Where(x => x.ClassId == currentClass!.Id).First();
+            var groupCount = await _unitOfWork.StudentRepository.Get()
+                                                                .Where(x => x.ClassId == currentClass!.Id)
+                                                                .Select(x => x.ProjectId).Distinct().CountAsync();
             var project = new Project
             {
-                GroupName = request.GroupName,
-                OwnerId = currentClass.LecturerId
+                GroupNum = ++groupCount,
+                OwnerId = currentClass!.LecturerId
             };
             await _unitOfWork.ProjectRepository.InsertAsync(project);
             student.ProjectId = project.Id;
@@ -115,11 +118,13 @@ namespace IPMS.Business.Services
             var requestGroupModel = await GetRequestGroupModel(studentId);
             var leaderList = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList();
             //Get Groups
-            var groupsInClass = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null).Include(x => x.Project).GroupBy(x => new { x.Project!.Id, x.Project!.GroupName })
+            var groupsInClass = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
+                                                                        .Include(x => x.Project)
+                                                                        .GroupBy(x => new { x.Project!.Id, x.Project!.GroupNum })
                                                                         .Select(x => new ClassGroupInfo
                                                                         {
                                                                             Id = x.Key.Id,
-                                                                            GroupName = x.Key.GroupName,
+                                                                            GroupName = $"Group {x.Key.GroupNum}",
                                                                             Members = x.Select(y => new GroupMemberInfo
                                                                             {
                                                                                 Id = y.InformationId,
@@ -175,7 +180,7 @@ namespace IPMS.Business.Services
                     sendMessageTasks.Add(_messageService.SendMessage(new NotificationMessage
                     {
                         AccountId = member.InformationId,
-                        Message = $"Member {member.Information.FullName} have been requested swap to group {memberSwapForProject.GroupName}",
+                        Message = $"Member {member.Information.FullName} have been requested swap to group {memberSwapForProject.GroupNum}",
                         Title = "Swap Group Request"
                     }));
                 }
@@ -198,7 +203,7 @@ namespace IPMS.Business.Services
             sendMessageTasks.Add(_messageService.SendMessage(new NotificationMessage
             {
                 AccountId = request.MemberId,
-                Message = $"You are requested to swap to group {reporterProject.GroupName}",
+                Message = $"You are requested to swap to group {reporterProject.GroupNum}",
                 Title = "Swap Group Request"
             }));
         }
