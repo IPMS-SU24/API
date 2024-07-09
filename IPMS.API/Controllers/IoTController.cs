@@ -78,5 +78,26 @@ namespace IPMS.API.Controllers
             var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return Ok(response);
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("repository")]
+        public async Task<IActionResult> GetIoTRepositoryAsync([FromQuery] GetIoTRepositoryRequest request)
+        {
+            var lecturerId = HttpContext.User.Claims.GetUserId();
+            var response = await _IoTDataService.GetIoTRepsitoryAsync(request, lecturerId);
+            var paginationResponse = await response.info.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            var iotResponse = new IoTRepositoryResponse
+            {
+                PageSize = paginationResponse.PageSize,
+                CurrentPage = paginationResponse.CurrentPage,
+                Data = paginationResponse.Data,
+                Errors = paginationResponse.Errors,
+                Message = paginationResponse.Message,
+                Status = paginationResponse.Status,
+                TotalPage = paginationResponse.TotalPage,
+                TotalComponents = response.TotalComponents
+            };
+            return GetActionResponse(paginationResponse);
+        }
     }
 }
