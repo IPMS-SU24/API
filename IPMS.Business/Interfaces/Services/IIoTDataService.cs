@@ -6,5 +6,6 @@ namespace IPMS.Business.Interfaces.Services
     public interface IIoTDataService
     {
         IQueryable<GetIoTComponentResponse> GetAll(GetIoTComponentRequest request);
+        Task<(int TotalComponents, IEnumerable<GetIoTRepositoryResponse> info)> GetIoTRepsitoryAsync(GetIoTRepositoryRequest request, Guid lecturerId);
     }
 }
