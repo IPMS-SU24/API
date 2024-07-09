@@ -251,25 +251,21 @@ namespace IPMS.Business.Services
             // Find distinct project in class
             List<GroupInformation> groups = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
                                                                         .Include(x => x.Project)
-                                                                        .GroupBy(x => new { x.Project!.Id, x.Project!.GroupName })
+                                                                        .GroupBy(x => new { x.Project!.Id, x.Project!.GroupNum })
                                                                             .Select(x => new GroupInformation
                                                                             {
                                                                                 Id = x.Key.Id,
-                                                                                Name = x.Key.GroupName,
+                                                                                Num = x.Key.GroupNum,
                                                                             }).ToListAsync();
 
             if (groups.Count == 0)
             {
                 return topics;
             }
-
+            List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
             List<Topic> preTopics = new List<Topic>();
-            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
-            if (project == null)
-            {
-                return topics;
-            }
-            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groups.Any(g => g.Id.Equals(t.SuggesterId))).ToListAsync();
+            
+            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groupsIds.Contains((Guid)t.SuggesterId) && t.Status != RequestStatus.Approved).ToListAsync();
             var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic).Include(cm => cm.Component).ToListAsync();
             foreach (var pre in preTopics)
             {
@@ -278,7 +274,7 @@ namespace IPMS.Business.Services
                     Id = pre.Id,
                     Title = pre.Name,
                     Description = pre.Description,
-                    GroupName = groups.FirstOrDefault(g => g.Id.Equals(pre.SuggesterId)).Name,
+                    GroupNum = groups.FirstOrDefault(g => g.Id.Equals(pre.SuggesterId)).Num,
                     Detail = _presignedUrlService.GeneratePresignedDownloadUrl(pre.Detail),
                     Status = pre.Status,
                     Iots = components.Where(c => c.MasterId.Equals(pre.Id)).Select(c => new TopicIoT

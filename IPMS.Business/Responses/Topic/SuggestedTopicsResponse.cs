@@ -7,7 +7,7 @@ namespace IPMS.Business.Responses.Topic
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
-        public string? GroupName { get; set; }
+        public int? GroupNum { get; set; }
         public string Description { get; set; }
         public string Detail { get; set; }
         public DateTime CreateAt { get; set; }
@@ -24,6 +24,6 @@ namespace IPMS.Business.Responses.Topic
     public class GroupInformation
     {
         public Guid Id { get; set; }
-        public String Name { get; set; }
+        public int Num { get; set; }
     }
 }
