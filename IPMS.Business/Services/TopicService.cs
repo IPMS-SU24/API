@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Http;
 using IPMS.Business.Common.Extensions;
 using IPMS.Business.Responses.Topic;
 using System.Runtime.InteropServices;
+using IPMS.Business.Responses.Group;
+using MathNet.Numerics.Distributions;
 
 namespace IPMS.Business.Services
 {
@@ -234,6 +236,62 @@ namespace IPMS.Business.Services
                 Message = $"A New Topic has been suggested to you from {project.GroupName}"
             };
             await _messageService.SendMessage(notificationMessageToLecturer);
+        }
+
+        public async Task<IEnumerable<SuggestedTopicsResponse>> GetSuggestedTopicsLecturer(GetSuggestedTopicsLecturerRequest request, Guid lecturerId)
+        {
+            List<SuggestedTopicsResponse> topics = new List<SuggestedTopicsResponse>();
+
+            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+            if (@class == null)
+            {
+                return topics;
+            }
+
+            // Find distinct project in class
+            List<GroupInformation> groups = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
+                                                                        .Include(x => x.Project)
+                                                                        .GroupBy(x => new { x.Project!.Id, x.Project!.GroupName })
+                                                                            .Select(x => new GroupInformation
+                                                                            {
+                                                                                Id = x.Key.Id,
+                                                                                Name = x.Key.GroupName,
+                                                                            }).ToListAsync();
+
+            if (groups.Count == 0)
+            {
+                return topics;
+            }
+
+            List<Topic> preTopics = new List<Topic>();
+            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
+            if (project == null)
+            {
+                return topics;
+            }
+            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groups.Any(g => g.Id.Equals(t.SuggesterId))).ToListAsync();
+            var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic).Include(cm => cm.Component).ToListAsync();
+            foreach (var pre in preTopics)
+            {
+                var topic = new SuggestedTopicsResponse
+                {
+                    Id = pre.Id,
+                    Title = pre.Name,
+                    Description = pre.Description,
+                    GroupName = groups.FirstOrDefault(g => g.Id.Equals(pre.SuggesterId)).Name,
+                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(pre.Detail),
+                    Status = pre.Status,
+                    Iots = components.Where(c => c.MasterId.Equals(pre.Id)).Select(c => new TopicIoT
+                    {
+                        Name = c.Component.Name,
+                        Quantity = c.Quantity
+
+                    }).ToList()
+
+                };
+                topics.Add(topic);
+            }
+            return topics;
         }
     }
 }

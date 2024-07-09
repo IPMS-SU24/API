@@ -33,6 +33,15 @@ namespace IPMS.API.Controllers
             var response = new IPMSResponse<IEnumerable<SuggestedTopicsResponse>> { Data = responseData };
             return GetActionResponse(response);
         }
+
+        [HttpGet("lecturer-suggested")]
+        public async Task<IActionResult> GetSuggestedTopicsLecturer([FromQuery] GetSuggestedTopicsLecturerRequest request)
+        {
+            Guid lecturerId = HttpContext.User.Claims.GetUserId();
+            var responseData = await _topicService.GetSuggestedTopicsLecturer(request, lecturerId);
+            var response = new IPMSResponse<IEnumerable<SuggestedTopicsResponse>> { Data = responseData };
+            return GetActionResponse(response);
+        }
         [EnumAuthorize(UserRole.Leader)]
         [HttpPost("registration")]
         public async Task<IActionResult> RegisterNewTopic([FromBody] RegisterTopicRequest request)
