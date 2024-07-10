@@ -34,13 +34,21 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-        [HttpGet("lecturer-suggested")]
-        public async Task<IActionResult> GetSuggestedTopicsLecturer([FromQuery] GetSuggestedTopicsLecturerRequest request)
+        [HttpPost("lecturer-suggested")]
+        public async Task<IActionResult> GetSuggestedTopicsLecturer([FromBody] GetSuggestedTopicsLecturerRequest request)
         {
             Guid lecturerId = HttpContext.User.Claims.GetUserId();
             var suggested = await _topicService.GetSuggestedTopicsLecturer(request, lecturerId);
             var response = await suggested.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return Ok(response);
+        }
+
+        [HttpPost("review-suggested")]
+        public async Task<IActionResult> ReviewSuggestedTopic([FromBody] ReviewSuggestedTopicRequest request)
+        {
+            Guid lecturerId = HttpContext.User.Claims.GetUserId();
+            await _topicService.ReviewSuggestedTopic(request, lecturerId);
+            return Ok();
         }
         [HttpGet("lecturer-suggested-detail")]
         public async Task<IActionResult> GetSuggestedTopicDetailLecturer([FromQuery] GetSugTopicDetailLecRequest request)

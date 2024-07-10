@@ -14,6 +14,7 @@ using IPMS.Business.Responses.Topic;
 using System.Runtime.InteropServices;
 using IPMS.Business.Responses.Group;
 using MathNet.Numerics.Distributions;
+using ZstdSharp.Unsafe;
 
 namespace IPMS.Business.Services
 {
@@ -263,9 +264,18 @@ namespace IPMS.Business.Services
                 return topics;
             }
             List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
+          
             List<Topic> preTopics = new List<Topic>();
 
-            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groupsIds.Contains((Guid)t.SuggesterId) && t.Status != RequestStatus.Approved).ToListAsync();
+            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groupsIds.Contains((Guid)t.SuggesterId)).ToListAsync();
+            if (request.Statuses.Count > 0) // filter status
+            {
+                preTopics = preTopics.Where(pT => request.Statuses.Contains(pT.Status)).ToList();
+            }
+            if (@class.ChangeTopicDeadline < DateTime.Now)
+            {
+                await UpdateStatusTopicExpired(preTopics);
+            }
             var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic).Include(cm => cm.Component).ToListAsync();
             foreach (var pre in preTopics)
             {
@@ -314,9 +324,9 @@ namespace IPMS.Business.Services
                 return topic;
             }
             List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
-
+            
             Topic preTopic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(t => groupsIds.Contains((Guid)t.SuggesterId) // validate that topic get belong to class and project lecturer teach!
-                                                                        && t.Status != RequestStatus.Approved && t.Id.Equals(request.TopicId));
+                                                                         && t.Id.Equals(request.TopicId));
 
             var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic 
                                                                             && cm.MasterId.Equals(preTopic.Id))
@@ -345,6 +355,88 @@ namespace IPMS.Business.Services
 
             };
             return topic;
+        }
+
+        private async Task UpdateStatusTopicExpired(List<Topic> topics)
+        {
+            foreach (var topic in topics)
+            {
+                if (topic.Status == RequestStatus.Waiting)
+                {
+                    topic.Status = RequestStatus.Rejected;
+                }
+                _unitOfWork.TopicRepository.Update(topic);
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+        public async Task<ValidationResultModel> ReviewSuggestedTopicValidators(ReviewSuggestedTopicRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operators did not successfully!"
+            };
+            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+
+            if (@class == null)
+            {
+                result.Message = "Class does not exist";
+                return result;
+            }
+
+            if (@class.ChangeTopicDeadline < DateTime.Now)
+            {
+                result.Message = "Review Topic is expired";
+                return result;
+            }
+
+            // Find distinct project in class
+            List<Guid> groupsIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
+                                                                        .Include(x => x.Project)
+                                                                        .GroupBy(x => new { x.Project!.Id })
+                                                                            .Select(x => x.Key.Id).ToListAsync();
+            if (groupsIds.Count == 0)
+            {
+                result.Message = "Group does not exist";
+                return result;
+
+            }
+
+            Topic preTopic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(t => groupsIds.Contains((Guid)t.SuggesterId) // validate that topic get belong to class and project lecturer teach!
+                                                                         && t.Id.Equals(request.TopicId));
+            if (preTopic == null)
+            {
+                result.Message = "Topic does not exist";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        public async Task ReviewSuggestedTopic(ReviewSuggestedTopicRequest request, Guid lecturerId)
+        {
+            SuggestedTopicsResponse topic = new SuggestedTopicsResponse();
+            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+            
+
+            // Find distinct project in class
+            List<Guid> groupsIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
+                                                                        .Include(x => x.Project)
+                                                                        .GroupBy(x => new { x.Project.Id })
+                                                                            .Select(x => x.Key.Id).ToListAsync();
+            //List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
+
+            Topic preTopic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(t => groupsIds.Contains((Guid)t.SuggesterId) // validate that topic get belong to class and project lecturer teach!
+                                                                         && t.Id.Equals(request.TopicId));
+            if (request.IsApproved == true)
+            {
+                preTopic.Status = RequestStatus.Approved;
+            } else if (request.IsApproved == false)
+            {
+                preTopic.Status = RequestStatus.Rejected;
+            }
+            _unitOfWork.TopicRepository.Update(preTopic);
+            await _unitOfWork.SaveChangesAsync();
+
         }
     }
 }

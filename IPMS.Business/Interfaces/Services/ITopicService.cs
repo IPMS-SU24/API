@@ -2,6 +2,7 @@
 using IPMS.Business.Requests.Topic;
 using IPMS.Business.Responses.Topic;
 using IPMS.DataAccess.Models;
+using System.Threading.Tasks;
 
 namespace IPMS.Business.Interfaces.Services
 {
@@ -16,5 +17,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<ValidationResultModel> LecturerRegisterNewTopicValidator(LecturerRegisterTopicRequest request);
         Task LecturerRegisterNewTopic(LecturerRegisterTopicRequest request, Guid lecturerId);
         Task<ValidationResultModel> CheckRegisterValid(RegisterTopicRequest request, Guid leaderId);
+        Task ReviewSuggestedTopic(ReviewSuggestedTopicRequest request, Guid lecturerId);
+        Task<ValidationResultModel> ReviewSuggestedTopicValidators(ReviewSuggestedTopicRequest request, Guid lecturerId);
     }
 }
