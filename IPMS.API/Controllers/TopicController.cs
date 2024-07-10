@@ -33,6 +33,31 @@ namespace IPMS.API.Controllers
             var response = new IPMSResponse<IEnumerable<SuggestedTopicsResponse>> { Data = responseData };
             return GetActionResponse(response);
         }
+
+        [HttpPost("lecturer-suggested")]
+        public async Task<IActionResult> GetSuggestedTopicsLecturer([FromBody] GetSuggestedTopicsLecturerRequest request)
+        {
+            Guid lecturerId = HttpContext.User.Claims.GetUserId();
+            var suggested = await _topicService.GetSuggestedTopicsLecturer(request, lecturerId);
+            var response = await suggested.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(response);
+        }
+
+        [HttpPost("review-suggested")]
+        public async Task<IActionResult> ReviewSuggestedTopic([FromBody] ReviewSuggestedTopicRequest request)
+        {
+            Guid lecturerId = HttpContext.User.Claims.GetUserId();
+            await _topicService.ReviewSuggestedTopic(request, lecturerId);
+            return Ok();
+        }
+        [HttpGet("lecturer-suggested-detail")]
+        public async Task<IActionResult> GetSuggestedTopicDetailLecturer([FromQuery] GetSugTopicDetailLecRequest request)
+        {
+            Guid lecturerId = HttpContext.User.Claims.GetUserId();
+            var responseData = await _topicService.GetSuggestedTopicDetailLecturer(request, lecturerId);
+            var response = new IPMSResponse<SuggestedTopicsResponse> { Data = responseData };
+            return GetActionResponse(response);
+        }
         [EnumAuthorize(UserRole.Leader)]
         [HttpPost("registration")]
         public async Task<IActionResult> RegisterNewTopic([FromBody] RegisterTopicRequest request)
