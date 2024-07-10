@@ -89,7 +89,8 @@ namespace IPMS.Business.Services
             await _unitOfWork.SaveChangesAsync();
             return new()
             {
-                ProjectId = student.ProjectId.Value
+                ProjectId = student.ProjectId.Value,
+                GroupName = $"Group {groupCount}"
             };
         }
 

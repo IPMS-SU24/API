@@ -40,10 +40,18 @@ namespace IPMS.API.Controllers
         {
             var studentId = User.Claims.GetUserId();
             var validator = new CreateGroupRequestValidator(_studentGroupService);
-            validator.Validate(new CreateGroupValidateRequest
+            var validateResult = await validator.ValidateAsync(new CreateGroupValidateRequest
             {
                 StudentId = studentId
             });
+            if (!validateResult.IsValid)
+            {
+                return new BadRequestObjectResult(new IPMSResponse<object>
+                {
+                    Status = ResponseStatus.BadRequest,
+                    Errors = validateResult.ToDictionary()
+                });
+            }
             var response = await _studentGroupService.CreateGroup(studentId);
             return GetActionResponse(new IPMSResponse<CreateGroupResponse>
             {
