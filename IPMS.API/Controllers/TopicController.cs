@@ -38,8 +38,16 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> GetSuggestedTopicsLecturer([FromQuery] GetSuggestedTopicsLecturerRequest request)
         {
             Guid lecturerId = HttpContext.User.Claims.GetUserId();
-            var responseData = await _topicService.GetSuggestedTopicsLecturer(request, lecturerId);
-            var response = new IPMSResponse<IEnumerable<SuggestedTopicsResponse>> { Data = responseData };
+            var suggested = await _topicService.GetSuggestedTopicsLecturer(request, lecturerId);
+            var response = await suggested.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return Ok(response);
+        }
+        [HttpGet("lecturer-suggested-detail")]
+        public async Task<IActionResult> GetSuggestedTopicDetailLecturer([FromQuery] GetSugTopicDetailLecRequest request)
+        {
+            Guid lecturerId = HttpContext.User.Claims.GetUserId();
+            var responseData = await _topicService.GetSuggestedTopicDetailLecturer(request, lecturerId);
+            var response = new IPMSResponse<SuggestedTopicsResponse> { Data = responseData };
             return GetActionResponse(response);
         }
         [EnumAuthorize(UserRole.Leader)]

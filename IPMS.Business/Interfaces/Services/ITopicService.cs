@@ -9,6 +9,7 @@ namespace IPMS.Business.Interfaces.Services
     {
         IQueryable<Topic> GetAllTopics();
         Task<IEnumerable<SuggestedTopicsResponse>> GetSuggestedTopicsLecturer(GetSuggestedTopicsLecturerRequest request, Guid lecturerId);
+        Task<SuggestedTopicsResponse> GetSuggestedTopicDetailLecturer(GetSugTopicDetailLecRequest request, Guid lecturerId);
         Task<IEnumerable<SuggestedTopicsResponse>> GetSuggestedTopics();
         IQueryable<Topic> GetApprovedTopics(GetTopicRequest request);
         Task RegisterTopic(RegisterTopicRequest request, Guid leaderId);

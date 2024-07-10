@@ -26,7 +26,7 @@ namespace IPMS.Business.Services
         private readonly IHttpContextAccessor _context;
         private readonly IPresignedUrlService _presignedUrlService;
 
-        public TopicService(IUnitOfWork unitOfWork, ICommonServices commonServices, 
+        public TopicService(IUnitOfWork unitOfWork, ICommonServices commonServices,
                     IMapper mapper, IMessageService messageService, IHttpContextAccessor context,
                     IPresignedUrlService presignedUrlService)
         {
@@ -118,7 +118,7 @@ namespace IPMS.Business.Services
                 return topics;
             }
             preTopics = await _unitOfWork.TopicRepository.Get().Where(t => t.SuggesterId.Equals(project.Id)).ToListAsync();
-            var components =await  _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic).Include(cm => cm.Component).ToListAsync();
+            var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic).Include(cm => cm.Component).ToListAsync();
             foreach (var pre in preTopics)
             {
                 var topic = new SuggestedTopicsResponse
@@ -264,7 +264,7 @@ namespace IPMS.Business.Services
             }
             List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
             List<Topic> preTopics = new List<Topic>();
-            
+
             preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groupsIds.Contains((Guid)t.SuggesterId) && t.Status != RequestStatus.Approved).ToListAsync();
             var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic).Include(cm => cm.Component).ToListAsync();
             foreach (var pre in preTopics)
@@ -288,6 +288,63 @@ namespace IPMS.Business.Services
                 topics.Add(topic);
             }
             return topics;
+        }
+
+        public async Task<SuggestedTopicsResponse> GetSuggestedTopicDetailLecturer(GetSugTopicDetailLecRequest request, Guid lecturerId)
+        {
+            SuggestedTopicsResponse topic = new SuggestedTopicsResponse();
+            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+            if (@class == null)
+            {
+                return topic;
+            }
+
+            // Find distinct project in class
+            List<GroupInformation> groups = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
+                                                                        .Include(x => x.Project)
+                                                                        .GroupBy(x => new { x.Project!.Id, x.Project!.GroupNum })
+                                                                            .Select(x => new GroupInformation
+                                                                            {
+                                                                                Id = x.Key.Id,
+                                                                                Num = x.Key.GroupNum,
+                                                                            }).ToListAsync();
+
+            if (groups.Count == 0)
+            {
+                return topic;
+            }
+            List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
+
+            Topic preTopic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(t => groupsIds.Contains((Guid)t.SuggesterId) // validate that topic get belong to class and project lecturer teach!
+                                                                        && t.Status != RequestStatus.Approved && t.Id.Equals(request.TopicId));
+
+            var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic 
+                                                                            && cm.MasterId.Equals(preTopic.Id))
+                                                                        .Include(cm => cm.Component)
+                                                                        .ToListAsync();
+
+            if (preTopic == null)
+            {
+                return topic;
+            }
+
+            topic = new SuggestedTopicsResponse
+            {
+                Id = preTopic.Id,
+                Title = preTopic.Name,
+                Description = preTopic.Description,
+                GroupNum = groups.FirstOrDefault(g => g.Id.Equals(preTopic.SuggesterId)).Num,
+                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(preTopic.Detail),
+                Status = preTopic.Status,
+                Iots = components.Where(c => c.MasterId.Equals(preTopic.Id)).Select(c => new TopicIoT
+                {
+                    Name = c.Component.Name,
+                    Quantity = c.Quantity
+
+                }).ToList()
+
+            };
+            return topic;
         }
     }
 }
