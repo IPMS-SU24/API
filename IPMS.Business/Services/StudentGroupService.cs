@@ -170,6 +170,7 @@ namespace IPMS.Business.Services
                 ProjectToId = memberSwapForProject.Id,
                 IPMSClassId = _commonServices.GetClass()!.Id
             };
+            await _unitOfWork.MemberHistoryRepository.InsertAsync(memberHistory);
             await _unitOfWork.SaveChangesAsync();
             var sendMessageTasks = new List<Task>();
             //Add leaderId to notification
