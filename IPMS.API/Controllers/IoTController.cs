@@ -99,5 +99,14 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(paginationResponse);
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("quantity")]
+        public async Task<IActionResult> UpdateQuantity(UpdateIoTQuantityRequest request)
+        {
+            var lecturerId = HttpContext.User.Claims.GetUserId();
+            await _IoTDataService.UpdateIoTQuantity(request, lecturerId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }
