@@ -1,8 +1,10 @@
 ﻿using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Requests.Notification;
 using IPMS.NotificationStorage;
 using IPMS.NotificationStorage.Models;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace IPMS.Business.Services
@@ -23,6 +25,12 @@ namespace IPMS.Business.Services
                 throw new DataNotFoundException();
             }
             return response.OrderByDescending(x=>x.DateSent).ToList();
+        }
+
+        public async Task MarkAsRead(MarkAsReadRequest request)
+        {
+            var notiObjectIds = request.NotificationIds.Select(x => ObjectId.Parse(x));
+            await _dbContext.NotificationMessages.UpdateManyAsync(x => notiObjectIds.Contains(x._id), Builders<NotificationMessage>.Update.Set(x => x.MarkAsRead, true));
         }
 
         public async Task SaveUserTokenAsync(UserToken userToken)
