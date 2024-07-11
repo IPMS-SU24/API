@@ -149,7 +149,7 @@ namespace IPMS.Business.Services
         }
         private async Task<AssessmentInformation> MapAssessmentInformation(Assessment assessment, List<ProjectSubmission> submissionsOfAssessment)
         {
-            var assessmentDeadline = (await _commonServices.GetAssessmentTime(assessment.Id, _commonServices.GetClass()!.Id));
+            var assessmentDeadline = _commonServices.GetAssessmentTime(assessment.Id, _commonServices.GetClass()!.Id);
             return new AssessmentInformation
             {
                 Name = assessment.Name ?? string.Empty,

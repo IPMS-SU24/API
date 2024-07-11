@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using IPMS.NotificationStorage.Models;
 using IPMS.API.Responses;
+using IPMS.Business.Requests.Notification;
 
 namespace IPMS.API.Controllers
 {
@@ -37,6 +38,14 @@ namespace IPMS.API.Controllers
                 Data = await _notificationStorageService.GetAllNotificationOfUserAsync(userId)
             };
             return GetActionResponse(response);
+        }
+        [Authorize]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> MarkAsRead([FromBody] MarkAsReadRequest request)
+        {
+            var userId = HttpContext.User.Claims.GetUserId();
+            await _notificationStorageService.MarkAsRead(request);
+            return GetActionResponse(new IPMSResponse<object>());
         }
     }
 }
