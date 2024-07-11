@@ -14,11 +14,6 @@ namespace IPMS.Business.Services
     public class CommonServices : ICommonServices
     {
         private readonly IUnitOfWork _unitOfWork;
-        private Project? Project { get; set; }
-        private IPMSClass? Class { get; set; }
-        private List<Student>? StudiesIn { get; set; }
-        private Topic? ProjectTopic { get; set; }
-        private IEnumerable<ProjectSubmission>? ProjectSubmissions { get; set; }
         private readonly IHttpContextAccessor _context;
         public CommonServices(IUnitOfWork unitOfWork, IHttpContextAccessor context)
         {
@@ -27,33 +22,24 @@ namespace IPMS.Business.Services
         }
         public async Task<List<Student>> GetStudiesIn(Guid currentUserId)
         {
-            if (StudiesIn == null)
-            {
-                StudiesIn = await _unitOfWork.StudentRepository.Get() // Find Student from current User 
-                                                       .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
-            }
-            return StudiesIn;
+            return await _unitOfWork.StudentRepository.Get() // Find Student from current User 
+                                                   .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
         }
 
         public async Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn, Guid currentSemesterId)
         {
-            if (Class == null)
-            {
-                Class = await _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
-                                                                      .FirstOrDefaultAsync(c => studiesIn.Contains(c.Id)
-                                                                      && c.SemesterId.Equals(currentSemesterId));
-            }
-            return Class;
+            return await _unitOfWork.IPMSClassRepository.Get() // Get class that student learned and find in current semester
+                                                                   .FirstOrDefaultAsync(c => studiesIn.Contains(c.Id)
+                                                                   && c.SemesterId.Equals(currentSemesterId));
         }
         public async Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn)
         {
-            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.Id;
+            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
             return await GetCurrentClass(studiesIn, currentSemesterId);
         }
 
         public async Task<Project?> GetProject(Guid currentUserId)
         {
-            if (this.Project != null) return this.Project;
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
             var studiesIn = (await GetStudiesIn(currentUserId)).ToList();
@@ -77,12 +63,8 @@ namespace IPMS.Business.Services
 
         public async Task<Topic?> GetProjectTopic(Guid projectId)
         {
-            if (ProjectTopic == null)
-            {
-                ProjectTopic = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
-                                                            .Include(x => x.Topic).Select(x => x.Topic).FirstOrDefaultAsync();
-            }
-            return ProjectTopic;
+            return await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
+                                                        .Include(x => x.Topic).Select(x => x.Topic).FirstOrDefaultAsync();
         }
 
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
@@ -113,13 +95,9 @@ namespace IPMS.Business.Services
 
         public async Task<IEnumerable<ProjectSubmission>> GetProjectSubmissions(Guid projectId)
         {
-            if (ProjectSubmissions == null)
-            {
-                ProjectSubmissions = await _unitOfWork.ProjectSubmissionRepository
+            return await _unitOfWork.ProjectSubmissionRepository
                                                     .Get().Where(x => x.ProjectId == projectId)
                                                     .Include(x => x.SubmissionModule).ToListAsync();
-            }
-            return ProjectSubmissions;
         }
 
         public async Task<AssessmentStatus> GetBorrowIoTStatus(Guid projectId, IPMSClass @class)
@@ -145,7 +123,7 @@ namespace IPMS.Business.Services
         public async Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId)
         {
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-            return await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId == currentSemester.Id && x.LecturerId == lecturerId)
+            return await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId == currentSemester!.Id && x.LecturerId == lecturerId)
                                                                                 .Join(_unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId != null),
                                                                                       @class => @class.Id,
                                                                                       classTopic => classTopic.ClassId,
@@ -154,11 +132,11 @@ namespace IPMS.Business.Services
 
         public async Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId, Guid classId)
         {
-            var modules = _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.ClassModuleDeadlines.Where(x=>x.ClassId == classId))
-                                                                .Where(x => x.AssessmentId == assessmentId).SelectMany(x=>x.ClassModuleDeadlines);
+            var modules = _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(x => x.ClassId == classId))
+                                                                .Where(x => x.AssessmentId == assessmentId).SelectMany(x => x.ClassModuleDeadlines);
             //Check Assessment Deadline, Start Date
-            var deadline = modules.Max(x => x.EndDate);
-            var start = modules.Min(x => x.StartDate);
+            var deadline = await modules.MaxAsync(x => x.EndDate);
+            var start = await modules.MinAsync(x => x.StartDate);
             return new()
             {
                 startDate = start,
