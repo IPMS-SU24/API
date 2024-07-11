@@ -37,7 +37,7 @@ namespace IPMS.Business.Services
 
         public async Task<string?> GetProjectName(Guid currentUserId)
         {
-            return $"{_commonServices.GetProject()?.GroupNum}";
+            return _commonServices.GetProject() != null ? $"Group {_commonServices.GetProject().GroupNum}" : null;
         }
 
         public async Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferences(ProjectPreferenceRequest request)
