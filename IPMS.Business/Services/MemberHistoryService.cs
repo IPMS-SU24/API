@@ -70,14 +70,14 @@ namespace IPMS.Business.Services
             if (leaderId != Guid.Empty && leaderId.Equals(currentUserId))  // current user also a leader
             {
                 histories = await _unitOfWork.MemberHistoryRepository.Get().
-                                            Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(mh.Id)
+                                            Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(currentUserId)
                                             || mh.ProjectFromId.Equals(project!.Id) || mh.ProjectToId.Equals(project.Id))
                                                 && mh.IPMSClassId.Equals(@class!.Id)).ToListAsync();
             }
             else // not a leader
             {
                 histories = await _unitOfWork.MemberHistoryRepository.Get().
-                                            Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(mh.Id))
+                                            Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(currentUserId))
                                                     && mh.IPMSClassId.Equals(@class!.Id)).ToListAsync();
             }
 
