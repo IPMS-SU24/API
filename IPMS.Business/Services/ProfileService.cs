@@ -32,7 +32,7 @@ namespace IPMS.Business.Services
             {
                 Id = studentId,
                 Email = user.Email,
-                ClassName = @class?.Name,
+                ClassName = @class?.ShortName,
                 SemesterName = semesterName,
                 GroupName = $"{_commonServices.GetProject()?.GroupNum}"
             };

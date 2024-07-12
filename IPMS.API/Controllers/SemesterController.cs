@@ -28,6 +28,17 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+        [Authorize]
+        [HttpGet("[action]")]
+        public async Task<IActionResult> CurrentSemesterAsync()
+        {
+            var semester = await _semesterService.GetCurrentSemester();
+            var response = new IPMSResponse<GetCurrentSemesterResponse>
+            {
+                Data = semester
+            };
+            return GetActionResponse(response);
+        }
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet("classes")]
         public async Task<IActionResult> GetClassesInSemester([FromQuery] GetClassInfoInSemesterRequest request)

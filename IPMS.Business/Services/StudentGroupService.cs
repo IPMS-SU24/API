@@ -139,7 +139,7 @@ namespace IPMS.Business.Services
             {
                 Class = new()
                 {
-                    ClassCode = @class.Name,
+                    ClassCode = @class.ShortName,
                     MaxMembers = @class.MaxMember,
                     Semester = currentSemester.ShortName
                 },
