@@ -4,8 +4,8 @@ namespace IPMS.DataAccess.Models
 {
     public partial class IPMSClass : BaseModel
     {
+        public string ShortName { get; set; }
         public string Name { get; set; }
-        public string Description { get; set; }
         public int MaxMember { get; set; } = int.MaxValue;
         public DateTime? CreateGroupDeadline { get; set; }
         public DateTime? ChangeGroupDeadline { get; set; }

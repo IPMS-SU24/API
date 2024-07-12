@@ -187,10 +187,10 @@ namespace IPMS.DataAccess
                     .ToTable("IPMSClass")
                     .HasKey(e => e.Id);
 
-                entity.Property(e => e.Description);
+                entity.Property(e => e.Name);
 
-                entity.Property(e => e.Name).HasMaxLength(50);
-                entity.HasIndex(e => e.Name).IsUnique();
+                entity.Property(e => e.ShortName).HasMaxLength(50);
+                entity.HasIndex(e => e.ShortName).IsUnique();
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("SemesterId")
