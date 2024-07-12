@@ -30,7 +30,7 @@ namespace IPMS.API.Controllers
         }
         [Authorize]
         [HttpGet("[action]")]
-        public async Task<IActionResult> CurrentSemesterAsync()
+        public async Task<IActionResult> CurrentAsync()
         {
             var semester = await _semesterService.GetCurrentSemester();
             var response = new IPMSResponse<GetCurrentSemesterResponse>
