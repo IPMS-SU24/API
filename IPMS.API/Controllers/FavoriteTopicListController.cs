@@ -31,7 +31,14 @@ namespace IPMS.API.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateAsync(UpdateFavoriteTopicListRequest request)
         {
-            await _favoriteTopicListService.Update(request, HttpContext.User.Claims.GetUserId());
+            await _favoriteTopicListService.UpdateAsync(request, HttpContext.User.Claims.GetUserId());
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpDelete("{favoriteId}")]
+        public async Task<IActionResult> DeleteAsync(Guid favoriteId)
+        {
+            await _favoriteTopicListService.DeleteAsync(favoriteId);
             return GetActionResponse(new IPMSResponse<object>());
         }
     }
