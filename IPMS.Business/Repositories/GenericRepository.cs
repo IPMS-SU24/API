@@ -19,13 +19,13 @@ namespace IPMS.Business.Repository
 
         public virtual IQueryable<TEntity> Get()
         {
-            return dbSet.ApplySoftDeleteFilter().AsNoTracking();
+            return dbSet.AsNoTracking();
         }
 
         public virtual async Task<TEntity?> GetByIDAsync(object id)
         {
             var technicalId = Guid.Parse(id.ToString());
-            var result = await dbSet.ApplySoftDeleteFilter().Where(x=>x.Id == technicalId).FirstOrDefaultAsync();
+            var result = await dbSet.Where(x=>x.Id == technicalId).FirstOrDefaultAsync();
             return result;
         }
 

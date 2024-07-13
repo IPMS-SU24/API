@@ -99,7 +99,7 @@ namespace IPMS.Business.Services
             var currentRequest = await _unitOfWork.MemberHistoryRepository.Get().Where(x => x.ReporterId == studentId
                                                                                 && (x.ProjectFromStatus == RequestStatus.Waiting
                                                                                 || x.ProjectToStatus == RequestStatus.Waiting
-                                                                                || x.MemberSwapStatus == RequestStatus.Waiting)).FirstOrDefaultAsync();
+                                                                                || (x.MemberSwapStatus == RequestStatus.Waiting && x.MemberSwapId != null))).FirstOrDefaultAsync();
             return currentRequest == null ? null : new()
             {
                 GroupId = currentRequest.ProjectToId!.Value,
@@ -360,7 +360,7 @@ namespace IPMS.Business.Services
                 result.Message = "Can Only assign to another member";
                 return result;
             }
-            var project = await _commonServices.GetProject(studentId);
+            var project = _commonServices.GetProject();
             if (project == null)
             {
                 result.Message = "Not found Valid Project";
