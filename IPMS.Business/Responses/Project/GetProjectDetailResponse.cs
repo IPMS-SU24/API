@@ -14,7 +14,7 @@ namespace IPMS.Business.Responses.Project
     public class MemberPrjDetail
     {
         public Guid Id { get; set; }
-        public Guid StudentId { get; set; }   
+        public string StudentId { get; set; }   
         public string Name { get; set;}
         public bool isLeader { get; set; }
     }
