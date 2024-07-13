@@ -40,7 +40,7 @@ namespace IPMS.API.Controllers
             Guid lecturerId = HttpContext.User.Claims.GetUserId();
             var suggested = await _topicService.GetSuggestedTopicsLecturer(request, lecturerId);
             var response = await suggested.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            return GetActionResponse(response);
         }
 
         [HttpPost("review-suggested")]
@@ -48,7 +48,8 @@ namespace IPMS.API.Controllers
         {
             Guid lecturerId = HttpContext.User.Claims.GetUserId();
             await _topicService.ReviewSuggestedTopic(request, lecturerId);
-            return Ok();
+            return GetActionResponse(new IPMSResponse<object>());
+
         }
         [HttpGet("lecturer-suggested-detail")]
         public async Task<IActionResult> GetSuggestedTopicDetailLecturer([FromQuery] GetSugTopicDetailLecRequest request)

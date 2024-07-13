@@ -26,7 +26,7 @@ namespace IPMS.Business.Services
         private readonly IPresignedUrlService _presignedUrlService;
         private readonly UserManager<IPMSUser> _userManager;
 
-        public ProjectService(IUnitOfWork unitOfWork, ICommonServices commonServices,IMapper mapper, IPresignedUrlService presignedUrlService, UserManager<IPMSUser> userManager)
+        public ProjectService(IUnitOfWork unitOfWork, ICommonServices commonServices, IMapper mapper, IPresignedUrlService presignedUrlService, UserManager<IPMSUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
@@ -74,7 +74,7 @@ namespace IPMS.Business.Services
             prjPref = projects.Select(p => new ProjectPreferenceResponse
             {
                 TopicTitle = p.Topic.Topic.Name != null ? p.Topic.Topic.Name : "",
-                LecturerId = p.Topic.Class.LecturerId != Guid.Empty ?  p.Topic.Class.LecturerId : Guid.Empty,
+                LecturerId = p.Topic.Class.LecturerId != Guid.Empty ? p.Topic.Class.LecturerId : Guid.Empty,
                 LecturerName = GetLecturerName(users, p.Topic.Class.LecturerId),
                 Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
                 SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
@@ -121,7 +121,7 @@ namespace IPMS.Business.Services
                     TopicName = topic?.Name ?? string.Empty,
                     Description = topic?.Description ?? string.Empty,
                     EndDate = @class.ChangeTopicDeadline,
-                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic,@class.ChangeTopicDeadline.Value,@class.ChangeGroupDeadline.Value)
+                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline.Value, @class.ChangeGroupDeadline.Value)
                 },
                 BorrowInfo = new()
                 {
@@ -171,7 +171,7 @@ namespace IPMS.Business.Services
                 return projectsOverview;
             }
             IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
-            
+
             if (@class == null) // check class is existed
             {
                 return projectsOverview;
@@ -199,7 +199,7 @@ namespace IPMS.Business.Services
             }
 
             var projectNotPick = await GetProjectNotPickedTopic(request.ClassId); // not picked topic
-            foreach (var project in projectNotPick) 
+            foreach (var project in projectNotPick)
             {
                 GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
                 {
@@ -223,7 +223,7 @@ namespace IPMS.Business.Services
                                                 .ToListAsync();
 
             var projectsId = await _unitOfWork.StudentRepository.Get().Where(s => s.ClassId.Equals(classId) // get through project not in project picked topic
-                                                    && prjPickedTopic.Contains(s.ProjectId) == false) 
+                                                    && prjPickedTopic.Contains(s.ProjectId) == false)
                                                 .Select(s => s.ProjectId).Distinct()
                                                 .ToListAsync();
 
@@ -275,7 +275,7 @@ namespace IPMS.Business.Services
                 }).ToList();
 
             var allLeaders = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList(); // Find leader of project
-           
+
             if (classTopic == null) // Expect cho nay viet 1 cai ham de lay project chua pick topic --> Lay 1 list xong where de view group tong quan dung luon
             {
                 var projectNotPick = await GetProjectNotPickedTopic(request.ClassId);
@@ -317,7 +317,7 @@ namespace IPMS.Business.Services
             {
                 GroupName = $"Group {classTopic.Project.GroupNum}",
                 TopicName = classTopic.Topic != null ? classTopic.Topic.Name : "",
-                TopicStatus = classTopic.Topic != null ?  classTopic.Topic.Status : RequestStatus.Waiting,
+                TopicStatus = classTopic.Topic != null ? classTopic.Topic.Status : RequestStatus.Waiting,
                 Members = members,
                 IotBorrows = iotBorrows
             };
@@ -337,7 +337,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id) 
+            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)
                                                             && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
             if (projects.Count != request.Projects.Count()) // check all request project need to be existed and have Id same lecturer Id updated
             {
@@ -353,7 +353,8 @@ namespace IPMS.Business.Services
         {
             var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)
                                                             && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
-            foreach(var project in projects) {
+            foreach (var project in projects)
+            {
                 project.IsPublished = request.Projects.FirstOrDefault(p => p.ProjectId.Equals(project.Id)).IsPublished;
                 _unitOfWork.ProjectRepository.Update(project);
             }
@@ -364,10 +365,22 @@ namespace IPMS.Business.Services
         public async Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferencesLecturer(ProjectPreferenceRequest request, Guid currentUserId)
         {
             var prjPref = new List<ProjectPreferenceResponse>();
-            IQueryable<Project> prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true || p.Topic.Class.LecturerId.Equals(currentUserId))
+            IQueryable<Project> prjQueryable;
+            if (request.isPublished == true)
+            {
+                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true)
                             .Include(p => p.Topic).ThenInclude(t => t.Topic)
                             .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
                             .Include(p => p.Submissions);
+            }
+            else
+            {
+                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.Topic.Class.LecturerId.Equals(currentUserId))
+                            .Include(p => p.Topic).ThenInclude(t => t.Topic)
+                            .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
+                            .Include(p => p.Submissions);
+            }
+
 
             if (request.SearchValue != null) // search value base on topic name or description
             {

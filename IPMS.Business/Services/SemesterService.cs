@@ -4,6 +4,8 @@ using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.Semester;
 using IPMS.Business.Responses.Semester;
+using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
@@ -11,9 +13,12 @@ namespace IPMS.Business.Services
     public class SemesterService : ISemesterService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public SemesterService(IUnitOfWork unitOfWork)
+        private readonly UserManager<IPMSUser> _userManager;
+
+        public SemesterService(IUnitOfWork unitOfWork, UserManager<IPMSUser> userManager)
         {
             _unitOfWork = unitOfWork;
+            _userManager = userManager;
         }
 
         public async Task<GetAllSemestersResponse> GetAllSemesters()
@@ -97,6 +102,24 @@ namespace IPMS.Business.Services
                 StartDate = currentSemester.StartDate,
                 EndDate = currentSemester.EndDate
             };
+        }
+
+        public async Task<GetLecturerInSemesterResponse> GetLecturerInSemester(GetLecturerInSemesterRequest request)
+        {
+            GetLecturerInSemesterResponse lecturers = new GetLecturerInSemesterResponse();
+            var semester = await _unitOfWork.SemesterRepository.Get().Where(s => s.ShortName.Equals(request.SemesterCode)).Include(s => s.Classes).FirstOrDefaultAsync();
+            if (semester == null || semester.Classes.Count == 0)
+            {
+                return lecturers;
+            }
+            var lecturerIds = semester.Classes.DistinctBy(s => s.LecturerId).Select(c => c.LecturerId).ToList();
+            List<IPMSUser> users = _userManager.Users.ToList();
+            lecturers.Lecturers = lecturerIds.Select(l => new LecturerInfo { 
+                Id = (Guid)l,
+                Name = users.FirstOrDefault(u => u.Id.Equals(l)).FullName
+            });
+
+            return lecturers;
         }
     }
 }

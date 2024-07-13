@@ -7,5 +7,6 @@ namespace IPMS.Business.Requests.ProjectPreference
         public string? SearchValue { get; set; }
         public Guid? LecturerId { get; set; }
         public string? SemesterCode { get; set; }
+        public bool isPublished { get; set; } = true;
     }
 }

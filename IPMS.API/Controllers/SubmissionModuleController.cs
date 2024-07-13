@@ -23,7 +23,7 @@ namespace IPMS.API.Controllers
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             await _submissionModuleService.ConfigureSubmissionModule(request, currentUserId);
-            return Ok();
+            return GetActionResponse(new IPMSResponse<object>());
         }
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet]
@@ -32,7 +32,7 @@ namespace IPMS.API.Controllers
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             var submissionModules = await _submissionModuleService.GetAssessmentSubmissionModuleByClass(request, currentUserId);
             var response = await submissionModules.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            return GetActionResponse(response);
         }
     }
 }

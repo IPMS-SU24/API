@@ -25,15 +25,15 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> RegisterIoT([FromBody] List<IoTModelRequest> requests)
         {
             var leaderId = HttpContext.User.Claims.GetUserId();
-            await _borrowIoTService.RegisterIoTForProject(leaderId,requests);
+            await _borrowIoTService.RegisterIoTForProject(leaderId, requests);
             return GetActionResponse(new IPMSResponse<object>());
         }
         [EnumAuthorize(UserRole.Student)]
         [HttpGet("available")]
-        public async Task<IActionResult> GetAvailableComponents([FromQuery] GetAvailableComponentRequest request )
+        public async Task<IActionResult> GetAvailableComponents([FromQuery] GetAvailableComponentRequest request)
         {
             var leaderId = HttpContext.User.Claims.GetUserId();
-            var availableComponents = await _borrowIoTService.GetAvailableIoTComponents(request,leaderId);
+            var availableComponents = await _borrowIoTService.GetAvailableIoTComponents(request, leaderId);
             var response = new IPMSResponse<IEnumerable<BorrowIoTComponentInformation>>()
             {
                 Data = availableComponents
@@ -76,7 +76,17 @@ namespace IPMS.API.Controllers
             var currentUserId = HttpContext.User.Claims.GetUserId();
             var data = await _borrowIoTService.GetBorrowIoTComponents(request, currentUserId);
             var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPost("review-iots")]
+        public async Task<IActionResult> ReviewBorrowIoTComponents([FromBody] ReviewBorrowIoTComponentsRequest request)
+        {
+            var currentUserId = HttpContext.User.Claims.GetUserId();
+            await _borrowIoTService.ReviewBorrowIoTComponents(request, currentUserId);
+            return GetActionResponse(new IPMSResponse<object>());
+
         }
 
         [EnumAuthorize(UserRole.Lecturer)]

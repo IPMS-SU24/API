@@ -1,7 +1,7 @@
-﻿using IPMS.Business.Requests.IoTComponent;
+﻿using IPMS.Business.Models;
+using IPMS.Business.Requests.IoTComponent;
 using IPMS.Business.Responses.IoT;
 using IPMS.Business.Responses.ProjectDashboard;
-using IPMS.DataAccess.Models;
 
 namespace IPMS.Business.Interfaces.Services
 {
@@ -12,5 +12,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<IEnumerable<BorrowIoTComponentInformation>> GetAvailableIoTComponents(GetAvailableComponentRequest request, Guid leaderId);
         Task<IEnumerable<ReportIoTComponentInformation>> GetGetReportIoTComponents();
         Task<IEnumerable<GetBorrowIoTComponentsResponse>> GetBorrowIoTComponents(GetBorrowIoTComponentsRequest request, Guid lecturerId);
+        Task<ValidationResultModel> ReviewBorrowIoTComponentsValidators(ReviewBorrowIoTComponentsRequest request, Guid lecturerId);
+        Task ReviewBorrowIoTComponents(ReviewBorrowIoTComponentsRequest request, Guid lecturerId);
     }
 }

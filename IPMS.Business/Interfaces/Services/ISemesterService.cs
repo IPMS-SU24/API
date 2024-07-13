@@ -8,5 +8,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<GetAllSemestersResponse> GetAllSemesters();
         Task<GetCurrentSemesterResponse> GetCurrentSemester();
         Task<GetClassInfoInSemesterResponse> GetClassesInSemester(Guid lecturerId, GetClassInfoInSemesterRequest request);
+        Task<GetLecturerInSemesterResponse> GetLecturerInSemester(GetLecturerInSemesterRequest request);
     }
 }
