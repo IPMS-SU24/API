@@ -51,5 +51,17 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("lecturer-semester")]
+        public async Task<IActionResult> GetLecturerInSemester([FromQuery] GetLecturerInSemesterRequest request)
+        {
+            var lecturers = await _semesterService.GetLecturerInSemester(request);
+            var response = new IPMSResponse<GetLecturerInSemesterResponse>
+            {
+                Data = lecturers
+            };
+            return GetActionResponse(response);
+        }
     }
 }
