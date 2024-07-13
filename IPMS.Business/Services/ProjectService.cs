@@ -288,10 +288,9 @@ namespace IPMS.Business.Services
                 var memsProject = project.Students.Select(s => new MemberPrjDetail
                 {
                     Id = s.InformationId,
-                    StudentId = s.Id,
+                    StudentId = s.Information.UserName,
                     Name = s.Information.FullName,
                     isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
-
                 }).ToList();
                 prjDetail = new GetProjectDetailResponse
                 {
@@ -308,7 +307,7 @@ namespace IPMS.Business.Services
             var members = classTopic.Project.Students.Select(s => new MemberPrjDetail
             {
                 Id = s.InformationId,
-                StudentId = s.Id,
+                StudentId = s.Information.UserName,
                 Name = s.Information.FullName,
                 isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
 

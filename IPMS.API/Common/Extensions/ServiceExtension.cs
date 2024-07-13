@@ -33,6 +33,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<IMemberHistoryRepository, MemberHistoryRepository>();
             services.AddScoped<ILecturerGradeRepository, LecturerGradeRepository>();
+            services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Depenency Injection
@@ -60,6 +61,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<ISubmissionModuleService, SubmissionModuleService>();
             services.AddScoped<INotificationStorageService, NotificationStorageService>();
             services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IFavoriteTopicListService, FavoriteTopicListService>();
             services.AddScoped<ApiExceptionFilterAttribute>();
         }
     }
