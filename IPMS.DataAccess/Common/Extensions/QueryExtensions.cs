@@ -48,8 +48,8 @@ namespace IPMS.DataAccess.Common.Extensions
                         isNotDeleted = Expression.AndAlso(foreignKeyNotNull, isNotDeleted);
                         var foreignKeyNull = Expression.Equal(Expression.Property(parameter, foreignKeyProperty.Name), Expression.Constant(null, foreignKeyProperty.ClrType));
                         isNotDeleted = Expression.Or(foreignKeyNull, isNotDeleted);
-                        combinedExpression = Expression.AndAlso(combinedExpression, isNotDeleted);
                     }
+                    combinedExpression = Expression.AndAlso(combinedExpression, isNotDeleted);
                 }
             }
 
