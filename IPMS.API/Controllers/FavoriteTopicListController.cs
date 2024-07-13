@@ -50,5 +50,14 @@ namespace IPMS.API.Controllers
             await _favoriteTopicListService.DeleteAsync(favoriteId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+        [HttpGet("{listId}")]
+        public async Task<IActionResult> GetInListAsync(Guid listId)
+        {
+            var response = await _favoriteTopicListService.GetInFavoriteAsync(listId);
+            return GetActionResponse(new IPMSResponse<IList<GetFavoriteTopicResponse>>()
+            {
+                Data = response
+            });
+        }
     }
 }

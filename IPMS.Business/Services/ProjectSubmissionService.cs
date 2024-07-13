@@ -1,5 +1,7 @@
-﻿using IPMS.Business.Common.Exceptions;
+﻿using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Extensions;
+using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
@@ -78,7 +80,7 @@ namespace IPMS.Business.Services
                 SubmitterName = x.Submitter!.FullName,
                 SubmitterId = x.SubmitterId,
                 Grade = x.FinalGrade,
-                Link = _presignedUrl.GeneratePresignedDownloadUrl(x.Name),
+                Link = _presignedUrl.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, x.Id, x.Name)) ?? string.Empty,
                 FileName = x.Name,
                 IsNewest = groupNewest.Select(gn => gn.NewestSubmissionnId).Contains(x.Id),
                 AssessmentId = x.SubmissionModule.AssessmentId,

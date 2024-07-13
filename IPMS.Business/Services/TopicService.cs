@@ -15,6 +15,8 @@ using System.Runtime.InteropServices;
 using IPMS.Business.Responses.Group;
 using MathNet.Numerics.Distributions;
 using ZstdSharp.Unsafe;
+using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Utils;
 
 namespace IPMS.Business.Services
 {
@@ -127,7 +129,7 @@ namespace IPMS.Business.Services
                     Id = pre.Id,
                     Title = pre.Name,
                     Description = pre.Description,
-                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(pre.Detail),
+                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, pre.Id, pre.Name)),
                     Status = pre.Status,
                     Iots = components.Where(c => c.MasterId.Equals(pre.Id)).Select(c => new TopicIoT
                     {
@@ -285,7 +287,7 @@ namespace IPMS.Business.Services
                     Title = pre.Name,
                     Description = pre.Description,
                     GroupNum = groups.FirstOrDefault(g => g.Id.Equals(pre.SuggesterId)).Num,
-                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(pre.Detail),
+                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, pre.Id, pre.Name)),
                     Status = pre.Status,
                     Iots = components.Where(c => c.MasterId.Equals(pre.Id)).Select(c => new TopicIoT
                     {
@@ -344,7 +346,7 @@ namespace IPMS.Business.Services
                 Title = preTopic.Name,
                 Description = preTopic.Description,
                 GroupNum = groups.FirstOrDefault(g => g.Id.Equals(preTopic.SuggesterId)).Num,
-                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(preTopic.Detail),
+                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, preTopic.Id, preTopic.Name)),
                 Status = preTopic.Status,
                 Iots = components.Where(c => c.MasterId.Equals(preTopic.Id)).Select(c => new TopicIoT
                 {

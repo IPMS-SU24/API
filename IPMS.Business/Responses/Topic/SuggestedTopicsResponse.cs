@@ -9,7 +9,7 @@ namespace IPMS.Business.Responses.Topic
         public string Title { get; set; }
         public int? GroupNum { get; set; }
         public string Description { get; set; }
-        public string Detail { get; set; }
+        public string? Detail { get; set; }
         public DateTime CreateAt { get; set; }
         public RequestStatus Status { get; set; }
         public List<TopicIoT> Iots { get; set; } = new();
