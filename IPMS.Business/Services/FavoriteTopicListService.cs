@@ -1,6 +1,7 @@
 ﻿using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
 using IPMS.Business.Requests.FavoriteTopic;
 using IPMS.Business.Responses.FavoriteTopic;
 using IPMS.DataAccess.Models;
@@ -16,6 +17,24 @@ namespace IPMS.Business.Services
         {
             _unitOfWork = unitOfWork;
         }
+
+        public async Task<ValidationResultModel> CheckValidCreate(Guid lecturerId, CreateFavoriteTopicListRequest request)
+        {
+            var result = new ValidationResultModel()
+            {
+                Message = "Cannot Create"
+            };
+            var isExistName = await _unitOfWork.FavoriteRepository.Get().AnyAsync(x => x.LecturerId == lecturerId && request.ListName == x.Name);
+            if (isExistName)
+            {
+                result.Message = "List Name is existed";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
         public async Task<CreateFavoriteTopicListResponse> Create(CreateFavoriteTopicListRequest request, Guid lecturerId)
         {
             var newFavorite = new Favorite
@@ -31,24 +50,32 @@ namespace IPMS.Business.Services
             };
         }
 
-        public async Task Update(UpdateFavoriteTopicListRequest request, Guid lecturerId)
+        public async Task UpdateAsync(UpdateFavoriteTopicListRequest request, Guid lecturerId)
         {
-            var favorite = await _unitOfWork.FavoriteRepository.Get().Include(x=>x.Topics).FirstOrDefaultAsync(x=>x.Id == request.ListId);
-            if (favorite == null) throw new DataNotFoundException();
+            var favorite = await _unitOfWork.FavoriteRepository.Get().AnyAsync(x=>x.Id == request.ListId);
+            if (!favorite) throw new DataNotFoundException();
             var topics = await _unitOfWork.TopicRepository.GetApprovedTopics().Where(x=>request.TopicIds.Contains(x.Id)).Select(x=>x.Id).CountAsync();
             if(topics != request.TopicIds.Count) throw new DataNotFoundException();
-            favorite.Topics.Clear();
-            foreach(var topicId in request.TopicIds)
+            var existingTopic = await _unitOfWork.TopicFavoriteRepository.Get().Where(x=>x.FavoriteId == request.ListId).ToListAsync();
+            if (existingTopic != null && existingTopic.Any())
             {
-                favorite.Topics.Add(new TopicFavorite
-                {
-                    TopicId = topicId,
-                    FavoriteId = favorite.Id,
-                });
+                _unitOfWork.TopicFavoriteRepository.DeleteRange(existingTopic);
             }
-            _unitOfWork.FavoriteRepository.Update(favorite);
+            var newTopicList = request.TopicIds.Select(x => new TopicFavorite
+            {
+                FavoriteId = request.ListId,
+                TopicId = x
+            });
+            await _unitOfWork.TopicFavoriteRepository.InsertRangeAsync(newTopicList);
             await _unitOfWork.SaveChangesAsync();
+        }
 
+        public async Task DeleteAsync(Guid favoriteId)
+        {
+            var existingFavorite = await _unitOfWork.FavoriteRepository.Get().Include(x=>x.Topics).Where(x=>x.Id == favoriteId).FirstOrDefaultAsync();
+            if (existingFavorite == null) throw new DataNotFoundException();
+            _unitOfWork.FavoriteRepository.Delete(existingFavorite);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
