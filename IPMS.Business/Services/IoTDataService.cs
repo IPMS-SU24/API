@@ -78,7 +78,7 @@ namespace IPMS.Business.Services
                                     (com, stu) => new
                                     {
                                         Id = com.ComponentId,
-                                        ClassCode = stu.Class.Name,
+                                        ClassCode = stu.Class.ShortName,
                                         GroupNumber = stu.Project!.GroupNum,
                                         BorrowNumber = com.Quantity
                                     }

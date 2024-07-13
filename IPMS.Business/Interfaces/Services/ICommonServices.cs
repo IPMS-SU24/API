@@ -7,13 +7,9 @@ namespace IPMS.Business.Interfaces.Services
     public interface ICommonServices
     {
         Task<List<Student>> GetStudiesIn(Guid currentUserId);
-        [Obsolete("Using GetClass From Session Instead")]
         Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn, Guid currentSemesterId);
-        [Obsolete("Using GetClass From Session Instead")]
         Task<IPMSClass?> GetCurrentClass(IEnumerable<Guid> studiesIn);
-        [Obsolete("Using GetClass From Session Instead")]
         Task<IPMSClass?> GetCurrentClass(Guid studentId);
-        [Obsolete("Using GetProject From Session Instead")]
         Task<Project?> GetProject(Guid currentUserId);
         Task<Topic?> GetProjectTopic(Guid projectId);
         Task<IEnumerable<ProjectSubmission>> GetProjectSubmissions(Guid projectId);
@@ -23,7 +19,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<int> GetRemainComponentQuantityOfLecturer(Guid lecturerId, Guid componentId);
         Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId);
         Task<List<IPMSClass>> GetAllCurrentClassesOfLecturer(Guid lecturerId);
-        Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId, Guid classId);
+        (DateTime startDate, DateTime endDate) GetAssessmentTime(Guid assessmentId, Guid classId);
         AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime changeTopicDeadline, DateTime changeGroupDeadline);
         Task SetCommonSessionUserEntity(Guid currentUserId);
         IPMSClass? GetClass();

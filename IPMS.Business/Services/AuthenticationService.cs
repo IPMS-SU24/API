@@ -175,7 +175,17 @@ namespace IPMS.Business.Services
             }
             //Revoke current token
             oldActiveRefreshToken.Revoked = DateTime.Now;
-            var newAccessToken = GenerateAccessToken(principal.Claims.ToList());
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var authClaims = new List<Claim>
+                    {
+                        new (ClaimTypes.Email, user.Email),
+                        new (ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new ("Id", user.UserName),
+                        new ("FullName", user.FullName),
+                        new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
+                    };
+            var newAccessToken = GenerateAccessToken(authClaims);
             var newRefreshToken = GenerateRefreshToken();
 
             user.RefreshTokens.Add(new UserRefreshToken

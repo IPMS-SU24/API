@@ -1,4 +1,5 @@
 ﻿using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.Semester;
@@ -39,9 +40,9 @@ namespace IPMS.Business.Services
                                                          .Where(x => x.Semester.ShortName == request.SemesterCode && x.LecturerId == lecturerId)
                                                          .Select(x => new
                                                          {
-                                                             ClassCode = x.Name,
+                                                             ClassCode = x.ShortName,
                                                              ClassId = x.Id,
-                                                             ClassName = x.Description,
+                                                             ClassName = x.Name,
                                                              MaxMembers = x.MaxMember
                                                          }).ToListAsync();
 
@@ -52,7 +53,7 @@ namespace IPMS.Business.Services
                                                                         ClassId = x.Key,
                                                                         Enroll = x.Where(stu => stu.Information.EmailConfirmed).Count(),
                                                                         Total = x.Count(),
-                                                                        GroupNum = x.Select(y => y.ProjectId).Distinct().Count()
+                                                                        GroupNum = x.Where(x=>x.ProjectId != null).Select(y => y.ProjectId).Distinct().Count()
                                                                     }).ToListAsync();
             var result = new List<ClassInSemesterInfo>();
             foreach (var @class in classesQuery)
@@ -83,6 +84,18 @@ namespace IPMS.Business.Services
             return new()
             {
                 Classes = result
+            };
+        }
+
+        public async Task<GetCurrentSemesterResponse> GetCurrentSemester()
+        {
+            var currentSemester  = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            return new GetCurrentSemesterResponse()
+            {
+                Code = currentSemester.ShortName,
+                Name = currentSemester.Name,
+                StartDate = currentSemester.StartDate,
+                EndDate = currentSemester.EndDate
             };
         }
     }

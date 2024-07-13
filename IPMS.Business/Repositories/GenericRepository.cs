@@ -24,9 +24,9 @@ namespace IPMS.Business.Repository
 
         public virtual async Task<TEntity?> GetByIDAsync(object id)
         {
-            var result = await dbSet.FindAsync(id);
-            if (result != null && result.IsDeleted) return null;
-            return await dbSet.FindAsync(id);
+            var technicalId = Guid.Parse(id.ToString());
+            var result = await dbSet.Where(x=>x.Id == technicalId).FirstOrDefaultAsync();
+            return result;
         }
 
         public virtual async Task InsertAsync(TEntity entity)

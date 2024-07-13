@@ -70,7 +70,7 @@ namespace IPMS.Business.Services
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
         {
             var now = DateTime.Now;
-            var time = await GetAssessmentTime(assessmentId, GetClass()!.Id);
+            var time = GetAssessmentTime(assessmentId, GetClass()!.Id);
             //Case 1: Start Time in the future => status NotYet
             if (time.startDate > now)
             {
@@ -130,13 +130,13 @@ namespace IPMS.Business.Services
                                                                                       (@class, classTopic) => classTopic.ProjectId.Value).ToListAsync();
         }
 
-        public async Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId, Guid classId)
+        public (DateTime startDate, DateTime endDate) GetAssessmentTime(Guid assessmentId, Guid classId)
         {
             var modules = _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(x => x.ClassId == classId))
                                                                 .Where(x => x.AssessmentId == assessmentId).SelectMany(x => x.ClassModuleDeadlines);
             //Check Assessment Deadline, Start Date
-            var deadline = await modules.MaxAsync(x => x.EndDate);
-            var start = await modules.MinAsync(x => x.StartDate);
+            var deadline = modules.Max(x => x.EndDate);
+            var start = modules.Min(x => x.StartDate);
             return new()
             {
                 startDate = start,

@@ -30,10 +30,9 @@ namespace IPMS.Business.Services
             var projectSubmissions = await _unitOfWork.ProjectSubmissionRepository.Get()
                                                       .Where(x => x.ProjectId == currentStudent.ProjectId && x.Name != null)
                                                       .Select(x => x.SubmissionModuleId).ToListAsync();
-            var nearDeadlineSubmissions = currentSemester?.CurrentSemester?.Syllabus?.Assessments
-                                                           .SelectMany(x => x.Modules).SelectMany(x => x.ClassModuleDeadlines)
-                                                           .Where(x => x.EndDate > DateTime.Now && x.ClassId == _commonService.GetClass()!.Id)
-                                                           .SkipWhile(x => projectSubmissions.Contains(x.SubmissionModuleId)).Select(x => new NearDealineSubmission
+            var nearDeadlineSubmissions = _unitOfWork.SubmissionModuleRepository.Get().Where(x=>x.SemesterId == currentSemester.CurrentSemester!.Id).SelectMany(x => x.ClassModuleDeadlines)
+                                                           .Where(x => x.EndDate > DateTime.Now && x.ClassId == _commonService.GetClass()!.Id && !projectSubmissions.Contains(x.SubmissionModuleId))
+                                                           .Select(x => new NearDealineSubmission
                                                            {
                                                                AssessmentId = x.SubmissionModule.AssessmentId.ToString()!,
                                                                EndDate = x.EndDate,
@@ -42,7 +41,7 @@ namespace IPMS.Business.Services
                                                            });
             return new NearSubmissionDeadlineData
             {
-                Submissions = nearDeadlineSubmissions.ToList()
+                Submissions = await nearDeadlineSubmissions.ToListAsync()
             };
         }
 

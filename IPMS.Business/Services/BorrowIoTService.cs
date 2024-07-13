@@ -102,7 +102,7 @@ namespace IPMS.Business.Services
                 {
                     ProjectId = ct.ProjectId,
                     GroupName = $"Group {ct.Project.GroupNum}",
-                    ClassName = @class.Name
+                    ClassName = @class.ShortName
                 }).ToList());
             }
 

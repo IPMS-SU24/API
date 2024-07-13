@@ -20,6 +20,7 @@ namespace IPMS.Business.Interfaces
         ILecturerGradeRepository LecturerGradeRepository { get; }
         IComponentsMasterRepository ComponentsMasterRepository { get; }
         IIoTComponentRepository IoTComponentRepository { get; }
+        IFavoriteRepository FavoriteRepository { get; }
         //Start the database Transaction
         Task CreateTransactionAsync();
         //Commit the database Transaction

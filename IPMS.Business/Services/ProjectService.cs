@@ -149,7 +149,7 @@ namespace IPMS.Business.Services
         }
         private async Task<AssessmentInformation> MapAssessmentInformation(Assessment assessment, List<ProjectSubmission> submissionsOfAssessment)
         {
-            var assessmentDeadline = (await _commonServices.GetAssessmentTime(assessment.Id, _commonServices.GetClass()!.Id));
+            var assessmentDeadline = _commonServices.GetAssessmentTime(assessment.Id, _commonServices.GetClass()!.Id);
             return new AssessmentInformation
             {
                 Name = assessment.Name ?? string.Empty,
@@ -288,10 +288,9 @@ namespace IPMS.Business.Services
                 var memsProject = project.Students.Select(s => new MemberPrjDetail
                 {
                     Id = s.InformationId,
-                    StudentId = s.Id,
+                    StudentId = s.Information.UserName,
                     Name = s.Information.FullName,
                     isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
-
                 }).ToList();
                 prjDetail = new GetProjectDetailResponse
                 {
@@ -308,7 +307,7 @@ namespace IPMS.Business.Services
             var members = classTopic.Project.Students.Select(s => new MemberPrjDetail
             {
                 Id = s.InformationId,
-                StudentId = s.Id,
+                StudentId = s.Information.UserName,
                 Name = s.Information.FullName,
                 isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
 
