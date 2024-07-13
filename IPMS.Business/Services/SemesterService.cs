@@ -53,7 +53,7 @@ namespace IPMS.Business.Services
                                                                         ClassId = x.Key,
                                                                         Enroll = x.Where(stu => stu.Information.EmailConfirmed).Count(),
                                                                         Total = x.Count(),
-                                                                        GroupNum = x.Select(y => y.ProjectId).Distinct().Count()
+                                                                        GroupNum = x.Where(x=>x.ProjectId != null).Select(y => y.ProjectId).Distinct().Count()
                                                                     }).ToListAsync();
             var result = new List<ClassInSemesterInfo>();
             foreach (var @class in classesQuery)

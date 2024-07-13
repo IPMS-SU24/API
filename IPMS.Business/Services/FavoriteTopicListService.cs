@@ -1,8 +1,10 @@
-﻿using IPMS.Business.Interfaces;
+﻿using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.FavoriteTopic;
 using IPMS.Business.Responses.FavoriteTopic;
 using IPMS.DataAccess.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
 {
@@ -27,6 +29,26 @@ namespace IPMS.Business.Services
             {
                 ListId = newFavorite.Id
             };
+        }
+
+        public async Task Update(UpdateFavoriteTopicListRequest request, Guid lecturerId)
+        {
+            var favorite = await _unitOfWork.FavoriteRepository.Get().Include(x=>x.Topics).FirstOrDefaultAsync(x=>x.Id == request.ListId);
+            if (favorite == null) throw new DataNotFoundException();
+            var topics = await _unitOfWork.TopicRepository.GetApprovedTopics().Where(x=>request.TopicIds.Contains(x.Id)).Select(x=>x.Id).CountAsync();
+            if(topics != request.TopicIds.Count) throw new DataNotFoundException();
+            favorite.Topics.Clear();
+            foreach(var topicId in request.TopicIds)
+            {
+                favorite.Topics.Add(new TopicFavorite
+                {
+                    TopicId = topicId,
+                    FavoriteId = favorite.Id,
+                });
+            }
+            _unitOfWork.FavoriteRepository.Update(favorite);
+            await _unitOfWork.SaveChangesAsync();
+
         }
     }
 }

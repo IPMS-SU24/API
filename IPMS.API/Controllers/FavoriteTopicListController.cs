@@ -27,5 +27,12 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut]
+        public async Task<IActionResult> UpdateAsync(UpdateFavoriteTopicListRequest request)
+        {
+            await _favoriteTopicListService.Update(request, HttpContext.User.Claims.GetUserId());
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }
