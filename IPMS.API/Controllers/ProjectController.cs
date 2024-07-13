@@ -10,6 +10,7 @@ using IPMS.Business.Requests.ProjectPreference;
 using IPMS.Business.Responses.ProjectPreference;
 using IPMS.DataAccess.Models;
 using IPMS.Business.Requests.Project;
+using IPMS.Business.Responses.Project;
 
 namespace IPMS.API.Controllers
 {
@@ -70,7 +71,7 @@ namespace IPMS.API.Controllers
         {
             var projectPreferences = await _projectService.GetProjectPreferences(request);
             var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            return GetActionResponse(response);
             
         }
 
@@ -85,7 +86,7 @@ namespace IPMS.API.Controllers
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             var projectPreferences = await _projectService.GetProjectsOverview(request, currentUserId);
             var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            return GetActionResponse(response);
 
         }
 
@@ -99,8 +100,16 @@ namespace IPMS.API.Controllers
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             var projectPreferences = await _projectService.GetProjectDetail(request, currentUserId);
-         //   var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(projectPreferences);
+            //   var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            var response = new IPMSResponse<GetProjectDetailResponse>()
+            {
+                Data = projectPreferences
+            };
+            if (projectPreferences == null)
+            {
+                response.Status = ResponseStatus.BadRequest;
+            }
+            return GetActionResponse(response);
 
         }
 
@@ -114,7 +123,7 @@ namespace IPMS.API.Controllers
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             await _projectService.UpdateProjectPreferencesStatus(request, currentUserId);
-            return Ok();
+            return GetActionResponse(new IPMSResponse<object>());
 
         }
 
@@ -129,7 +138,7 @@ namespace IPMS.API.Controllers
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             var projectPreferences = await _projectService.GetProjectPreferencesLecturer(request, currentUserId);
             var response = await projectPreferences.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            return GetActionResponse(response);
 
         }
     }

@@ -10,10 +10,11 @@ using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Common.Exceptions;
 using IPMS.DataAccess.Common.Enums;
 using Microsoft.AspNetCore.Http;
-using System.Xml.Linq;
 using IPMS.Business.Common.Extensions;
 using IPMS.Business.Responses.IoT;
 using IPMS.Business.Responses.Project;
+using IPMS.Business.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.Business.Services
 {
@@ -106,12 +107,12 @@ namespace IPMS.Business.Services
             }
 
             List<GetBorrowIoTComponentsResponse> borrowComponents = new();
-            
+
             foreach (var prj in projects)
             {
                 var prjComponents = components.Where(c => c.MasterId.Equals(prj.ProjectId)); // get borrow component base on projects
 
-                borrowComponents.AddRange( prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour }) // add to response
+                borrowComponents.AddRange(prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour }) // add to response
                 .Select(g => new GetBorrowIoTComponentsResponse
                 {
                     ClassName = prj.ClassName,
@@ -123,7 +124,7 @@ namespace IPMS.Business.Services
                         Name = g.Component!.Name,
                         Quantity = g.Quantity,
                         Status = g.Status
-                        
+
                     }).ToList()
 
                 }).ToList());
@@ -131,7 +132,8 @@ namespace IPMS.Business.Services
             if (request.OrderBy)
             {
                 borrowComponents = borrowComponents.OrderByDescending(bC => bC.CreateAt).ToList();
-            } else
+            }
+            else
             {
                 borrowComponents = borrowComponents.OrderBy(bC => bC.CreateAt).ToList();
             }
@@ -183,6 +185,178 @@ namespace IPMS.Business.Services
 
 
         }
+        public async Task<ValidationResultModel> ReviewBorrowIoTComponentsValidators(ReviewBorrowIoTComponentsRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+            // check component quantity < 0
+            var validReqComponts = request.IotComponents.Any(ic => ic.Quantity < 0);
+            if (validReqComponts)
+            {
+                result.Message = "Cannot set Quantity < 0";
+                return result;
+            }
+
+            var components = await _unitOfWork.ComponentsMasterRepository.Get()
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.ProjectId) && cm.Status == BorrowedStatus.Pending)
+                                    .Include(cm => cm.Component).ToListAsync();
+            if (components.Count() == 0)
+            {
+                result.Message = "Does not have any request from Project";
+                return result;
+            }
+
+            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
+                .Select(g => new GroupIotReview
+                {
+                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    IotComponents = g.Select(g => new IoTReview
+                    {
+                        Id = g.Id,
+                        Quantity = g.Quantity,
+                    }).ToList()
+                }).ToList();
+
+            var reqBorrow = groups.FirstOrDefault(g => g.CreatedAt == request.CreatedAt);
+            if (reqBorrow == null)
+            {
+                result.Message = "Request cannot found";
+                return result;
+            }
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+
+            // get class topic (validate) --> get class, current semester (validate) --> different lecturer Id, check deadline
+            var classTopic = await _unitOfWork.ClassTopicRepository.Get()
+                                        .FirstOrDefaultAsync(ct => ct.ProjectId.Equals(request.ProjectId) 
+                                                    && ct.Class.SemesterId.Equals(currentSemester.Id) 
+                                                    && ct.Class.LecturerId.Equals(lecturerId));
+                                                    
+            if (classTopic == null)
+            {
+                result.Message = "Cannot found project";
+                return result;
+            }
+
+            // get topic --> get iot component topic --> check count, check quantity of every components -> must match all
+
+            var topicCompontns = await _unitOfWork.ComponentsMasterRepository.Get()
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Topic && cm.MasterId.Equals(classTopic.TopicId)).ToListAsync();
+
+            // iot components -> count -> If different --> Do not enough
+
+            // group this request, check is enough component in 1 request?
+            if (reqBorrow.IotComponents.Count() != request.IotComponents.Count())
+            {
+                result.Message = "Please send full request";
+                return result;
+            }
+
+            if (topicCompontns.Count() != request.IotComponents.Count())
+            {
+                result.Message = "Request not match with current topic";
+                return result;
+            }
+
+            // check match all
+            foreach (var compont in request.IotComponents)
+            {
+                if (!reqBorrow.IotComponents.Any(iot => iot.Id.Equals(compont.Id))) // check with request
+                {
+                    result.Message = "Component does not match request";
+                    return result;
+                }
+
+                if (!topicCompontns.Any(iot => iot.ComponentId.Equals(compont.Id))) // check with topic
+                {
+                    result.Message = "Component does not match request";
+                    return result;
+                }
+            }
+
+            // get borrowed
+
+            var projects = await _commonServices.GetAllCurrentProjectsOfLecturer(lecturerId);
+
+            //get from all request project accepted
+            List<IoTReview> approvedComponnts = _unitOfWork.ComponentsMasterRepository.Get().Where(cm =>
+                    cm.MasterType == ComponentsMasterType.Project
+                    && projects.Contains((Guid)cm.MasterId)
+                    && cm.Status == BorrowedStatus.Approved).GroupBy(cm => cm.ComponentId).Select(cm => new IoTReview
+                    {
+                        Id = (Guid)cm.Key,
+                        Quantity = cm.Sum(g => g.Quantity)
+                    }).ToList();
+
+            //get from all lecturer
+            List<IoTReview> lecComponnts = _unitOfWork.ComponentsMasterRepository.Get().Where(cm =>
+                    cm.MasterType == ComponentsMasterType.Lecturer
+                    && cm.MasterId.Equals(lecturerId)).GroupBy(cm => cm.ComponentId).Select(cm => new IoTReview
+                    {
+                        Id = (Guid)cm.Key,
+                        Quantity = cm.Sum(g => g.Quantity)
+                    }).ToList();
+
+            foreach (var compont in request.IotComponents)
+            {
+                var lecCompont = lecComponnts.FirstOrDefault(c => compont.Id.Equals(c.Id));
+                if (lecCompont == null)
+                {
+                    result.Message = "Lecturer does not has request Iot Component";
+                    return result;
+                }
+
+                var approvedCompont = approvedComponnts.FirstOrDefault(c => compont.Id.Equals(c.Id));
+
+                if (approvedCompont != null)
+                {
+                    if (approvedCompont.Quantity + compont.Quantity > lecCompont.Quantity)
+                    {
+                        result.Message = "Lecturer does not has enough quantity";
+                        return result;
+                    }
+                } else if (compont.Quantity > lecCompont.Quantity)
+                {
+                    result.Message = "Lecturer does not has enough quantity";
+                    return result;
+                }
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+
+        }
+        public async Task ReviewBorrowIoTComponents(ReviewBorrowIoTComponentsRequest request, Guid lecturerId)
+        {
+            var components = await _unitOfWork.ComponentsMasterRepository.Get()
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.ProjectId) && cm.Status == BorrowedStatus.Pending)
+                                    .Include(cm => cm.Component).ToListAsync();
+           
+            foreach (var compont in request.IotComponents)
+            {
+
+                var updtCompont = components.FirstOrDefault(c => c.Id.Equals(compont.Id));
+
+                updtCompont.Quantity = compont.Quantity;
+
+                if (updtCompont.Quantity == 0)
+                {
+                    updtCompont.Status = BorrowedStatus.Rejected;
+                } else if (updtCompont.Quantity > 0)
+                {
+                    updtCompont.Status = BorrowedStatus.Approved;
+
+                }
+                _unitOfWork.ComponentsMasterRepository.Update(updtCompont);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+        }
+
+
+
         private async Task<BorrowIoTComponentInformation> MapBorrowIoTComponentInformation(ComponentsMaster component, IPMSClass @class)
         {
             return new BorrowIoTComponentInformation

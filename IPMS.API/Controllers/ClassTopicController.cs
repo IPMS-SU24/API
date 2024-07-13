@@ -29,7 +29,7 @@ namespace IPMS.API.Controllers
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             var classTopics = await _classTopicService.GetClassTopicsAvailable(currentUserId, request);
             var response = await classTopics.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            return Ok(response);
+            return GetActionResponse(response);
         }
 
         /// <summary>

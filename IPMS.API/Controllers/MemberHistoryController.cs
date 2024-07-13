@@ -1,5 +1,7 @@
-﻿using IPMS.API.Common.Attributes;
+﻿using Azure;
+using IPMS.API.Common.Attributes;
 using IPMS.API.Common.Extensions;
+using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.MemberHistory;
@@ -30,7 +32,8 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> UpdateRequestStatus([FromBody] UpdateRequestStatusRequest request)
         {
             await _memberHistoryService.UpdateRequestStatus(request);
-            return Ok();
+            return GetActionResponse(new IPMSResponse<object>());
+
         }
     }
 }
