@@ -77,5 +77,15 @@ namespace IPMS.Business.Services
             _unitOfWork.FavoriteRepository.Delete(existingFavorite);
             await _unitOfWork.SaveChangesAsync();
         }
+        public async Task<IList<GetAllFavoriteResponse>> GetAsync(Guid lecturerId)
+        {
+            var response =  await _unitOfWork.FavoriteRepository.Get().Where(x => x.LecturerId == lecturerId).Select(x => new GetAllFavoriteResponse
+            {
+                ListId = x.Id,
+                ListName = x.Name
+            }).ToListAsync();
+            if (response == null || !response.Any()) throw new DataNotFoundException();
+            return response;
+        }
     }
 }
