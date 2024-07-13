@@ -99,15 +99,7 @@ namespace IPMS.Business.Services
             if (user != null && !user.IsDeleted && await _userManager.CheckPasswordAsync(user, loginModel.Password) && await _userManager.IsEmailConfirmedAsync(user))
             {
                 var userRoles = await _userManager.GetRolesAsync(user);
-                var authClaims = new List<Claim>
-                    {
-                        new (ClaimTypes.Email, user.Email),
-                        new (ClaimTypes.NameIdentifier, user.Id.ToString()),
-                        new ("Id", user.UserName),
-                        new ("FullName", user.FullName),
-                        new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                        new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
-                    };
+                var authClaims = await GetUserClaims(user);
                 if (userRoles.Contains(UserRole.Student.ToString()))
                 {
                     //If student => Add ProjectId to Claim
@@ -175,17 +167,7 @@ namespace IPMS.Business.Services
             }
             //Revoke current token
             oldActiveRefreshToken.Revoked = DateTime.Now;
-            var userRoles = await _userManager.GetRolesAsync(user);
-            var authClaims = new List<Claim>
-                    {
-                        new (ClaimTypes.Email, user.Email),
-                        new (ClaimTypes.NameIdentifier, user.Id.ToString()),
-                        new ("Id", user.UserName),
-                        new ("FullName", user.FullName),
-                        new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                        new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
-                    };
-            var newAccessToken = GenerateAccessToken(authClaims);
+            var newAccessToken = GenerateAccessToken(await GetUserClaims(user));
             var newRefreshToken = GenerateRefreshToken();
 
             user.RefreshTokens.Add(new UserRefreshToken
@@ -217,6 +199,31 @@ namespace IPMS.Business.Services
             {
                 throw new EmailConfirmException("Token is invalid");
             }
+        }
+
+        public async Task<bool> CheckUserClaimsInTokenStillValidAsync(IEnumerable<Claim> claims)
+        {
+            //No need to check for anonymous user
+            if (!claims.Any()) return true;
+            var user = await _userManager.FindByEmailAsync(claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)!.Value);
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var roleInToken = claims.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value).ToList();
+            // userRole must contain all roleInToken and same length
+            return !userRoles.Any(x => !roleInToken.Contains(x)) && userRoles.Count == roleInToken.Count;
+        }
+
+        private async Task<IList<Claim>> GetUserClaims(IPMSUser user)
+        {
+            var userRoles = await _userManager.GetRolesAsync(user);
+            return new List<Claim>
+                    {
+                        new (ClaimTypes.Email, user.Email),
+                        new (ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new ("Id", user.UserName),
+                        new ("FullName", user.FullName),
+                        new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
+                    };
         }
     }
 }
