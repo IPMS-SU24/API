@@ -1,4 +1,7 @@
-﻿using IPMS.Business.Common.Exceptions;
+﻿using Azure;
+using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
@@ -12,10 +15,12 @@ namespace IPMS.Business.Services
     public class FavoriteTopicListService : IFavoriteTopicListService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPresignedUrlService _presignedUrlService;
 
-        public FavoriteTopicListService(IUnitOfWork unitOfWork)
+        public FavoriteTopicListService(IUnitOfWork unitOfWork, IPresignedUrlService presignedUrlService)
         {
             _unitOfWork = unitOfWork;
+            _presignedUrlService = presignedUrlService;
         }
 
         public async Task<ValidationResultModel> CheckValidCreate(Guid lecturerId, CreateFavoriteTopicListRequest request)
@@ -77,6 +82,7 @@ namespace IPMS.Business.Services
             _unitOfWork.FavoriteRepository.Delete(existingFavorite);
             await _unitOfWork.SaveChangesAsync();
         }
+
         public async Task<IList<GetAllFavoriteResponse>> GetAsync(Guid lecturerId)
         {
             var response =  await _unitOfWork.FavoriteRepository.Get().Where(x => x.LecturerId == lecturerId).Select(x => new GetAllFavoriteResponse
@@ -85,6 +91,38 @@ namespace IPMS.Business.Services
                 ListName = x.Name
             }).ToListAsync();
             if (response == null || !response.Any()) throw new DataNotFoundException();
+            return response;
+        }
+
+        public async Task<IList<GetFavoriteTopicResponse>> GetInFavoriteAsync(Guid listId)
+        {
+            var response = await _unitOfWork.TopicRepository.GetApprovedTopics().Include(x => x.Favorites).Select(x => new GetFavoriteTopicResponse
+            {
+                Description = x.Description,
+                TopicId = x.Id,
+                TopicName = x.Name,
+                DetailLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic,x.Id,x.Detail)),
+                IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId)
+            }).ToListAsync();
+            if(response ==  null || !response.Any()) throw new DataNotFoundException();
+            var allTopicIoT = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x=>x.Component).Where(x => response.Select(x => x.TopicId).ToList().Contains(x.MasterId.Value)).Select(x => new
+            {
+                Title = x.Component.Name,
+                x.Component.Description,
+                Id = x.ComponentId,
+                TopicId = x.MasterId
+            }).ToListAsync();
+
+            foreach (var topic in response)
+            {
+                topic.IoTComponents.AddRange(allTopicIoT.Where(x =>x.TopicId == topic.TopicId).Select(x=> new FavoriteIoTInfo
+                {
+                    Description= x.Description,
+                    Id = x.Id,
+                    Title = x.Title
+                }));
+
+            }
             return response;
         }
     }

@@ -85,10 +85,10 @@ namespace IPMS.Business.Services
                                     ).ToListAsync();
             var result = lecturerIoTQuery.Select(lec => new GetIoTRepositoryResponse
             {
-                Id = lec.Id.Value,
+                Id = lec.Id,
                 Name = lec.Name,
                 TotalQuantity = lec.TotalQuantity,
-                Components = groupBorrowQuery.Where(x => x.Id.Value == lec.Id.Value).Select(x => new BorrowInGroup
+                Components = groupBorrowQuery.Where(x => x.Id == lec.Id).Select(x => new BorrowInGroup
                 {
                     ClassCode = x.ClassCode,
                     BorrowNumber = x.BorrowNumber,

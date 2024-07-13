@@ -1,6 +1,7 @@
 ﻿using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
 using System.Security.AccessControl;
@@ -19,11 +20,11 @@ namespace IPMS.Business.Services
             _configuration = configuration;
      
         }
-        public string GeneratePresignedDownloadUrl(string objectName)
+        public string? GeneratePresignedDownloadUrl(string? objectName)
         {
             if (string.IsNullOrEmpty(objectName))
                 return null;
-            string urlString = string.Empty;
+            string? urlString = null;
             try
             {
                 var request = new GetPreSignedUrlRequest()
@@ -33,7 +34,10 @@ namespace IPMS.Business.Services
                     Expires = DateTime.UtcNow.AddHours(double.Parse(_configuration[EXPIRY])),
 
                 };
-                urlString = _s3Client.GetPreSignedURL(request);
+                if (DoesS3ObjectExistAsync(_configuration[BUCKET_NAME], objectName).GetAwaiter().GetResult())
+                {
+                    urlString = _s3Client.GetPreSignedURL(request);
+                }
             }
             catch (AmazonS3Exception ex)
             {
@@ -46,7 +50,7 @@ namespace IPMS.Business.Services
         public  string GeneratePresignedUploadUrl(string objectName)
         {
             if (string.IsNullOrEmpty(objectName))
-                return null;
+                throw new DataNotFoundException();
             AWSConfigsS3.UseSignatureVersion4 = true;
             var requestS3 = new GetPreSignedUrlRequest
             {
@@ -58,6 +62,31 @@ namespace IPMS.Business.Services
 
             string url = _s3Client.GetPreSignedURL(requestS3);
             return url;
+        }
+        private async Task<bool> DoesS3ObjectExistAsync(string bucketName, string key)
+        {
+            try
+            {
+                var request = new GetObjectMetadataRequest
+                {
+                    BucketName = bucketName,
+                    Key = key
+                };
+
+                await _s3Client.GetObjectMetadataAsync(request);
+                return true;
+            }
+            catch (AmazonS3Exception e)
+            {
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
     }
 }

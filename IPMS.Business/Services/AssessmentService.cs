@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Common.Extensions;
+﻿using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Extensions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
@@ -92,7 +93,7 @@ namespace IPMS.Business.Services
                                                                         Id = ps.Id,
                                                                         Name = ps.Name,
                                                                         SubmitTime = ps.SubmissionDate,
-                                                                        Link = _presignedUrlService.GeneratePresignedDownloadUrl("PS_" + ps.Id + "_" + ps.Name) //Get base on name on S3 
+                                                                        Link = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission,ps.Id,ps.Name)) ?? string.Empty //Get base on name on S3 
 
                                                                     }).ToList()
                                                                 }).ToList();

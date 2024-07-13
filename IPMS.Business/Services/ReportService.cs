@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using IPMS.Business.Common.Constants;
 using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
@@ -68,7 +70,7 @@ namespace IPMS.Business.Services
                 Response = pr.ResponseContent,
                 Status = pr.Status,
                 CreateAt = pr.CreatedAt,
-                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(pr.FileName)
+                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Report,pr.Id,pr.FileName))
 
             });
             return reports;

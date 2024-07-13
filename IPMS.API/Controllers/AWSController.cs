@@ -1,12 +1,15 @@
 ﻿using IPMS.API.Common.Attributes;
 using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
 {
     [Route("api/v1/[controller]/")]
+    [Authorize]
     public class AWSController : ApiControllerBase
     {
         private readonly IPresignedUrlService _presignedUrlService;
@@ -15,20 +18,18 @@ namespace IPMS.API.Controllers
             _presignedUrlService = PresignedUrlService;
         }
 
-        [EnumAuthorize(UserRole.Student, UserRole.Lecturer, UserRole.Admin)]
         [HttpGet]
         [Route("download")]
         public IActionResult GeneratePresignedDownloadUrl(string objectKey)
         {
-            var response = new IPMSResponse<string>()
+            var response = new IPMSResponse<string?>()
             {
                 Data = _presignedUrlService.GeneratePresignedDownloadUrl(objectKey)
             }; // Default is success
-        
-            return Ok(response);
+            if (response.Data == null) throw new DataNotFoundException();
+            return GetActionResponse(response);
         }
 
-        [EnumAuthorize(UserRole.Student, UserRole.Lecturer, UserRole.Admin)]
         [HttpGet]
         [Route("upload")]
         public IActionResult GeneratePresignedUploadUrl([FromQuery] string objectName)
@@ -38,7 +39,7 @@ namespace IPMS.API.Controllers
                 Data = _presignedUrlService.GeneratePresignedUploadUrl(objectName)
             }; // Default is success
 
-            return Ok(response);
+            return GetActionResponse(response);
         }
 
     }

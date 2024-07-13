@@ -168,7 +168,11 @@ namespace IPMS.Business.Services
         }
         public async Task AddStudentAsync(AddStudentsToClassRequest request)
         {
-            var importFileUrl = _presignedUrlService.GeneratePresignedDownloadUrl(request.FileName);
+            var importFileUrl = _presignedUrlService.GeneratePresignedDownloadUrl(request.FileName); // FE add Prefix
+            if(importFileUrl == null)
+            {
+                throw new DataNotFoundException();
+            }
             await ProcessImportStudentAsync(importFileUrl, request.ClassId);
         }
 

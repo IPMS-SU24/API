@@ -11,5 +11,6 @@ namespace IPMS.Business.Interfaces.Services
         Task UpdateAsync(UpdateFavoriteTopicListRequest request, Guid lecturerId);
         Task DeleteAsync(Guid favoriteId);
         Task<IList<GetAllFavoriteResponse>> GetAsync(Guid lecturerId);
+        Task<IList<GetFavoriteTopicResponse>> GetInFavoriteAsync(Guid listId);
     }
 }

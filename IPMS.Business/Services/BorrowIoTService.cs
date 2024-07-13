@@ -366,9 +366,9 @@ namespace IPMS.Business.Services
         {
             return new BorrowIoTComponentInformation
             {
-                Id = component.ComponentId!.Value,
+                Id = component.ComponentId,
                 Name = component.Component.Name,
-                Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, component.ComponentId!.Value)
+                Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, component.ComponentId)
             };
         }
 
