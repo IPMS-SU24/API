@@ -16,6 +16,7 @@ namespace IPMS.Business.Requests.IoTComponent
     public class IoTReview
     {
         public Guid Id { get; set; }
+        public Guid? ComponentId { get; set; }
         public int Quantity { get; set; }
     }
 }

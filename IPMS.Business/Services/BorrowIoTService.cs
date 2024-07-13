@@ -200,7 +200,7 @@ namespace IPMS.Business.Services
             }
 
             var components = await _unitOfWork.ComponentsMasterRepository.Get()
-                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.ProjectId) && cm.Status == BorrowedStatus.Pending)
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.ProjectId) && cm.Status == BorrowedStatus.Pending) // check that cannot review approved || rejected component
                                     .Include(cm => cm.Component).ToListAsync();
             if (components.Count() == 0)
             {
@@ -215,6 +215,7 @@ namespace IPMS.Business.Services
                     IotComponents = g.Select(g => new IoTReview
                     {
                         Id = g.Id,
+                        ComponentId = g.ComponentId, 
                         Quantity = g.Quantity,
                     }).ToList()
                 }).ToList();
@@ -262,17 +263,20 @@ namespace IPMS.Business.Services
             // check match all
             foreach (var compont in request.IotComponents)
             {
-                if (!reqBorrow.IotComponents.Any(iot => iot.Id.Equals(compont.Id))) // check with request
+                var borrow = reqBorrow.IotComponents.FirstOrDefault(iot => iot.Id.Equals(compont.Id));
+                if (borrow == null) // check with request
                 {
                     result.Message = "Component does not match request";
+                    return result;
+                }
+                borrow.Quantity = compont.Quantity;
+
+                if (!topicCompontns.Any(iot => iot.ComponentId.Equals(borrow.ComponentId) && iot.Quantity >= compont.Quantity)) // check with topic must lower or equal quantity of request
+                {
+                    result.Message = "Component request does not match topic";
                     return result;
                 }
 
-                if (!topicCompontns.Any(iot => iot.ComponentId.Equals(compont.Id))) // check with topic
-                {
-                    result.Message = "Component does not match request";
-                    return result;
-                }
             }
 
             // get borrowed
@@ -298,16 +302,17 @@ namespace IPMS.Business.Services
                         Quantity = cm.Sum(g => g.Quantity)
                     }).ToList();
 
-            foreach (var compont in request.IotComponents)
+            foreach (var compont in reqBorrow.IotComponents)
             {
-                var lecCompont = lecComponnts.FirstOrDefault(c => compont.Id.Equals(c.Id));
+
+                var lecCompont = lecComponnts.FirstOrDefault(c => compont.ComponentId.Equals(c.Id));
                 if (lecCompont == null)
                 {
                     result.Message = "Lecturer does not has request Iot Component";
                     return result;
                 }
 
-                var approvedCompont = approvedComponnts.FirstOrDefault(c => compont.Id.Equals(c.Id));
+                var approvedCompont = approvedComponnts.FirstOrDefault(c => compont.ComponentId.Equals(c.Id));
 
                 if (approvedCompont != null)
                 {
