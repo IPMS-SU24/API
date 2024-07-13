@@ -174,6 +174,7 @@ app.UseCors(options => options.AllowAnyMethod()
 app.UseRequestResponseMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCheckTokenRoleStillValidMiddleware();
 app.UseSession();
 app.UseAddStudentSessionIfNotExistMiddleware();
 app.MapControllers();
