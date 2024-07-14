@@ -20,12 +20,12 @@ namespace IPMS.Business.Services
         private readonly IPresignedUrlService _presignedUrl;
         private readonly IHttpContextAccessor _context;
 
-        public ProjectSubmissionService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrl, IHttpContextAccessor context) 
+        public ProjectSubmissionService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrl, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _presignedUrl = presignedUrl;
-            _context  = context;
+            _context = context;
         }
 
         public async Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId)
@@ -75,7 +75,7 @@ namespace IPMS.Business.Services
             IQueryable<GetAllSubmissionResponse> response = projectSubmissions.Select(x => new GetAllSubmissionResponse
             {
                 ModuleName = x.SubmissionModule!.Name,
-                AssesmentName =  x.SubmissionModule.Assessment!.Name,
+                AssesmentName = x.SubmissionModule.Assessment!.Name,
                 SubmitDate = x.SubmissionDate,
                 SubmitterName = x.Submitter!.FullName,
                 SubmitterId = x.SubmitterId,
@@ -86,8 +86,8 @@ namespace IPMS.Business.Services
                 AssessmentId = x.SubmissionModule.AssessmentId,
                 ModuleId = x.SubmissionModuleId,
             });
-           
-            
+
+
             return response;
         }
         public async Task<ValidationResultModel> UpdateProjectSubmissionValidators(UpdateProjectSubmissionRequest request)
@@ -96,7 +96,7 @@ namespace IPMS.Business.Services
             {
                 Message = "Operation did not successfully"
             };
-            var submissionModule = _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.ClassModuleDeadlines.Where(y=> y.ClassId == _commonServices.GetClass()!.Id)).FirstOrDefault(sm => sm.Id.Equals(request.SubmissionModuleId)); // Find submission module
+            var submissionModule = _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(y => y.ClassId == _commonServices.GetClass()!.Id)).FirstOrDefault(sm => sm.Id.Equals(request.SubmissionModuleId)); // Find submission module
             if (submissionModule == null)
             {
                 result.Message = "Submission module does not exist";
@@ -115,38 +115,127 @@ namespace IPMS.Business.Services
         public async Task<bool> UpdateProjectSubmission(UpdateProjectSubmissionRequest request, Guid currentUserId)
         {
 
-                ProjectSubmission? submission = await _unitOfWork.ProjectSubmissionRepository.Get().FirstOrDefaultAsync(ps => ps.Id.Equals(request.Id));
+            ProjectSubmission? submission = await _unitOfWork.ProjectSubmissionRepository.Get().FirstOrDefaultAsync(ps => ps.Id.Equals(request.Id));
 
-                if (submission != null) // It's mean that have submission before, so that update
+            if (submission != null) // It's mean that have submission before, so that update
+            {
+                submission.Name = request.Name;
+                submission.SubmitterId = currentUserId;
+                submission.SubmissionDate = request.SubmissionDate;
+
+                _unitOfWork.ProjectSubmissionRepository.Update(submission); // Update
+                _unitOfWork.SaveChanges(); // Save changes
+                return true;
+            }
+            else // haven't submitted yet
+            {
+                var currentProject = await _commonServices.GetProject(currentUserId); // find current project
+
+                submission = new ProjectSubmission
                 {
-                    submission.Name = request.Name;
-                    submission.SubmitterId = currentUserId;
-                    submission.SubmissionDate = request.SubmissionDate;
+                    Id = request.Id,
+                    Name = request.Name,
+                    SubmissionDate = request.SubmissionDate,
+                    ProjectId = currentProject!.Id,
+                    SubmissionModuleId = request.SubmissionModuleId,
+                    SubmitterId = currentUserId
+                };
 
-                    _unitOfWork.ProjectSubmissionRepository.Update(submission); // Update
-                    _unitOfWork.SaveChanges(); // Save changes
-                    return true;
-                }
-                else // haven't submitted yet
-                {
-                    var currentProject = await _commonServices.GetProject(currentUserId); // find current project
+                await _unitOfWork.ProjectSubmissionRepository.InsertAsync(submission); // Insert
+                _unitOfWork.SaveChanges(); // Save changes
+                return true;
 
-                    submission = new ProjectSubmission
-                    {
-                        Id = request.Id,
-                        Name = request.Name,
-                        SubmissionDate = request.SubmissionDate,
-                        ProjectId = currentProject!.Id,
-                        SubmissionModuleId = request.SubmissionModuleId,
-                        SubmitterId = currentUserId
-                    };
+            }
 
-                    await _unitOfWork.ProjectSubmissionRepository.InsertAsync(submission); // Insert
-                    _unitOfWork.SaveChanges(); // Save changes
-                    return true;
+        }
 
-                }
+        public async Task<ValidationResultModel> GradeSubmissionValidators(GradeSubmissionRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
 
+            if (request.Grade < 0 || request.Grade > 10)
+            {
+                result.Message = "Cannot graded lower than 0 and greater than 10";
+                return result;
+            }
+            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId))
+                             .Include(ps => ps.Grades.FirstOrDefault(g => g.CommitteeId.Equals(lecturerId)))
+                             .FirstOrDefaultAsync();
+
+            if (submission == null)
+            {
+                result.Message = "Project submission cannot found";
+                return result;
+            }
+
+            if (submission.Grades.Count() != 1)
+            {
+                result.Message = "Lecturer does not assign to grade this project";
+                return result;
+            }
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)
+                                        && c.Students.Any(s => s.ProjectId.Equals(submission.ProjectId)))
+                                .Include(c => c.ClassModuleDeadlines.FirstOrDefault(cm => cm.SubmissionModuleId.Equals(submission.SubmissionModuleId)))
+                                .FirstOrDefaultAsync();
+
+            if (@class == null)
+            {
+                result.Message = "Class cannot found";
+                return result;
+            }
+
+            if (@class.ClassModuleDeadlines.Count() != 1)
+            {
+                result.Message = "Please set deadline for submission";
+                return result;
+            }
+
+            var moduleDeadline = @class.ClassModuleDeadlines.FirstOrDefault();
+            var now = DateTime.Now;
+
+            if (moduleDeadline.EndDate >= now)
+            {
+                result.Message = "The submission deadline has not yet passed";
+                return result;
+            }
+
+            var semester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            if (semester == null)
+            {
+                result.Message = "Is not in Semester now";
+                return result;
+            }
+
+            if (semester.StartDate > now || semester.EndDate < now)
+            {
+
+                result.Message = "Is not in Semester now";
+                return result;
+            }
+
+            if (moduleDeadline.EndDate < submission.SubmissionDate)
+            {
+                result.Message = "Cannot graded for expired submission";
+                return result;
+            }
+
+            if (@class.SemesterId.Equals(semester.Id) == false)
+            {
+                result.Message = "Class is not in Semester";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public Task GradeSubmission(GradeSubmissionRequest request, Guid lecturerId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

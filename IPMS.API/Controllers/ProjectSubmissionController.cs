@@ -34,6 +34,17 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("grade")]
+        public async Task<IActionResult> GradeSubmission([FromBody] GradeSubmissionRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            await _projectSubmissionService.GradeSubmission(request, currentUserId);
+
+            
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
 
         /// <summary>
         /// Get all submission in project of current user

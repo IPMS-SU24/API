@@ -5,6 +5,7 @@ namespace IPMS.Business.Responses.IoT
 {
     public class GetBorrowIoTComponentsResponse 
     {
+        public Guid? ProjectId { get; set; }
         public string ClassName { get; set; }
         public string GroupName { get; set; }
         public DateTime CreateAt { get; set; }
