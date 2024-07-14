@@ -236,7 +236,7 @@ namespace IPMS.Business.Services
             {
                 AccountId = @class.LecturerId!.Value,
                 Title = "New Topic Registration",
-                Message = $"A New Topic has been suggested to you from group {project.GroupNum}"
+                Message = $"A New Topic has been suggested to you from group {project.GroupNum} of Class {@class.ShortName}"
             };
             await _messageService.SendMessage(notificationMessageToLecturer);
         }

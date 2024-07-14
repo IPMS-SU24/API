@@ -122,7 +122,7 @@ namespace IPMS.Business.Services
                 ProjectFrom = GetProject(projects, h.ProjectFromId, h.ProjectFromStatus), // Iqueryable will be borrow if query db again -> so that query before and just linq select
                 ProjectTo = GetProject(projects, h.ProjectToId, h.ProjectToStatus),
                 Status = GetFinalStatus(h),
-                CreateAt = h.CreatedDate,
+                CreateAt = h.CreatedAt,
             }).ToList();
 
             return response;
