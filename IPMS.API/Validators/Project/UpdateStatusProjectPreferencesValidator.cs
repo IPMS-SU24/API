@@ -11,7 +11,7 @@ namespace IPMS.API.Validators.Submission
         {
             var lecturerId = context.HttpContext.User.Claims.GetUserId();
             RuleFor(x => x.Projects.Select(p => p.ProjectId)).NotEmpty();
-            RuleFor(x => x.Projects.Select(p => p.IsPublished)).NotEmpty();
+            //RuleFor(x => x.Projects.Select(p => p.IsPublished)).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
                 var validationResult = await submissionModuleService.UpdateProjectPreferencesStatusValidators(x, lecturerId);
