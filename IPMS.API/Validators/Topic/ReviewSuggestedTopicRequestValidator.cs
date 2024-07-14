@@ -12,7 +12,7 @@ namespace IPMS.API.Validators.Topic
             var leaderId = context.HttpContext.User.Claims.GetUserId();
             RuleFor(x => x.ClassId).NotEmpty();
             RuleFor(x => x.TopicId).NotEmpty();
-            RuleFor(x => x.IsApproved).NotEmpty();
+          //  RuleFor(x => x.IsApproved).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
                 var validationResult = await topicService.ReviewSuggestedTopicValidators(x, leaderId);
