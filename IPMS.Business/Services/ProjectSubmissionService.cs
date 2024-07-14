@@ -10,6 +10,7 @@ using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Bcpg;
 
 namespace IPMS.Business.Services
 {
@@ -18,14 +19,14 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly IPresignedUrlService _presignedUrl;
-        private readonly IHttpContextAccessor _context;
+        private IPMSClass @class;
 
         public ProjectSubmissionService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrl, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _presignedUrl = presignedUrl;
-            _context = context;
+            
         }
 
         public async Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId)
@@ -161,9 +162,9 @@ namespace IPMS.Business.Services
                 result.Message = "Cannot graded lower than 0 and greater than 10";
                 return result;
             }
-            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId))
-                             .Include(ps => ps.Grades.FirstOrDefault(g => g.CommitteeId.Equals(lecturerId)))
-                             .FirstOrDefaultAsync();
+
+            var x = _unitOfWork.ProjectSubmissionRepository.Get().OrderByDescending(ps => ps.SubmissionDate).Select(ps => ps.Id).ToList();
+            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId)).FirstOrDefaultAsync();
 
             if (submission == null)
             {
@@ -171,14 +172,10 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            if (submission.Grades.Count() != 1)
-            {
-                result.Message = "Lecturer does not assign to grade this project";
-                return result;
-            }
-            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)
+            @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)
                                         && c.Students.Any(s => s.ProjectId.Equals(submission.ProjectId)))
-                                .Include(c => c.ClassModuleDeadlines.FirstOrDefault(cm => cm.SubmissionModuleId.Equals(submission.SubmissionModuleId)))
+                                .Include(c => c.ClassModuleDeadlines.Where(cm => cm.SubmissionModuleId.Equals(submission.SubmissionModuleId))) // can not set FirstOrDefault
+                                .Include(c => c.Committees.Where(c => c.LecturerId.Equals(lecturerId)))
                                 .FirstOrDefaultAsync();
 
             if (@class == null)
@@ -192,7 +189,11 @@ namespace IPMS.Business.Services
                 result.Message = "Please set deadline for submission";
                 return result;
             }
-
+            if (@class.Committees.Count() != 1)
+            {
+                result.Message = "Lecturer does not have permission to grade this class";
+                return result;
+            }
             var moduleDeadline = @class.ClassModuleDeadlines.FirstOrDefault();
             var now = DateTime.Now;
 
@@ -222,6 +223,15 @@ namespace IPMS.Business.Services
                 return result;
             }
 
+            var lastSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.SubmissionDate <= moduleDeadline.EndDate).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
+
+            if (lastSubmission.Id.Equals(submission.Id) == false)
+            {
+                result.Message = "Cannot grade different last submission";
+                return result;
+            }
+
+
             if (@class.SemesterId.Equals(semester.Id) == false)
             {
                 result.Message = "Class is not in Semester";
@@ -233,9 +243,34 @@ namespace IPMS.Business.Services
             return result;
         }
 
-        public Task GradeSubmission(GradeSubmissionRequest request, Guid lecturerId)
+        public async Task GradeSubmission(GradeSubmissionRequest request, Guid lecturerId)
         {
-            throw new NotImplementedException();
+            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId)).FirstOrDefaultAsync();
+
+            @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)
+                                       && c.Students.Any(s => s.ProjectId.Equals(submission.ProjectId)))
+                               .Include(c => c.ClassModuleDeadlines.Where(cm => cm.SubmissionModuleId.Equals(submission.SubmissionModuleId))) // can not set FirstOrDefault
+                               .Include(c => c.Committees.Where(c => c.LecturerId.Equals(lecturerId)))
+                               .FirstOrDefaultAsync();
+            var grade = await _unitOfWork.LecturerGradeRepository.Get().FirstOrDefaultAsync(lg => lg.CommitteeId.Equals(@class.Committees.FirstOrDefault().Id) && lg.SubmissionId.Equals(request.SubmissionId));
+            if (grade == null)
+            {
+                grade = new LecturerGrade
+                {
+                    CommitteeId = @class.Committees.FirstOrDefault().Id,
+                    SubmissionId = request.SubmissionId,
+                    Grade = request.Grade
+
+                };
+                await _unitOfWork.LecturerGradeRepository.InsertAsync(grade);
+            }
+            else
+            {
+                grade.Grade = request.Grade;
+                _unitOfWork.LecturerGradeRepository.Update(grade);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
