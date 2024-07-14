@@ -376,7 +376,7 @@ namespace IPMS.Business.Services
             }
             else
             {
-                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.Topic.Class.LecturerId.Equals(currentUserId))
+                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.Topic.Class.LecturerId.Equals(currentUserId) && p.IsPublished == false)
                             .Include(p => p.Topic).ThenInclude(t => t.Topic)
                             .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
                             .Include(p => p.Submissions);
