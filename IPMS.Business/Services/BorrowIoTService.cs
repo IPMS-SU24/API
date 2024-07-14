@@ -115,6 +115,7 @@ namespace IPMS.Business.Services
                 borrowComponents.AddRange(prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour }) // add to response
                 .Select(g => new GetBorrowIoTComponentsResponse
                 {
+                    ProjectId = prj.ProjectId,
                     ClassName = prj.ClassName,
                     GroupName = prj.GroupName,
                     CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
@@ -123,6 +124,7 @@ namespace IPMS.Business.Services
                         Id = g.Id,
                         Name = g.Component!.Name,
                         Quantity = g.Quantity,
+                        ComponentId = g.ComponentId,
                         Status = g.Status
 
                     }).ToList()

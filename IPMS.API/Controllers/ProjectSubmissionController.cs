@@ -33,6 +33,18 @@ namespace IPMS.API.Controllers
             }
             return GetActionResponse(response);
         }
+        /***
+         * Lecturer grade for submission
+         * https://docs.google.com/spreadsheets/d/1nReV4aDfzD6r96pK9GTiDFUWI-cVFpX441ES8n855y8/edit?gid=0#gid=0
+         * ***/
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("grade")]
+        public async Task<IActionResult> GradeSubmission([FromBody] GradeSubmissionRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            await _projectSubmissionService.GradeSubmission(request, currentUserId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
 
 
         /// <summary>
