@@ -12,6 +12,8 @@ namespace IPMS.Business.Interfaces.Services
         Task DeleteAsync(Guid favoriteId);
         Task<IList<GetAllFavoriteResponse>> GetAsync(Guid lecturerId);
         Task<IList<GetListTopicResponse>> GetListTopic(Guid lecturerId);
+        Task<ValidationResultModel> AssignTopicListValidators(AssignTopicListRequest request, Guid lecturerId);
+        Task AssignTopicList(AssignTopicListRequest request, Guid lecturerId);
         Task<IList<GetFavoriteTopicResponse>> GetInFavoriteAsync(Guid listId);
     }
 }
