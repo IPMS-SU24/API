@@ -43,6 +43,17 @@ namespace IPMS.API.Controllers
             });
         }
 
+        /***
+         * Get list favorite and topics in list
+         * https://docs.google.com/spreadsheets/d/1PLw2eOghlf4kPk_JU8qFFppeHfD0ap3LGIic7SPsBko/edit?gid=0#gid=0
+         ***/
+        [HttpPut("assign-topic")]
+        public async Task<IActionResult> AssignTopicList(AssignTopicListRequest request)
+        {
+            await _favoriteTopicListService.AssignTopicList(request, HttpContext.User.Claims.GetUserId());
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateAsync(CreateFavoriteTopicListRequest request)
         {

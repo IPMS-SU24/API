@@ -10,6 +10,7 @@ using IPMS.Business.Responses.FavoriteTopic;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
+using NPOI.HSSF.Record.Chart;
 
 namespace IPMS.Business.Services
 {
@@ -144,6 +145,68 @@ namespace IPMS.Business.Services
                             }).ToListAsync();
 
             return favTopics;
+        }
+
+        public async Task<ValidationResultModel> AssignTopicListValidators(AssignTopicListRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel()
+            {
+                Message = "Operation did not successfully"
+            };
+          /*  var comingSemester = await _unitOfWork.SemesterRepository.Get().Where(s => s.StartDate > DateTime.Now).OrderBy(s => s.StartDate).FirstOrDefaultAsync();
+            if (comingSemester == null)
+            {
+                result.Message = "Does not have any incoming semester";
+                return result;
+            }
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => request.ClassesId.Contains(c.Id) && c.LecturerId.Equals(lecturerId) && c.SemesterId.Equals(comingSemester.Id)).ToListAsync();
+            if (@class.Count() != request.ClassesId.Count())
+            {
+                result.Message = "Class cannot found";
+                return result;
+            }
+
+            var topicList = await _unitOfWork.FavoriteRepository.Get().Where(f => f.LecturerId.Equals(lecturerId) && f.Id.Equals(request.ListId)).Include(f => f.Topics).FirstOrDefaultAsync();
+            if (topicList == null)
+            {
+                result.Message = "List topic cannot found";
+                return result;
+            }
+
+            if (topicList.Topics.Count() == 0)
+            {
+                result.Message = "Does not have any topic in list";
+                return result;
+            }*/
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public async Task AssignTopicList(AssignTopicListRequest request, Guid lecturerId)
+        {
+            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(c => request.ClassesId.Contains(c.ClassId!.Value)).ToListAsync();
+            _unitOfWork.ClassTopicRepository.DeleteRange(classTopics);
+            await _unitOfWork.SaveChangesAsync();
+
+            var topics = await _unitOfWork.TopicFavoriteRepository.Get().Where(tf => tf.FavoriteId.Equals(request.ListId)).ToListAsync();
+            var newClassTopics = new List<ClassTopic>();
+
+            foreach (var classId in request.ClassesId)
+            {
+                newClassTopics.AddRange(topics.Select(t => new ClassTopic
+                {
+                    ClassId = classId,
+                    TopicId = t.TopicId
+                }).ToList());
+            }
+
+            await _unitOfWork.ClassTopicRepository.InsertRangeAsync(newClassTopics);
+            await _unitOfWork.SaveChangesAsync();
+                 
+            
+            
         }
     }
 }
