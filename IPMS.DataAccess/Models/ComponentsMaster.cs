@@ -10,9 +10,8 @@ namespace IPMS.DataAccess.Models
         public ComponentsMasterType MasterType { get; set; }
         public string? Comment { get; set; }
         public Guid ComponentId { get; set; }
-        public Guid? MasterId { get; set; }
+        public Guid MasterId { get; set; }
         public virtual IoTComponent Component { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     }
 }

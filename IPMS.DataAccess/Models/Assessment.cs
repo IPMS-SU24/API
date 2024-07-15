@@ -8,8 +8,8 @@ namespace IPMS.DataAccess.Models
         public string Description { get; set; }
         public int Order { get; set; }
         public decimal Percentage { get; set; }
-        public Guid? SyllabusId { get; set; }
-        public virtual Syllabus? Syllabus { get; set; }
+        public Guid SyllabusId { get; set; }
+        public virtual Syllabus Syllabus { get; set; }
         public virtual ICollection<SubmissionModule> Modules { get; set; } = new List<SubmissionModule>();
 
     }

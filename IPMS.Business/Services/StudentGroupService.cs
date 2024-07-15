@@ -103,7 +103,7 @@ namespace IPMS.Business.Services
                                                                                 || (x.MemberSwapStatus == RequestStatus.Waiting && x.MemberSwapId != null))).FirstOrDefaultAsync();
             return currentRequest == null ? null : new()
             {
-                GroupId = currentRequest.ProjectToId!.Value,
+                GroupId = currentRequest.ProjectToId,
                 MemberForSwapId = currentRequest.MemberSwapId,
             };
         }
@@ -326,8 +326,8 @@ namespace IPMS.Business.Services
                 ReporterId = studentId,
                 IPMSClassId = _commonServices.GetClass()!.Id,
                 ProjectToId = request.GroupId,
-                MemberSwapId = Guid.Empty,
-                ProjectFromId = Guid.Empty
+                MemberSwapId = null,
+                ProjectFromId = null
             };
             await _unitOfWork.MemberHistoryRepository.InsertAsync(memberHistory);
             await _unitOfWork.SaveChangesAsync();

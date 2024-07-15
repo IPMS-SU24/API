@@ -9,8 +9,8 @@ namespace IPMS.DataAccess.Models
         public string Description { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public Guid? SyllabusId { get; set; }
-        public virtual Syllabus? Syllabus { get; set; }
+        public Guid SyllabusId { get; set; }
+        public virtual Syllabus Syllabus { get; set; }
         public virtual ICollection<SubmissionModule> Modules { get; set; } = new List<SubmissionModule>();
         public virtual ICollection<IPMSClass> Classes { get; set; } = new List<IPMSClass>();
     }

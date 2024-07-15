@@ -1,44 +1,43 @@
 ﻿using IPMS.DataAccess.Common.Models;
+using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
 
 namespace IPMS.DataAccess.Common.Extensions
 {
     public static partial class QueryExtensions
     {
-        public static IQueryable<T> GetEntityDeleted<T>(this IQueryable<T> source) where T : BaseModel
+        public static IQueryable<T> GetEntityDeleted<T>(this IQueryable<T> source) where T : class, IBaseModel
         {
             return source.Where(x => x.IsDeleted);
         }
-        public static IQueryable<T> ApplySoftDeleteFilter<T>(this IQueryable<T> query, IPMSDbContext context) where T : BaseModel
+        public static void ApplySoftDeleteFilter(this IMutableEntityType mutableEntityType)
         {
-            var entityType = typeof(T);
+            var entityType = mutableEntityType.ClrType;
             var parameter = Expression.Parameter(entityType, "e");
 
             var body = Expression.AndAlso(
-                Expression.Equal(Expression.Property(parameter, nameof(BaseModel.IsDeleted)), Expression.Constant(false)),
-                GetRelatedEntitiesFilter(entityType, parameter, context)
+                Expression.Equal(Expression.Property(parameter, nameof(IBaseModel.IsDeleted)), Expression.Constant(false)),
+                GetRelatedEntitiesFilter(entityType, parameter, mutableEntityType)
             );
 
-            var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
-            return query.Where(lambda);
+            var lambda = Expression.Lambda(body, parameter);
+            mutableEntityType.SetQueryFilter(lambda);
         }
 
-        private static Expression GetRelatedEntitiesFilter(Type entityType, ParameterExpression parameter, IPMSDbContext context)
+        private static Expression GetRelatedEntitiesFilter(Type entityType, ParameterExpression parameter, IMutableEntityType mutableEntityType)
         {
             Expression combinedExpression = Expression.Constant(true);
 
-            var entityTypeModel = context.Model.FindEntityType(entityType);
-            if (entityTypeModel == null) return combinedExpression;
-
-            var foreignKeys = entityTypeModel.GetForeignKeys();
+            var foreignKeys = mutableEntityType.GetForeignKeys();
             foreach (var foreignKey in foreignKeys)
             {
                 var navigation = foreignKey.DependentToPrincipal;
                 if (navigation != null)
                 {
                     var relatedEntity = Expression.Property(parameter, navigation.Name);
-                    var isDeletedProperty = Expression.Property(relatedEntity, nameof(BaseModel.IsDeleted));
+                    var isDeletedProperty = Expression.Property(relatedEntity, nameof(IBaseModel.IsDeleted));
                     var isNotDeleted = Expression.Equal(isDeletedProperty, Expression.Constant(false));
 
                     var foreignKeyProperty = foreignKey.Properties.FirstOrDefault();

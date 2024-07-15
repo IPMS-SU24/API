@@ -1,4 +1,5 @@
-﻿using IPMS.DataAccess.Common.Models;
+﻿using IPMS.DataAccess.Common.Extensions;
+using IPMS.DataAccess.Common.Models;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -63,6 +64,8 @@ namespace IPMS.DataAccess
             modelBuilder.Entity<IPMSUser>(entity =>
             {
                 entity.ToTable("Account");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+                entity.Property(e => e.LastModified).HasDefaultValueSql("now()");
                 entity.Property(e => e.PhoneNumber).IsRequired(false);
                 entity.Ignore(c => c.AccessFailedCount);
                 entity.Ignore(c => c.LockoutEnabled);
@@ -222,7 +225,7 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("MemberHistory")
                     .HasKey(e => e.Id);
-
+                entity.Ignore(x => x.FinalStatus);
             });
 
             modelBuilder.Entity<Project>(entity =>
@@ -384,7 +387,7 @@ namespace IPMS.DataAccess
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Suggester)
-                   .WithMany(p => p.Topics)
+                   .WithMany(p => p.SuggestedTopic)
                    .HasForeignKey("SuggesterId")
                    .OnDelete(DeleteBehavior.Cascade);
             });
@@ -420,20 +423,12 @@ namespace IPMS.DataAccess
                     .HasForeignKey(x=>x.ClassId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-            // define your filter expression tree
-            Expression<Func<BaseModel, bool>> filterExpr = bm => !bm.IsDeleted;
-            foreach (var mutableEntityType in modelBuilder.Model.GetEntityTypes().Where(x=>!x.IsOwned()))
+            foreach (var mutableEntityType in modelBuilder.Model.GetEntityTypes().Where(x => !x.IsOwned()))
             {
                 // check if current entity type is child of BaseModel
-                if (mutableEntityType.ClrType.IsAssignableTo(typeof(BaseModel)))
+                if (typeof(IBaseModel).IsAssignableFrom(mutableEntityType.ClrType))
                 {
-                    // modify expression to handle correct child type
-                    var parameter = Expression.Parameter(mutableEntityType.ClrType);
-                    var body = ReplacingExpressionVisitor.Replace(filterExpr.Parameters.First(), parameter, filterExpr.Body);
-                    var lambdaExpression = Expression.Lambda(body, parameter);
-
-                    // set filter
-                    mutableEntityType.SetQueryFilter(lambdaExpression);
+                    mutableEntityType.ApplySoftDeleteFilter();
                 }
             }
         }
