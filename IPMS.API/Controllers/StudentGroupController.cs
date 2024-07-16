@@ -74,12 +74,21 @@ namespace IPMS.API.Controllers
             await _studentGroupService.RequestToJoinGroup(request,studentId);
             return GetActionResponse(new IPMSResponse<object>());
         }
-        [EnumAuthorize(UserRole.Leader)]
+        [EnumAuthorize(UserRole.Leader, UserRole.Lecturer)]
         [HttpPut("leader-assignment")]
         public async Task<IActionResult> AssignLeader([FromBody] AssignLeaderRequest request)
         {
             var studentId = User.Claims.GetUserId();
             await _studentGroupService.AssignLeader(request,studentId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("remove-student-group")]
+        public async Task<IActionResult> RemoveStudentOutGroup([FromBody] RemoveStudentOutGroupRequest request)
+        {
+            var lecturerId = User.Claims.GetUserId();
+            await _studentGroupService.RemoveStudentOutGroup(request, lecturerId);
             return GetActionResponse(new IPMSResponse<object>());
         }
     }
