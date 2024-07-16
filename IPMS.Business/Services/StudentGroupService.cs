@@ -8,6 +8,7 @@ using IPMS.Business.Requests.Group;
 using IPMS.Business.Responses.Group;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
+using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -452,6 +453,76 @@ namespace IPMS.Business.Services
             var student = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(s => s.InformationId.Equals(studentId));
             student.ProjectId = projectId;
             _unitOfWork.StudentRepository.Update(student);
+            await _unitOfWork.SaveChangesAsync();
+
+        }
+
+        public async Task<ValidationResultModel> RemoveStudentOutGroupValidators(RemoveStudentOutGroupRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+            var student = await _unitOfWork.StudentRepository.Get().Where(s => s.Id.Equals(request.StudentId)).Include(s => s.Class).Include(s => s.Project).FirstOrDefaultAsync();
+            if (student == null)
+            {
+                result.Message = "Student cannot found";
+                return result;
+            }
+
+            if (student.Class == null)
+            {
+                result.Message = "Student is not in class";
+                return result;
+            }
+
+            if (student.Project == null)
+            {
+                result.Message = "Student is not in project";
+                return result;
+            }
+
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            if (student.Class.SemesterId.Equals(currentSemester.Id) == false)
+            {
+                result.Message = "Class is not in current semester";
+                return result;
+            }
+
+            if (student.Class.LecturerId != lecturerId)
+            {
+                result.Message = "Lecturer does not teach in class";
+                return result;
+            }
+
+            var membersProject = (await _unitOfWork.StudentRepository.Get().Where(s => s.ProjectId.Equals(student.ProjectId)).ToListAsync()).Count();
+
+            if (membersProject == 1)
+            {
+                result.Message = "Cannot remove group has 1 member";
+                return result;
+            }
+
+            var user = await _userManager.FindByIdAsync(student.InformationId.ToString());
+            
+            if (await _userManager.IsInRoleAsync(user, UserRole.Leader.ToString()) && membersProject > 1) // check that project has > 1 member so need to assign another leader before delete
+            {
+                result.Message = "Please assign another leader";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public async Task RemoveStudentOutGroup(RemoveStudentOutGroupRequest request, Guid lecturerId)
+        {
+            var student = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(request.StudentId));
+
+            student.ProjectId = null; // just remove group of student - not remove out of class
+            _unitOfWork.StudentRepository.Update(student);
+
             await _unitOfWork.SaveChangesAsync();
 
         }
