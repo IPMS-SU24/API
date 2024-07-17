@@ -46,7 +46,7 @@ namespace IPMS.Business.Services
             return _mapper.Map<IEnumerable<ReportTypeResponse>>(reportTypes);
         }
 
-        public async Task<IEnumerable<StudentReportResponse>> GetStudentReport(StudentReportRequest request, Guid reporterId)
+        public async Task<IEnumerable<ReportResponse>> GetReport(ReportRequest request, Guid reporterId)
         {
             var searchValue = request.SearchValue;
             if (searchValue == null)
@@ -55,13 +55,13 @@ namespace IPMS.Business.Services
             }
             searchValue = searchValue.Trim().ToLower();
 
-            IEnumerable<StudentReportResponse> reports = new List<StudentReportResponse>();
+            IEnumerable<ReportResponse> reports = new List<ReportResponse>();
             var preReports = await _unitOfWork.ReportRepository.Get() // get report of current user with title or description contains searchValue
                             .Where(r => r.ReporterId.Equals(reporterId) 
                                 && (r.Content.ToLower().Contains(searchValue) || r.Title.ToLower().Contains(searchValue)))
                             .Include(r => r.ReportType).ToListAsync();
 
-            reports = preReports.Select(pr => new StudentReportResponse
+            reports = preReports.Select(pr => new ReportResponse
             {
                 Id = pr.Id,
                 ReportType = pr.ReportType.Name,
