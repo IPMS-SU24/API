@@ -99,7 +99,7 @@ namespace IPMS.Business.Services
                 else
                 {
                     existUser.FullName = student.StudentName;
-                    existUser.UserName = existUser.UserName;
+                    existUser.UserName = student.StudentId;
                     await _userManager.UpdateAsync(existUser);
                     await _messageService.SendMessage(new NotificationMessage()
                     {
