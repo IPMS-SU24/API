@@ -98,6 +98,9 @@ namespace IPMS.Business.Services
                 //If exist => create student info in class, send notification
                 else
                 {
+                    existUser.FullName = student.StudentName;
+                    existUser.UserName = existUser.UserName;
+                    await _userManager.UpdateAsync(existUser);
                     await _messageService.SendMessage(new NotificationMessage()
                     {
                         AccountId = existUser.Id,
