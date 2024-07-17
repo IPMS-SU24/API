@@ -23,10 +23,12 @@ namespace IPMS.Business.Services
 
         public async Task<GetAllSemestersResponse> GetAllSemesters()
         {
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var semesters =  await _unitOfWork.SemesterRepository.Get().Select(x=>new SemesterInfo
             {
                 Code = x.ShortName,
-                Name = x.Name
+                Name = x.Name,
+                IsCurrent = currentSemester.Id == x.Id,
             }).ToListAsync();
             if(semesters == null || !semesters.Any())
             {
