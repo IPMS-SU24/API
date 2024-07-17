@@ -186,7 +186,7 @@ namespace IPMS.Business.Services
 
         public async Task AssignTopicList(AssignTopicListRequest request, Guid lecturerId)
         {
-            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(c => request.ClassesId.Contains(c.ClassId!.Value)).ToListAsync();
+            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(c => request.ClassesId.Contains(c.ClassId)).ToListAsync();
             _unitOfWork.ClassTopicRepository.DeleteRange(classTopics);
             await _unitOfWork.SaveChangesAsync();
 
