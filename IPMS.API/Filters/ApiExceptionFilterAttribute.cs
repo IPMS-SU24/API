@@ -18,8 +18,7 @@ namespace IPMS.API.Filters
             {
                 { typeof(ValidationException), HandleValidationException },
                 { typeof(DataNotFoundException), HandleNotFoundException },
-                { typeof(CannotImportStudentException), HandleCannotImportStudentException },
-                { typeof(EmailConfirmException), HandleEmailAlreadyConfirmException }
+                { typeof(BaseBadRequestException), HandleBaseBadRequestException }
             };
             _logger = logger;
         }
@@ -40,7 +39,8 @@ namespace IPMS.API.Filters
             context.Result = new BadRequestObjectResult(details);
 
             context.ExceptionHandled = true;
-        }private void HandleEmailAlreadyConfirmException(ExceptionContext context)
+        }
+        private void HandleBaseBadRequestException(ExceptionContext context)
         {
             var exception = (EmailConfirmException)context.Exception;
 

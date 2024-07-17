@@ -95,13 +95,13 @@ namespace IPMS.Business.Services
             {
                 Message = "Cannot import students to class"
             };
-            var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x=>x.Semester).Where(x => x.Id == request.ClassId && x.LecturerId == lecturerId).FirstOrDefaultAsync();
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester).Where(x => x.Id == request.ClassId && x.LecturerId == lecturerId).FirstOrDefaultAsync();
             if (@class == null)
             {
                 result.Message = "Class is not exist or belong to another lecturer";
                 return result;
             }
-            if(@class.Semester.StartDate < DateTime.Now)
+            if (@class.Semester.StartDate < DateTime.Now)
             {
                 result.Message = "Cannot import student because class started";
                 return result;
@@ -176,7 +176,7 @@ namespace IPMS.Business.Services
         public async Task AddStudentAsync(AddStudentsToClassRequest request)
         {
             var importFileUrl = _presignedUrlService.GeneratePresignedDownloadUrl(request.FileName); // FE add Prefix
-            if(importFileUrl == null)
+            if (importFileUrl == null)
             {
                 throw new DataNotFoundException();
             }
@@ -224,7 +224,20 @@ namespace IPMS.Business.Services
                 var excelMapper = new ExcelMapper(tempFile);
                 var students = excelMapper.Fetch<StudentDataRow>().ToList();
                 var validationResults = new List<ValidationResult>();
-                var existStudentInClass = await _unitOfWork.StudentRepository.Get().Include(x=>x.Information).Where(x => x.ClassId == classId && students.Select(x=>x.StudentId).Contains(x.Information.UserName)).ToListAsync();
+                var classForImport = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == classId);
+                var existStudentInAnotherClass = await _unitOfWork.StudentRepository.Get()
+                                                                                .Include(x => x.Information)
+                                                                                .Include(x => x.Class)
+                                                                                .AnyAsync
+                                                                                (
+                                                                                    x => students.Select(y => y.StudentId)
+                                                                                    .Contains(x.Information.UserName)
+                                                                                    && x.Class.SemesterId != classForImport!.SemesterId
+                                                                                );
+                if (existStudentInAnotherClass) throw new BaseBadRequestException($"Exist student in another class");
+                var existStudentInClass = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
+                                                                             .Where(x => x.ClassId == classId)
+                                                                             .ToListAsync();
                 if (existStudentInClass != null)
                 {
                     _unitOfWork.StudentRepository.DeleteRange(existStudentInClass);
