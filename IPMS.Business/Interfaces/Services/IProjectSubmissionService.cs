@@ -9,6 +9,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<bool> UpdateProjectSubmission(UpdateProjectSubmissionRequest request, Guid currentUserId);
         Task<ValidationResultModel> GradeSubmissionValidators(GradeSubmissionRequest request, Guid lecturerId);
         Task GradeSubmission(GradeSubmissionRequest request, Guid lecturerId);
+        Task<IEnumerable<GetClassesCommitteeResponse>> GetClassesCommittee(GetClassesCommitteeRequest request, Guid lecturerId);
         Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId);
         Task<ValidationResultModel> UpdateProjectSubmissionValidators(UpdateProjectSubmissionRequest request);
     }

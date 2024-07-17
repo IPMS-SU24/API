@@ -10,6 +10,7 @@ using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NPOI.Util;
 using Org.BouncyCastle.Bcpg;
 
 namespace IPMS.Business.Services
@@ -271,6 +272,28 @@ namespace IPMS.Business.Services
             }
 
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<GetClassesCommitteeResponse>> GetClassesCommittee(GetClassesCommitteeRequest request, Guid lecturerId)
+        {
+            List<GetClassesCommitteeResponse> classes = new List<GetClassesCommitteeResponse>();
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(s => s.ShortName.ToLower().Equals(request.SemesterCode.ToLower()));
+            if (semester == null)
+            {
+                return classes;
+            }
+            classes = _unitOfWork.IPMSClassRepository.Get().Where(c => c.SemesterId.Equals(semester.Id) && c.LecturerId.Equals(lecturerId))
+                .Include(c => c.Students)
+                .Select(c => new GetClassesCommitteeResponse
+            {
+                ClassId = c.Id,
+                GroupNum = c.Students.Where(s => s.ProjectId != null).GroupBy(s => s.ProjectId).Count(),
+                ClassCode = c.ShortName,
+                ClassName = c.Name,
+                StudentNum = c.Students.Count()
+            }).ToList();
+
+            return classes;
         }
     }
 }
