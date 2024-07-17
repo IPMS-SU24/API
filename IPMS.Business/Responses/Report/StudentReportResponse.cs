@@ -3,7 +3,7 @@ using MongoDB.Driver;
 
 namespace IPMS.Business.Responses.Report
 {
-    public class StudentReportResponse
+    public class ReportResponse
     {
         public Guid Id { get; set; }
         public string ReportType { get; set; }

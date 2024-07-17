@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace IPMS.Business.Requests.Report
 {
-    public class StudentReportRequest
+    public class ReportRequest
     {
         public string? SearchValue { get; set; }
     }
