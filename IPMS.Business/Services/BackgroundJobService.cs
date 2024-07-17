@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using MathNet.Numerics.Distributions;
 using NPOI.Util;
 using IPMS.Business.Common.Hangfire;
+using IPMS.Business.Common.Enums;
 
 namespace IPMS.Business.Services
 {
@@ -69,6 +70,7 @@ namespace IPMS.Business.Services
                     {
                         throw new CannotCreateAccountException();
                     }
+                    await _userManager.AddToRoleAsync(stuAccount,UserRole.Student.ToString());
                     existUser = await _userManager.FindByEmailAsync(student.Email);
                     //Send mail confirm
                     try

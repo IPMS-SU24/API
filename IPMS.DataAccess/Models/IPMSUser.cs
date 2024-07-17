@@ -17,7 +17,7 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<ProjectSubmission> ProjectSubmissions { get; set; } = new List<ProjectSubmission>();
         public string FullName {  get; set; }
         public virtual ICollection<UserRefreshToken> RefreshTokens { get; set; } = new List<UserRefreshToken>();
-        public bool IsDeleted { get; set; } = false;
+        public bool? IsDeleted { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LastModified { get; set; }
     }

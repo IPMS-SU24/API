@@ -1,4 +1,5 @@
-﻿using IPMS.DataAccess.Common.Extensions;
+﻿using IPMS.DataAccess.Common.Enums;
+using IPMS.DataAccess.Common.Extensions;
 using IPMS.DataAccess.Common.Models;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
@@ -64,8 +65,6 @@ namespace IPMS.DataAccess
             modelBuilder.Entity<IPMSUser>(entity =>
             {
                 entity.ToTable("Account");
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
-                entity.Property(e => e.LastModified).HasDefaultValueSql("now()");
                 entity.Property(e => e.PhoneNumber).IsRequired(false);
                 entity.Ignore(c => c.AccessFailedCount);
                 entity.Ignore(c => c.LockoutEnabled);
@@ -105,7 +104,7 @@ namespace IPMS.DataAccess
                 entity.Property(e => e.ContributePercentage).HasPrecision(3, 0);
 
                 entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
-                entity.HasIndex(e => new {e.ClassId,e.InformationId }).IsUnique();
+                entity.HasIndex(e => new { e.ClassId, e.InformationId }).IsUnique();
                 entity.HasOne(e => e.Information)
                     .WithMany(p => p.Students)
                     .HasForeignKey("InformationId")
@@ -183,7 +182,6 @@ namespace IPMS.DataAccess
 
                 entity.Property(e => e.Name).HasMaxLength(50);
             });
-
             modelBuilder.Entity<IPMSClass>(entity =>
             {
                 entity
@@ -251,7 +249,7 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("ComponentsMaster")
                     .HasKey(e => e.Id);
-                entity.Property(e=>e.Status).IsRequired(false);
+                entity.Property(e => e.Status).IsRequired(false);
                 entity.HasOne(e => e.Component)
                     .WithMany(p => p.ComponentsMasters)
                     .HasForeignKey("ComponentId")
@@ -268,7 +266,7 @@ namespace IPMS.DataAccess
 
                 entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
 
-                
+
 
                 entity.HasOne(e => e.Submitter)
                     .WithMany(p => p.ProjectSubmissions)
@@ -315,7 +313,7 @@ namespace IPMS.DataAccess
                 entity
                     .ToTable("Semester")
                     .HasKey(e => e.Id);
-                entity.HasIndex(e=>e.ShortName).IsUnique();
+                entity.HasIndex(e => e.ShortName).IsUnique();
                 entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
@@ -380,7 +378,7 @@ namespace IPMS.DataAccess
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.ShortName).HasMaxLength(50);
-
+                entity.Property(e => e.Status).HasDefaultValue(RequestStatus.Approved);
                 entity.HasOne(e => e.Owner)
                     .WithMany(p => p.OwnTopics)
                     .HasForeignKey("OwnerId")
@@ -415,12 +413,12 @@ namespace IPMS.DataAccess
 
                 entity.HasOne(e => e.SubmissionModule)
                     .WithMany(p => p.ClassModuleDeadlines)
-                    .HasForeignKey(x=>x.SubmissionModuleId)
+                    .HasForeignKey(x => x.SubmissionModuleId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Class)
                     .WithMany(p => p.ClassModuleDeadlines)
-                    .HasForeignKey(x=>x.ClassId)
+                    .HasForeignKey(x => x.ClassId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
             foreach (var mutableEntityType in modelBuilder.Model.GetEntityTypes().Where(x => !x.IsOwned()))
@@ -428,6 +426,13 @@ namespace IPMS.DataAccess
                 // check if current entity type is child of BaseModel
                 if (typeof(IBaseModel).IsAssignableFrom(mutableEntityType.ClrType))
                 {
+                    modelBuilder.Entity(mutableEntityType.ClrType.FullName, entity =>
+                    {
+                        entity.Property("Id").HasDefaultValueSql("uuid_generate_v4()");
+                        entity.Property("CreatedAt").HasDefaultValueSql("now()");
+                        entity.Property("LastModified").HasDefaultValueSql("now()");
+                        entity.Property("IsDeleted").HasDefaultValueSql("false");
+                    });
                     mutableEntityType.ApplySoftDeleteFilter();
                 }
             }
