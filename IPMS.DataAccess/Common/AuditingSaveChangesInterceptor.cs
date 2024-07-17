@@ -1,4 +1,5 @@
 ﻿using IPMS.DataAccess.Common.Models;
+using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -10,9 +11,9 @@ namespace IPMS.DataAccess.Common
         public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
         {
             var dbContext = eventData.Context;
-            foreach (var entry in dbContext.ChangeTracker.Entries().Where(e => e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted))
+            foreach (var entry in dbContext.ChangeTracker.Entries<IBaseModel>().Where(e => e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted))
             {
-                if (entry.Entity is BaseModel auditable)
+                if (entry.Entity is IBaseModel auditable)
                 {
                     var now = DateTime.Now;
                     if (entry.State == EntityState.Added)

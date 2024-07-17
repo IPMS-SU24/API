@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver.Linq;
 using System.ComponentModel.DataAnnotations;
 
 namespace IPMS.Business.Services
@@ -94,9 +95,15 @@ namespace IPMS.Business.Services
             {
                 Message = "Cannot import students to class"
             };
-            if (!await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x => x.Id == request.ClassId && x.LecturerId == lecturerId))
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x=>x.Semester).Where(x => x.Id == request.ClassId && x.LecturerId == lecturerId).FirstOrDefaultAsync();
+            if (@class == null)
             {
                 result.Message = "Class is not exist or belong to another lecturer";
+                return result;
+            }
+            if(@class.Semester.StartDate < DateTime.Now)
+            {
+                result.Message = "Cannot import student because class started";
                 return result;
             }
             if (await _unitOfWork.StudentRepository.Get().AnyAsync(x => x.ClassId == request.ClassId) && !request.IsOverwrite!.Value)

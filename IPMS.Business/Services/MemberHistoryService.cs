@@ -32,9 +32,9 @@ namespace IPMS.Business.Services
             _studentGroupService = studentGroupService;
             _context = context;
         }
-        private async Task<Guid> GetLeaderId(Guid projectId)
+        private async Task<Guid?> GetLeaderId(Guid projectId)
         {
-            Guid leaderId = Guid.Empty;
+            Guid? leaderId = null;
             var members = _unitOfWork.StudentRepository.Get().Where(s => s.ProjectId.Equals(projectId)); // Find member of project
 
             var allLeaders = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList(); // Find leader of project
@@ -52,7 +52,7 @@ namespace IPMS.Business.Services
             if (@class == null)
                 throw new DataNotFoundException("Current user isn't in any class");
 
-            Guid leaderId = Guid.Empty; // default current user is freedom
+            Guid? leaderId = null; // default current user is freedom
 
             // Find current project
             Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
@@ -67,7 +67,7 @@ namespace IPMS.Business.Services
             //IQueryable<MemberHistory> histories;
             List<MemberHistory> histories;
             //  Note: find with current class to ignore case re-study
-            if (leaderId != Guid.Empty && leaderId.Equals(currentUserId))  // current user also a leader
+            if (leaderId != null && leaderId.Equals(currentUserId))  // current user also a leader
             {
                 histories = await _unitOfWork.MemberHistoryRepository.Get().
                                             Where(mh => (mh.ReporterId.Equals(currentUserId) || mh.MemberSwapId.Equals(currentUserId)
@@ -86,9 +86,9 @@ namespace IPMS.Business.Services
             // Update if expired
             if (@class!.ChangeGroupDeadline <= DateTime.Now)
             {
-                int expiredReviews = histories.Count(h => (h.MemberSwapId != Guid.Empty && h.MemberSwapStatus == RequestStatus.Waiting)
-                                                            || (h.ProjectFromId != Guid.Empty && h.ProjectFromStatus == RequestStatus.Waiting)
-                                                            || (h.ProjectToId != Guid.Empty && h.ProjectToStatus == RequestStatus.Waiting));
+                int expiredReviews = histories.Count(h => (h.MemberSwapId != null && h.MemberSwapStatus == RequestStatus.Waiting)
+                                                            || (h.ProjectFromId != null && h.ProjectFromStatus == RequestStatus.Waiting)
+                                                            || (h.ProjectToId != null && h.ProjectToStatus == RequestStatus.Waiting));
                 if (expiredReviews > 0) // set status
                 {
                     histories = UpdateExpiredRequest(histories);
@@ -115,51 +115,17 @@ namespace IPMS.Business.Services
             var response = histories.Select(h => new LoggedInUserHistoryResponse
             {
                 Id = h.Id,
-                LeaderId = leaderId, 
-                RequestType = (h.ProjectFromId == Guid.Empty) ? "join" : "swap",
+                LeaderId = leaderId.Value, 
+                RequestType = (h.ProjectFromId == null) ? "join" : "swap",
                 Requester = GetUser(users, h.ReporterId, null), // cannot use async await in here, cannot query
                 MemberSwap = GetUser(users, h.MemberSwapId, h.MemberSwapStatus),
                 ProjectFrom = GetProject(projects, h.ProjectFromId, h.ProjectFromStatus), // Iqueryable will be borrow if query db again -> so that query before and just linq select
                 ProjectTo = GetProject(projects, h.ProjectToId, h.ProjectToStatus),
-                Status = GetFinalStatus(h),
-                CreateAt = h.CreatedDate,
+                Status = h.FinalStatus,
+                CreateAt = h.CreatedAt,
             }).ToList();
 
             return response;
-
-        }
-        private RequestStatus GetFinalStatus(MemberHistory history)
-        {
-            if (history.MemberSwapId != Guid.Empty && history.MemberSwapStatus == RequestStatus.Rejected)
-            {
-                return RequestStatus.Rejected;
-
-            }
-
-            else if (history.ProjectFromId != Guid.Empty && history.ProjectFromStatus == RequestStatus.Rejected)
-            {
-                return RequestStatus.Rejected;
-
-            }
-
-            else if (history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Rejected)
-            {
-                return RequestStatus.Rejected;
-
-            }
-            if (history.ProjectFromId != Guid.Empty) // case swap
-            {
-                if ((history.MemberSwapId != Guid.Empty && history.MemberSwapStatus == RequestStatus.Approved)
-                    && (history.ProjectFromId != Guid.Empty && history.ProjectFromStatus == RequestStatus.Approved)
-                    && ((history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Approved)))
-                    return RequestStatus.Approved;
-            } else // case join
-            {
-                if (history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Approved)
-                    return RequestStatus.Approved;
-
-            }
-            return RequestStatus.Waiting;
 
         }
         private GeneralObjectInformation GetUser(List<IPMSUser> users, Guid? userId, RequestStatus? status)
@@ -187,7 +153,7 @@ namespace IPMS.Business.Services
 
         }
 
-        private GeneralObjectInformation GetProject(List<Project> projects, Guid? projectId, RequestStatus status)
+        private GeneralObjectInformation GetProject(List<Project> projects, Guid? projectId, RequestStatus? status)
         {
             if (projectId == null) // case join
                 return null;
@@ -214,18 +180,18 @@ namespace IPMS.Business.Services
         {
             foreach (var history in histories)
             {
-                if (history.MemberSwapId != Guid.Empty && history.MemberSwapStatus == RequestStatus.Waiting)
+                if (history.MemberSwapId != null && history.MemberSwapStatus == RequestStatus.Waiting)
                 {
                     history.MemberSwapStatus = RequestStatus.Rejected;
                 }
 
-                if (history.ProjectFromId != Guid.Empty && history.ProjectFromStatus == RequestStatus.Waiting)
+                if (history.ProjectFromId != null && history.ProjectFromStatus == RequestStatus.Waiting)
                 {
                     history.ProjectFromStatus = RequestStatus.Rejected;
 
                 }
 
-                if (history.ProjectToId != Guid.Empty && history.ProjectToStatus == RequestStatus.Waiting)
+                if (history.ProjectToId != null && history.ProjectToStatus == RequestStatus.Waiting)
                 {
                     history.ProjectToStatus = RequestStatus.Rejected;
 
@@ -266,8 +232,8 @@ namespace IPMS.Business.Services
 
             if (request.Type == "join")
             {
-                if (history.ProjectFromId != Guid.Empty  // validation data
-                    || history.MemberSwapId != Guid.Empty)
+                if (history.ProjectFromId != null  // validation data
+                    || history.MemberSwapId != null)
                 {
                     result.Message = "Request is not correct";
                     return result;
@@ -290,9 +256,9 @@ namespace IPMS.Business.Services
             }
             else if (request.Type == "swap")
             {
-                if (history.ProjectFromId == Guid.Empty || history.ProjectFromId == Guid.Empty // validation data
-                    || history.ProjectToId == Guid.Empty || history.ProjectToId == Guid.Empty
-                    || history.MemberSwapId == Guid.Empty || history.MemberSwapId == Guid.Empty)
+                if (history.ProjectFromId == null || history.ProjectFromId == null // validation data
+                    || history.ProjectToId == null || history.ProjectToId == null
+                    || history.MemberSwapId == null || history.MemberSwapId == null)
                 {
                     result.Message = "Request is not correct";
                     return result;
@@ -329,7 +295,7 @@ namespace IPMS.Business.Services
                     return result;
                 }
 
-                Guid leaderId = await GetLeaderId(project.Id); // get leader of project
+                Guid? leaderId = await GetLeaderId(project.Id); // get leader of project
 
                 // check case Id for project or member swap
                 if ((history.ProjectFromId == request.ReviewId && request.ReviewId == project.Id) // review (project to || project from --> need current user is in role leader) &&  (user in project to || project from)

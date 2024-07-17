@@ -47,12 +47,12 @@ namespace IPMS.Business.Services
             var iot = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.ComponentId);
             if (iot == null) return false;
             //Check iot in iot list of Topic
-            var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id).Select(x => x.TopicId).FirstOrDefaultAsync(); //checked project get topic
+            var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id && x.Topic.Status == RequestStatus.Approved).Select(x => x.TopicId).FirstOrDefaultAsync(); //checked project get topic
             var isInTopicComponent = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents()
                                                                                     .Where(x => x.MasterId == topicId && x.ComponentId == request.ComponentId).AnyAsync();
             if (!isInTopicComponent) return false;
             //Check remain Quantity
-            var remainQuantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, request.ComponentId);
+            var remainQuantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId, request.ComponentId);
             if (remainQuantity < request.Quantity) return false;
             return true;
         }
@@ -370,7 +370,7 @@ namespace IPMS.Business.Services
             {
                 Id = component.ComponentId,
                 Name = component.Component.Name,
-                Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId!.Value, component.ComponentId)
+                Quantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId, component.ComponentId)
             };
         }
 

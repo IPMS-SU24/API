@@ -234,9 +234,9 @@ namespace IPMS.Business.Services
             await _unitOfWork.SaveChangesAsync();
             var notificationMessageToLecturer = new NotificationMessage
             {
-                AccountId = @class.LecturerId!.Value,
+                AccountId = @class.LecturerId,
                 Title = "New Topic Registration",
-                Message = $"A New Topic has been suggested to you from group {project.GroupNum}"
+                Message = $"A New Topic has been suggested to you from group {project.GroupNum} of Class {@class.ShortName}"
             };
             await _messageService.SendMessage(notificationMessageToLecturer);
         }

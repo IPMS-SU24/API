@@ -3,6 +3,7 @@ using System;
 using IPMS.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IPMS.DataAccess.Migrations
 {
     [DbContext(typeof(IPMSDbContext))]
-    partial class IPMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240716012252_AddSqlDefault")]
+    partial class AddSqlDefault
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -298,6 +300,7 @@ namespace IPMS.DataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ImageLink")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool?>("IsDeleted")
@@ -989,9 +992,7 @@ namespace IPMS.DataAccess.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<int>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(3);
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("SuggesterId")
                         .HasColumnType("uuid");

@@ -35,7 +35,7 @@ namespace IPMS.Business.Services
             if (ioTMasters == null) throw new DataNotFoundException();
             var projects = await _commonServices.GetAllCurrentProjectsOfLecturer(lectuerId);
             var ioTBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents()
-                                                                            .Where(x => projects.Contains(x.MasterId.Value) && x.ComponentId == request.Id)
+                                                                            .Where(x => projects.Contains(x.MasterId) && x.ComponentId == request.Id)
                                                                             .GroupBy(x => x.ComponentId, x => x.Id,
                                                                             (master, com) => 
                                                                                  com.Count()

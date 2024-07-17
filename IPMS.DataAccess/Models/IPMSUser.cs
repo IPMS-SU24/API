@@ -2,8 +2,10 @@
 
 namespace IPMS.DataAccess.Models
 {
-    public class IPMSUser : IdentityUser<Guid>
+    public class IPMSUser : IdentityUser<Guid>, IBaseModel
     {
+        public override Guid Id { get; set; } = Guid.NewGuid();
+
         public override string? PhoneNumber { get; set; }
         public virtual ICollection<Student> Students { get; set; } = new List<Student>();
         public virtual ICollection<Committee> Committees { get; set; } = new List<Committee>();
@@ -15,6 +17,8 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<ProjectSubmission> ProjectSubmissions { get; set; } = new List<ProjectSubmission>();
         public string FullName {  get; set; }
         public virtual ICollection<UserRefreshToken> RefreshTokens { get; set; } = new List<UserRefreshToken>();
-        public bool IsDeleted { get; set; } = false;
+        public bool? IsDeleted { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime LastModified { get; set; }
     }
 }

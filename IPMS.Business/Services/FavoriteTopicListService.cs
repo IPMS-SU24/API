@@ -106,8 +106,8 @@ namespace IPMS.Business.Services
                 DetailLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, x.Id, x.Detail)),
                 IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId)
             }).ToListAsync();
-            if (response == null || !response.Any()) throw new DataNotFoundException();
-            var allTopicIoT = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x => x.Component).Where(x => response.Select(x => x.TopicId).ToList().Contains(x.MasterId.Value)).Select(x => new
+            if(response ==  null || !response.Any()) throw new DataNotFoundException();
+            var allTopicIoT = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x=>x.Component).Where(x => response.Select(x => x.TopicId).ToList().Contains(x.MasterId)).Select(x => new
             {
                 Title = x.Component.Name,
                 x.Component.Description,
