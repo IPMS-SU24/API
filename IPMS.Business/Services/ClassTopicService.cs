@@ -10,6 +10,7 @@ using IPMS.Business.Common.Utils;
 using Microsoft.AspNetCore.Http;
 using IPMS.Business.Models;
 using IPMS.Business.Common.Extensions;
+using IPMS.Business.Common.Exceptions;
 
 namespace IPMS.Business.Services
 {
@@ -37,10 +38,12 @@ namespace IPMS.Business.Services
                 request.SearchValue = "";
             }
 
-            IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
+            IPMSClass? @class = _commonServices.GetClass();
             // Check null current user did not enrolled any class this semester
             if (@class == null)
-                return null;
+            {
+                throw new DataNotFoundException("Not found class");
+            }
 
             Guid? currentClassId = @class?.Id;
 
