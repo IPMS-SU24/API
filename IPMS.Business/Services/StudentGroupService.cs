@@ -73,7 +73,7 @@ namespace IPMS.Business.Services
             var currentClass = _commonServices.GetClass();
             var student = studiesIn.Where(x => x.ClassId == currentClass!.Id).First();
             var groupCount = await _unitOfWork.StudentRepository.Get()
-                                                                .Where(x => x.ClassId == currentClass!.Id)
+                                                                .Where(x => x.ClassId == currentClass!.Id && x.ProjectId != null)
                                                                 .Select(x => x.ProjectId).Distinct().CountAsync();
             var project = new Project
             {
