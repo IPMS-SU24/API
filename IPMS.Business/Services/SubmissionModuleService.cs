@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Common.Utils;
+﻿using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
@@ -6,6 +7,8 @@ using IPMS.Business.Requests.SubmissionModule;
 using IPMS.Business.Responses.SubmissionModule;
 using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace IPMS.Business.Services
 {
@@ -16,10 +19,13 @@ namespace IPMS.Business.Services
         private List<SubmissionModule> _submissionModules = new();
         private List<Assessment> _assessments = new();
         private Guid _currentSemesterId;
-        public SubmissionModuleService(IUnitOfWork unitOfWork, ICommonServices commonServices)
+        private readonly IPresignedUrlService _presignedUrlService;
+
+        public SubmissionModuleService(IUnitOfWork unitOfWork, ICommonServices commonServices, IPresignedUrlService presignedUrlService)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
+            _presignedUrlService = presignedUrlService;
         }
         public async Task<ValidationResultModel> ConfigureSubmissionModuleValidator(ConfigureSubmissionModuleRequest request, Guid currentUserId)
         {
@@ -215,6 +221,37 @@ namespace IPMS.Business.Services
             return assessments;
         }
 
-        
+        public async Task<IEnumerable<GetSubmissionsResponse>> GetSubmissions(GetSubmissionsRequest request, Guid lecturerId)
+        {
+            IEnumerable<GetSubmissionsResponse> submissions = new List<GetSubmissionsResponse>();
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.LecturerId.Equals(lecturerId) && c.Id.Equals(request.ClassId));
+            if (@class == null)
+            {
+                return submissions;
+            }
+            var deadline = await _unitOfWork.ClassModuleDeadlineRepository.Get().FirstOrDefaultAsync(d => d.SubmissionModuleId.Equals(request.ModuleId) && d.ClassId.Equals(request.ClassId));
+            if (deadline == null)
+            {
+                return submissions;
+            }
+            //var deadline = await _unitOfWork.ClassModuleDeadline.
+            /*  var mockSubmissions = await _unitOfWork.SubmissionModuleRepository.Get().Where(s => s.Id.Equals(request.ModuleId))
+                      .Include(s => s.ProjectSubmissions).ThenInclude(p => p.Project)
+                      .Include(s => s.ProjectSubmissions).ThenInclude(p => p.Grades.Where(g => g.CommitteeId.Equals(lecturerId)))
+                      .ToListAsync();
+  */
+            submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(p => p.SubmissionModuleId.Equals(request.ModuleId) && p.SubmissionDate <= deadline.EndDate)
+                .OrderByDescending(p => p.SubmissionDate).GroupBy(p => p.ProjectId).Select(group =>  new GetSubmissionsResponse
+                {
+                    SubmitDate = group.First().SubmissionDate,
+                    DownloadUrl = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, group.First().Id, group.First().Name)) ?? String.Empty,
+                    GroupNum = group.First().Project.GroupNum,
+                    Grade = group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)).Grade ?? 0,
+                    SubmissionId = group.First().Id,
+                    GroupId = group.First().ProjectId,
+                }).ToListAsync();
+
+            return submissions;
+        }
     }
 }

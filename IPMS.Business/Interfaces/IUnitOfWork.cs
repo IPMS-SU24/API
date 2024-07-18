@@ -22,6 +22,7 @@ namespace IPMS.Business.Interfaces
         IIoTComponentRepository IoTComponentRepository { get; }
         IFavoriteRepository FavoriteRepository { get; }
         ITopicFavoriteRepository TopicFavoriteRepository { get; }
+        IClassModuleDeadlineRepository ClassModuleDeadlineRepository { get; }
         //Start the database Transaction
         Task CreateTransactionAsync();
         //Commit the database Transaction
