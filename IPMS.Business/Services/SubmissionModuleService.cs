@@ -80,10 +80,6 @@ namespace IPMS.Business.Services
                 {
                     submissionModule.Description = "";
                 }
-                if (submissionModule.ModuleId == null) // case create new module
-                {
-                    submissionModule.ModuleId = Guid.Empty;
-                }
 
                 if (submissionModule.ModuleId == Guid.Empty && submissionModule.IsDeleted == true) // submission module is not existed
                 {
@@ -172,8 +168,7 @@ namespace IPMS.Business.Services
             }
 
             IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.classId)
-                                            && c.LecturerId.Equals(currentUserId)
-                                            && c.SemesterId.Equals(_currentSemesterId));
+                                            && c.LecturerId.Equals(currentUserId));
             if (@class == null) // validate class
             {
                 result.Message = "Class does not exist!";
@@ -192,7 +187,7 @@ namespace IPMS.Business.Services
                                             && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
             List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.CommitteeId.Equals(currentUserId)).ToListAsync();
 
-            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(request.classId) && ct.ProjectId != Guid.Empty).ToListAsync(); //get class topics have picked == project in class
+            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(request.classId) && ct.ProjectId != null).ToListAsync(); //get class topics have picked == project in class
 
             foreach (var assessment in _assessments)
             {
