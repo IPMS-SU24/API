@@ -256,7 +256,11 @@ namespace IPMS.Business.Services
 
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
-            var user = await _userManager.FindByIdAsync(request.UserId.ToString()) ?? throw new DataNotFoundException("Not Found Account");
+            var user = await _userManager.FindByIdAsync(request.UserId.ToString());
+            if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                throw new DataNotFoundException("Not Found Account");
+            }
             var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
             if (!result.Succeeded)
             {
