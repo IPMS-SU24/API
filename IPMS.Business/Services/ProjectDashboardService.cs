@@ -73,7 +73,7 @@ namespace IPMS.Business.Services
 
             var submissions = projectSubmissions.GroupBy(x => x.SubmissionModule.AssessmentId).ToDictionary(x => x.Key);
             var mapAssessmentDetailTasks = new List<Task<AssessmentDetail>>();
-            foreach (var assessment in currentSemesterInfo.CurrentSemester!.Syllabus!.Assessments)
+            foreach (var assessment in currentSemesterInfo.CurrentSemester!.Syllabus!.Assessments.OrderBy(x=>x.Order))
             {
                 var submissionsOfAssessment = new List<ProjectSubmission>();
                 var isHaveSubmission = submissions.TryGetValue(assessment.Id, out var assessmentSubmissions);
