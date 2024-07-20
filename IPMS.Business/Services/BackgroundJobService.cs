@@ -16,6 +16,7 @@ using MathNet.Numerics.Distributions;
 using NPOI.Util;
 using IPMS.Business.Common.Hangfire;
 using IPMS.Business.Common.Enums;
+using Microsoft.Extensions.Configuration;
 
 namespace IPMS.Business.Services
 {
@@ -26,14 +27,21 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMessageService _messageService;
         private readonly IHttpContextAccessor _httpContext;
+        private readonly string _mailHost;
 
-        public BackgroundJobService(UserManager<IPMSUser> userManager, MailServer mailServer, IUnitOfWork unitOfWork, IMessageService messageService, IHttpContextAccessor httpContext)
+        public BackgroundJobService(UserManager<IPMSUser> userManager,
+                                    MailServer mailServer,
+                                    IUnitOfWork unitOfWork,
+                                    IMessageService messageService,
+                                    IHttpContextAccessor httpContext,
+                                    IConfiguration configuration)
         {
             _userManager = userManager;
             _mailServer = mailServer;
             _unitOfWork = unitOfWork;
             _messageService = messageService;
             _httpContext = httpContext;
+            _mailHost = configuration["MailFrom"];
         }
 
         public async Task AddJobIdToStudent(string jobId,Guid classId, string email)
@@ -79,10 +87,10 @@ namespace IPMS.Business.Services
                         var confirmURL = PathUtils.GetConfirmURL(existUser.Id, confirmEmailToken);
                         EmailSendOperation emailSendOperation = await _mailServer.Client.SendAsync(
                             WaitUntil.Completed,
-                            "DoNotReply@5c9fc577-26d6-49e3-98e1-62c04cc4e4e0.azurecomm.net",
+                            _mailHost,
                             student.Email,
                             ConfirmEmailTemplate.Subject,
-                            ConfirmEmailTemplate.GetBody(confirmURL, password));
+                            EmailUtils.GetFullMailContent(ConfirmEmailTemplate.GetBody(confirmURL, password)));
                         EmailSendResult statusMonitor = emailSendOperation.Value;
 
                         if (statusMonitor.Status == EmailSendStatus.Failed)

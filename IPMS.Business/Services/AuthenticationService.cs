@@ -1,9 +1,14 @@
-﻿using IPMS.Business.Common.Enums;
+﻿using Azure.Communication.Email;
+using Azure;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Models;
+using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Authentication;
 using IPMS.DataAccess.Models;
+using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -22,19 +27,25 @@ namespace IPMS.Business.Services
         private readonly UserManager<IPMSUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly ICommonServices _commonService;
+        private readonly MailServer _mailServer;
         private readonly ILogger<AuthenticationService> _logger;
         private readonly JWTConfig _jwtConfig;
+        private readonly string _mailHost;
         public AuthenticationService(UserManager<IPMSUser> userManager,
                                    RoleManager<IdentityRole<Guid>> roleManager,
                                    IOptions<JWTConfig> jwtConfig,
                                    ILogger<AuthenticationService> logger,
-                                   ICommonServices commonService)
+                                   ICommonServices commonService,
+                                   MailServer mailServer,
+                                   IConfiguration configuration)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _jwtConfig = jwtConfig.Value;
             _logger = logger;
             _commonService = commonService;
+            _mailServer = mailServer;
+            _mailHost = configuration["MailFrom"];
         }
 
         public Task<IdentityResult> AddLecturerAccount(AddLecturerAccountRequest registerModel)
@@ -224,6 +235,50 @@ namespace IPMS.Business.Services
                         new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                         new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
                     };
+        }
+
+        public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if(user == null || !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                throw new DataNotFoundException("Not Found Account");
+            }
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetUrl = PathUtils.GetResetPasswordURL(user.Id, token);
+            EmailSendOperation emailSendOperation = await _mailServer.Client.SendAsync(
+                           WaitUntil.Started,
+                           _mailHost,
+                           request.Email,
+                           ForgotPasswordEmailTemplate.Subject,
+                           EmailUtils.GetFullMailContent(ForgotPasswordEmailTemplate.GetBody(resetUrl)));
+        }
+
+        public async Task ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            var user = await _userManager.FindByIdAsync(request.UserId.ToString());
+            if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                throw new DataNotFoundException("Not Found Account");
+            }
+            var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                throw new CannotResetPasswordException(result.Errors.Select(x => x.Description).ToArray());
+            }
+        }
+
+        public async Task ChangePasswordAsync(ChangePasswordRequest request, Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user != null && !user.IsDeleted.Value)
+            {
+                var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+                if (!result.Succeeded)
+                {
+                    throw new CannotResetPasswordException(result.Errors.Select(x => x.Description).ToArray());
+                }
+            }
         }
     }
 }

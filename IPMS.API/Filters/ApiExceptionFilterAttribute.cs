@@ -42,14 +42,14 @@ namespace IPMS.API.Filters
         }
         private void HandleBaseBadRequestException(ExceptionContext context)
         {
-            var exception = (EmailConfirmException)context.Exception;
+            var exception = (BaseBadRequestException)context.Exception;
 
             var details = new IPMSResponse<object>()
             {
                 Status = ResponseStatus.BadRequest,
                 Errors = new Dictionary<string, string[]>()
                 {
-                    { "Invalid request",  new string[1]{ exception.Message} }
+                    { "Invalid request", string.IsNullOrEmpty(exception.Message) ?  new string[1]{ exception.Message} : exception.Errors}
                 }
             };
 
@@ -79,6 +79,7 @@ namespace IPMS.API.Filters
         private void HandleException(ExceptionContext context)
         {
             Type type = context.Exception.GetType();
+            if(type.IsSubclassOf(typeof(BaseBadRequestException))) type = typeof(BaseBadRequestException);
             if (_exceptionHandlers.ContainsKey(type))
             {
                 _exceptionHandlers[type].Invoke(context);
