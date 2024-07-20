@@ -239,7 +239,11 @@ namespace IPMS.Business.Services
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email) ?? throw new DataNotFoundException("Not Found Account");
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if(user == null || !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                throw new DataNotFoundException("Not Found Account");
+            }
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var resetUrl = PathUtils.GetResetPasswordURL(user.Id, token);
             EmailSendOperation emailSendOperation = await _mailServer.Client.SendAsync(
