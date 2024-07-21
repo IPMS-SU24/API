@@ -226,12 +226,14 @@ namespace IPMS.Business.Services
         private async Task<IList<Claim>> GetUserClaims(IPMSUser user)
         {
             var userRoles = await _userManager.GetRolesAsync(user);
+            var isFirstLogin = !user.RefreshTokens.Any();
             return new List<Claim>
                     {
                         new (ClaimTypes.Email, user.Email),
                         new (ClaimTypes.NameIdentifier, user.Id.ToString()),
                         new ("Id", user.UserName),
                         new ("FullName", user.FullName),
+                        new ("isFirstLogin", isFirstLogin.ToString(), ClaimValueTypes.Boolean),
                         new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                         new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
                     };

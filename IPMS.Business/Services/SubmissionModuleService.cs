@@ -63,11 +63,14 @@ namespace IPMS.Business.Services
                 result.Message = "Module Name cannot be null";
                 return result;
             }
-
-            _currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
-
-            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.AssessmentId.Equals(request.AssessmentId) 
-                                            && sm.SemesterId.Equals(_currentSemesterId) 
+            var isCurrentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.ShortName == request.SemesterCode;
+            if(isCurrentSemester)
+            {
+                result.Message = "Cannot update module in current semester";
+                return result;
+            }
+            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.Semester).Where(sm => sm.AssessmentId.Equals(request.AssessmentId) 
+                                            && sm.Semester.ShortName.Equals(request.SemesterCode) 
                                             && sm.LectureId.Equals(currentUserId)).ToListAsync();
             foreach (var submissionModule in request.SubmissionModules) { 
                 if (submissionModule.Description == null)
@@ -98,7 +101,9 @@ namespace IPMS.Business.Services
         }
         public async Task ConfigureSubmissionModule(ConfigureSubmissionModuleRequest request, Guid currentUserId)
         {
-            var classes = await _commonServices.GetAllCurrentClassesOfLecturer(currentUserId);
+            var classes = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
+                                                                .Where(x => x.Semester.ShortName == request.SemesterCode && x.LecturerId == currentUserId)
+                                                                .Select(x => x.Id).ToListAsync();
             foreach (var submissionModule in request.SubmissionModules)
             {
                 if (submissionModule.ModuleId == Guid.Empty) // create
@@ -113,10 +118,12 @@ namespace IPMS.Business.Services
                         SemesterId = _currentSemesterId,
                         AssessmentId = request.AssessmentId,
                         LectureId = currentUserId,
-                        ClassModuleDeadlines = classes.Select(@class=> new ClassModuleDeadline
+                        ClassModuleDeadlines = classes.Select(classId=> new ClassModuleDeadline
                         {
-                            ClassId = @class.Id,
-                            SubmissionModuleId = id
+                            ClassId = classId,
+                            SubmissionModuleId = id,
+                            StartDate = submissionModule.StartDate,
+                            EndDate = submissionModule.EndDate,
                         }).ToList()
                     };
                     await _unitOfWork.SubmissionModuleRepository.InsertAsync(subModule);
@@ -131,7 +138,6 @@ namespace IPMS.Business.Services
                     subModule.Percentage = submissionModule.Percentage;
                     subModule.IsDeleted = submissionModule.IsDeleted;
                     _unitOfWork.SubmissionModuleRepository.Update(subModule);
-
 
                 }
             }

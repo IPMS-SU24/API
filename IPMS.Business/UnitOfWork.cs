@@ -32,6 +32,8 @@ namespace IPMS.Business
         public IFavoriteRepository FavoriteRepository { get; }
         public ITopicFavoriteRepository TopicFavoriteRepository { get; }
 
+        public IClassModuleDealineRepository ClassModuleDealineRepository { get; }
+
 
         //TODO in Sprint 2
         //Add repository
@@ -44,7 +46,7 @@ namespace IPMS.Business
                     ISubmissionModuleRepository submissionModuleRepository, ISyllabusRepository syllabusRepository,
                     IAssessmentRepository assessmentRepository, IReportTypeRepository reportTypeRepository, IReportRepository reportRepository,
                     IMemberHistoryRepository memberHistoryRepository, ILecturerGradeRepository lecturerGradeRepository,
-                    IFavoriteRepository favoriteRepository, ITopicFavoriteRepository topicFavoriteRepository)
+                    IFavoriteRepository favoriteRepository, ITopicFavoriteRepository topicFavoriteRepository, IClassModuleDealineRepository classModuleDealineRepository)
         {
             _context = context;
             ProjectRepository = projectRepository;
@@ -70,6 +72,7 @@ namespace IPMS.Business
             LecturerGradeRepository = lecturerGradeRepository;
             FavoriteRepository = favoriteRepository;
             TopicFavoriteRepository = topicFavoriteRepository;
+            ClassModuleDealineRepository = classModuleDealineRepository;
         }
         public async Task SaveChangesAsync()
         {

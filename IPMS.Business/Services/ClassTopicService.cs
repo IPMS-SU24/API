@@ -100,7 +100,6 @@ namespace IPMS.Business.Services
                 result.Message = ("Student did not enrolled any class this semester");
                 return result;
             }
-
             if (@class.ChangeTopicDeadline < DateTime.Now) // Check is expired 
             {
                 result.Message = ("Cannot change topic at this time");
