@@ -130,7 +130,7 @@ namespace IPMS.Business.Services
             ClassTopic? pickedTopicAvailable = await _unitOfWork.ClassTopicRepository.Get() // Is Picked Topic available
                                                                                .FirstOrDefaultAsync(ct => ct.ClassId.Equals(@class.Id)
                                                                                && ct.ProjectId == null && ct.TopicId.Equals(topicId)
-                                                                               && ct.Topic!.Status == RequestStatus.Approved); // Only project approved can pick
+                                                                               && ct.Topic.Status == RequestStatus.Approved); // Only project approved can pick
 
             if (pickedTopicAvailable == null)
             {

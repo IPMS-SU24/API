@@ -5,6 +5,7 @@ using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ClassTopic;
+using IPMS.Business.Requests.Topic;
 using Microsoft.AspNetCore.Mvc;
 using static IPMS.API.Common.Extensions.UserExtensions;
 
@@ -39,9 +40,9 @@ namespace IPMS.API.Controllers
         /// </summary>
         [EnumAuthorize(UserRole.Leader)]
         [HttpPut]
-        public async Task<IActionResult> PickTopic([FromBody] Guid topicId)
+        public async Task<IActionResult> PickTopic([FromBody] PickTopicRequest request)
         {
-            bool isPickedSuccessfully = await _classTopicService.PickTopic(topicId);
+            bool isPickedSuccessfully = await _classTopicService.PickTopic(request.TopicId);
 
             var response = new IPMSResponse<object>(); // Default is success
 
