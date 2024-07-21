@@ -91,5 +91,14 @@ namespace IPMS.API.Controllers
             await _studentGroupService.RemoveStudentOutGroup(request, lecturerId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("add-students")]
+        public async Task<IActionResult> AddStudentsToGroup([FromBody] LecturerAddStudentsToGroupRequest request)
+        {
+            var lecturerId = User.Claims.GetUserId();
+            await _studentGroupService.AddStudentsToGroup(request, lecturerId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }
