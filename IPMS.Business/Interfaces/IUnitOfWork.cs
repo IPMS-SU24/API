@@ -23,7 +23,6 @@ namespace IPMS.Business.Interfaces
         IClassModuleDeadlineRepository ClassModuleDeadlineRepository { get; }
         IFavoriteRepository FavoriteRepository { get; }
         ITopicFavoriteRepository TopicFavoriteRepository { get; }
-        IClassModuleDeadlineRepository ClassModuleDeadlineRepository { get; }
         //Start the database Transaction
         Task CreateTransactionAsync();
         //Commit the database Transaction
