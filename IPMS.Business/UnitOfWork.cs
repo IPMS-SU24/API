@@ -33,6 +33,8 @@ namespace IPMS.Business
         public ITopicFavoriteRepository TopicFavoriteRepository { get; }
         public IClassModuleDeadlineRepository ClassModuleDeadlineRepository { get; }
 
+        public IClassModuleDeadlineRepository ClassModuleDeadlineRepository { get; }
+
 
         //TODO in Sprint 2
         //Add repository

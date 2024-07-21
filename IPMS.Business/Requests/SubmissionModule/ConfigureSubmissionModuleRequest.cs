@@ -5,6 +5,7 @@ namespace IPMS.Business.Requests.SubmissionModule
     {
         public List<SubmissionModuleRequest> SubmissionModules { get; set; } = new();
         public Guid AssessmentId { get; set; }
+        public string SemesterCode { get; set; } = null!;
 
     }
 
