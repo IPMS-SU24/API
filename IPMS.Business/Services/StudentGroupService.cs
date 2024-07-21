@@ -504,7 +504,7 @@ namespace IPMS.Business.Services
             }
 
             var user = await _userManager.FindByIdAsync(student.InformationId.ToString());
-            
+
             if (await _userManager.IsInRoleAsync(user, UserRole.Leader.ToString()) && membersProject > 1) // check that project has > 1 member so need to assign another leader before delete
             {
                 result.Message = "Please assign another leader";
@@ -525,6 +525,60 @@ namespace IPMS.Business.Services
 
             await _unitOfWork.SaveChangesAsync();
 
+        }
+
+        public async Task AddStudentsToGroup(LecturerAddStudentsToGroupRequest request, Guid lecturerId)
+        {
+            var students = await _unitOfWork.StudentRepository.Get().Where(x => request.Students.Contains(x.InformationId) && request.ClassId == x.ClassId).ToListAsync();
+            foreach (var student in students)
+            {
+                student.ProjectId = request.GroupId;
+                _unitOfWork.StudentRepository.Update(student);
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<ValidationResultModel> CheckValidForLecturerAddStudentToGroup(LecturerAddStudentsToGroupRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Cannot Add Students To Group"
+            };
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            var classMaxMember = await _unitOfWork.IPMSClassRepository.Get()
+                .Where(x => x.Id == request.ClassId && x.LecturerId == lecturerId && x.SemesterId == (currentSemester.Id)).Select(x=>x.MaxMember).FirstOrDefaultAsync();
+            if (!request.Students.Any())
+            {
+                result.Message = "No student to add";
+                return result;
+            }
+            if (classMaxMember == default)
+            {
+                result.Message = "Class does not exist";
+                return result;
+            }
+            var isGroupExist = await _unitOfWork.ProjectRepository.Get().AnyAsync(x => x.Id == request.GroupId);
+            if (!isGroupExist)
+            {
+                result.Message = "Group does not exist";
+                return result;
+            }
+            var isAllStudentExist = await _unitOfWork.StudentRepository.Get()
+                .AnyAsync(x => request.Students.Contains(x.Id) && x.ProjectId == null && x.ClassId == request.ClassId);
+            if (!isAllStudentExist)
+            {
+                result.Message = "Student does not exist or current in a group";
+                return result;
+            }
+            var existedMembers = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == request.GroupId).CountAsync();
+            if(existedMembers + request.Students.Count() > classMaxMember)
+            {
+                result.Message = "Reach of max member";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
         }
     }
 }

@@ -20,5 +20,7 @@ namespace IPMS.Business.Interfaces.Services
         Task RemoveStudentOutGroup(RemoveStudentOutGroupRequest request, Guid lecturerId);
         Task<ValidationResultModel> AddMemberValidators(Guid studentId, Guid projectId);
         Task AddMember(Guid studentId, Guid projectId);
+        Task AddStudentsToGroup(LecturerAddStudentsToGroupRequest request, Guid lecturerId);
+        Task<ValidationResultModel> CheckValidForLecturerAddStudentToGroup(LecturerAddStudentsToGroupRequest request, Guid lecturerId);
     }
 }
