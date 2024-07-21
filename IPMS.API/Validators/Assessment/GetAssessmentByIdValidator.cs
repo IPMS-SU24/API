@@ -11,7 +11,7 @@ namespace IPMS.API.Validators.Assessment
             RuleFor(x => x).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
-                var validationResult = await topicService.GetAssessmentByIdValidators(x.AssessmentId);
+                var validationResult = await topicService.GetAssessmentByIdValidators(x.Id);
                 if (!validationResult.Result)
                 {
                     validationContext.AddFailure(validationResult.Message);

@@ -2,6 +2,6 @@
 {
     public class GetAssessmentByIdRequest
     {
-        public Guid AssessmentId { get; set; }
+        public Guid Id { get; set; }
     }
 }
