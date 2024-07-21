@@ -28,7 +28,7 @@ namespace IPMS.API.Controllers
         {
             var response = new IPMSResponse<AssessmentSubmissionProjectResponse>
             {
-                Data = await _assessmentService.GetAssessmentById(request.AssessmentId)
+                Data = await _assessmentService.GetAssessmentById(request.Id)
             };
             return GetActionResponse(response);
         }
