@@ -5,9 +5,9 @@ using IPMS.DataAccess.Models;
 
 namespace IPMS.Business.Repositories
 {
-    public class ClassModuleDealineRepository : GenericRepository<ClassModuleDeadline>, IClassModuleDealineRepository
+    public class ClassModuleDeadlineRepository : GenericRepository<ClassModuleDeadline>, IClassModuleDeadlineRepository
     {
-        public ClassModuleDealineRepository(IPMSDbContext context) : base(context)
+        public ClassModuleDeadlineRepository(IPMSDbContext context) : base(context)
         {
         }
     }
