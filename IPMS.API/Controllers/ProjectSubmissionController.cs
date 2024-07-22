@@ -74,5 +74,19 @@ namespace IPMS.API.Controllers
             var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return GetActionResponse(response);
         }
+
+        /// <summary>
+        /// Get all classes need to grade of lecturer
+        /// https://docs.google.com/spreadsheets/d/1uOCNgK3DZm9hK-3TQy3g12mwmV_ancrsMvyygVGxZeY/edit?gid=0#gid=0
+        /// </summary>
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("final-assessment")]
+        public async Task<IActionResult> GetFinalAssessment([FromQuery] GetFinalAssessmentRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var data = await _projectSubmissionService.GetFinalAssessment(request, currentUserId);
+            var response = await data.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
     }
 }
