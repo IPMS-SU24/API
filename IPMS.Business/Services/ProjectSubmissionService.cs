@@ -166,7 +166,7 @@ namespace IPMS.Business.Services
             }
 
             var x = _unitOfWork.ProjectSubmissionRepository.Get().OrderByDescending(ps => ps.SubmissionDate).Select(ps => ps.Id).ToList();
-            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId)).FirstOrDefaultAsync();
+            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().FirstOrDefaultAsync(ps => ps.Id.Equals(request.SubmissionId));
 
             if (submission == null)
             {
@@ -219,7 +219,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var lastSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.SubmissionDate <= moduleDeadline.EndDate).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
+            var lastSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.SubmissionDate <= moduleDeadline.EndDate && ps.SubmissionModuleId.Equals(submission.SubmissionModuleId)).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
 
             if (lastSubmission.Id.Equals(submission.Id) == false)
             {
@@ -320,7 +320,7 @@ namespace IPMS.Business.Services
             }
 
             var submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(pm => pm.ProjectId.Equals(request.GroupId))
-                                    .Include(pm => pm.Grades.Where(g => g.CommitteeId.Equals(lecturerId)))
+                                    .Include(pm => pm.Grades.Where(g => g.CommitteeId.Equals(validCommittee.Committees.First().Id)))
                                     .OrderByDescending(pm => pm.SubmissionDate) // to get first or default below
                                     .ToListAsync();
             var modules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.AssessmentId.Equals(lastAss.Id) && sm.SemesterId.Equals(semester.Id)).Include(sm => sm.ClassModuleDeadlines.Where(cm => cm.ClassId.Equals(request.ClassId))).ToListAsync();
