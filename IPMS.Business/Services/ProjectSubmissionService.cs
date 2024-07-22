@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NPOI.Util;
 using Org.BouncyCastle.Bcpg;
+using System.Reflection;
 
 namespace IPMS.Business.Services
 {
@@ -165,7 +166,7 @@ namespace IPMS.Business.Services
             }
 
             var x = _unitOfWork.ProjectSubmissionRepository.Get().OrderByDescending(ps => ps.SubmissionDate).Select(ps => ps.Id).ToList();
-            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId)).FirstOrDefaultAsync();
+            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().FirstOrDefaultAsync(ps => ps.Id.Equals(request.SubmissionId));
 
             if (submission == null)
             {
@@ -218,7 +219,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var lastSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.SubmissionDate <= moduleDeadline.EndDate).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
+            var lastSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.SubmissionDate <= moduleDeadline.EndDate && ps.SubmissionModuleId.Equals(submission.SubmissionModuleId)).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
 
             if (lastSubmission.Id.Equals(submission.Id) == false)
             {
@@ -288,6 +289,67 @@ namespace IPMS.Business.Services
             }).ToList();
 
             return classes;
+        }
+
+        public async Task<IEnumerable<GetFinalAssessmentResponse>> GetFinalAssessment(GetFinalAssessmentRequest request, Guid lecturerId)
+        {
+            List<GetFinalAssessmentResponse> final = new List<GetFinalAssessmentResponse>();
+
+            var validCommittee = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.ClassId)).Include(c => c.Committees.Where(com => com.LecturerId.Equals(lecturerId))).FirstOrDefaultAsync();
+            if (validCommittee == null) // class does not exist
+            {
+                return final;
+            }
+
+            if (validCommittee.Committees.Count() != 1) // current lecturer does not have permission
+            {
+                return final;
+            }
+
+            var lastAss = await _unitOfWork.AssessmentRepository.Get().OrderByDescending(a => a.Order).FirstOrDefaultAsync();
+
+            if (lastAss == null) // cannot find assessment
+            {
+                return final;
+            }
+
+            var semester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            if (semester == null)
+            {
+                return final;
+            }
+
+            var submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(pm => pm.ProjectId.Equals(request.GroupId))
+                                    .Include(pm => pm.Grades.Where(g => g.CommitteeId.Equals(validCommittee.Committees.First().Id)))
+                                    .OrderByDescending(pm => pm.SubmissionDate) // to get first or default below
+                                    .ToListAsync();
+            var modules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.AssessmentId.Equals(lastAss.Id) && sm.SemesterId.Equals(semester.Id)).Include(sm => sm.ClassModuleDeadlines.Where(cm => cm.ClassId.Equals(request.ClassId))).ToListAsync();
+            foreach (var m in modules)
+            {
+                if (m.ClassModuleDeadlines.Count() != 1) // 1 submission - 1 class - not found --> config wrong
+                {
+                    return final;
+                }
+                var submitted = submissions.FirstOrDefault(s => s.SubmissionModuleId.Equals(m.Id) && s.SubmissionDate <= m.ClassModuleDeadlines.First().EndDate);
+                decimal grade = 0;
+                if (submitted != null)
+                {
+                    grade = submitted.Grades.Count() == 1 ? submitted.Grades.First().Grade!.Value : 0;
+                }
+                final.Add(new GetFinalAssessmentResponse
+                {
+                    ModuleId = m.Id,
+                    SubmissionId = submitted == null ? Guid.Empty : submitted.Id,
+                    Description = m.Description,
+                    ModuleName = m.Name,
+                    Percentage = m.Percentage,
+                    FileLink = submitted == null ? "" : _presignedUrl.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, submitted.Id, submitted.Name)) ?? string.Empty,
+                    Grade = grade,
+                });
+
+
+            }
+            return final;
         }
     }
 }
