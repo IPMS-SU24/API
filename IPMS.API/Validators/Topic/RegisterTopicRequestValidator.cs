@@ -13,6 +13,7 @@ namespace IPMS.API.Validators.Topic
             var leaderId = context.HttpContext.User.Claims.GetUserId();
             RuleFor(x => x.TopicName).NotEmpty();
             RuleFor(x => x.Description).NotEmpty();
+            RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
                 var validationResult = await topicService.CheckRegisterValid(x, leaderId);
