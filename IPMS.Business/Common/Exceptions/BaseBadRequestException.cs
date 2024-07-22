@@ -2,6 +2,7 @@
 {
     public class BaseBadRequestException : Exception
     {
+        public string[] Errors { get; }
         public BaseBadRequestException(string message)
             : base(message)
         {
@@ -10,5 +11,11 @@
             : base(message, innerException)
         {
         }
+        public BaseBadRequestException(string[] errors)
+            : base()
+        {
+            Errors = errors;
+        }
+
     }
 }

@@ -35,6 +35,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<ILecturerGradeRepository, LecturerGradeRepository>();
             services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<ITopicFavoriteRepository, TopicFavoriteRepository>();
+            services.AddScoped<IClassModuleDeadlineRepository, ClassModuleDeadlineRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Depenency Injection

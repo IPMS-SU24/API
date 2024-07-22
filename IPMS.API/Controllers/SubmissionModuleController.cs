@@ -34,5 +34,16 @@ namespace IPMS.API.Controllers
             var response = await submissionModules.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return GetActionResponse(response);
         }
+
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("submission-id")]
+        public async Task<IActionResult> GetSubmissions([FromQuery] GetSubmissionsRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var submissionModules = await _submissionModuleService.GetSubmissions(request, currentUserId);
+            var response = await submissionModules.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
     }
 }

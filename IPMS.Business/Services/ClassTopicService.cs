@@ -10,6 +10,7 @@ using IPMS.Business.Common.Utils;
 using Microsoft.AspNetCore.Http;
 using IPMS.Business.Models;
 using IPMS.Business.Common.Extensions;
+using IPMS.Business.Common.Exceptions;
 
 namespace IPMS.Business.Services
 {
@@ -37,10 +38,12 @@ namespace IPMS.Business.Services
                 request.SearchValue = "";
             }
 
-            IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
+            IPMSClass? @class = _commonServices.GetClass();
             // Check null current user did not enrolled any class this semester
             if (@class == null)
-                return null;
+            {
+                throw new DataNotFoundException("Not found class");
+            }
 
             Guid? currentClassId = @class?.Id;
 
@@ -97,7 +100,6 @@ namespace IPMS.Business.Services
                 result.Message = ("Student did not enrolled any class this semester");
                 return result;
             }
-
             if (@class.ChangeTopicDeadline < DateTime.Now) // Check is expired 
             {
                 result.Message = ("Cannot change topic at this time");
@@ -127,7 +129,7 @@ namespace IPMS.Business.Services
             ClassTopic? pickedTopicAvailable = await _unitOfWork.ClassTopicRepository.Get() // Is Picked Topic available
                                                                                .FirstOrDefaultAsync(ct => ct.ClassId.Equals(@class.Id)
                                                                                && ct.ProjectId == null && ct.TopicId.Equals(topicId)
-                                                                               && ct.Topic!.Status == RequestStatus.Approved); // Only project approved can pick
+                                                                               && ct.Topic.Status == RequestStatus.Approved); // Only project approved can pick
 
             if (pickedTopicAvailable == null)
             {

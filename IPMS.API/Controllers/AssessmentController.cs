@@ -4,6 +4,7 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Requests.Assessment;
 using IPMS.Business.Responses.Assessment;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,12 +24,11 @@ namespace IPMS.API.Controllers
         /// </summary>
         [EnumAuthorize(UserRole.Student)]
         [HttpGet]
-        public async Task<IActionResult> GetAssessmentById(Guid Id)
+        public async Task<IActionResult> GetAssessmentById([FromQuery] GetAssessmentByIdRequest request)
         {
             var response = new IPMSResponse<AssessmentSubmissionProjectResponse>
             {
-                Data = await _assessmentService.GetAssessmentById(Id)
-                
+                Data = await _assessmentService.GetAssessmentById(request.Id)
             };
             return GetActionResponse(response);
         }

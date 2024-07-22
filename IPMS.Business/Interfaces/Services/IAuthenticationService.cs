@@ -12,5 +12,8 @@ namespace IPMS.Business.Interfaces.Services
         Task<TokenModel?> RefreshToken(TokenModel tokenModel);
         Task ConfirmEmailAsync(Guid userId, string token);
         Task<bool> CheckUserClaimsInTokenStillValidAsync(IEnumerable<Claim> claims);
+        Task ForgotPasswordAsync(ForgotPasswordRequest request);
+        Task ResetPasswordAsync(ResetPasswordRequest request);
+        Task ChangePasswordAsync(ChangePasswordRequest request, Guid userId);
     }
 }

@@ -198,12 +198,6 @@ namespace IPMS.Business.Services
             var moduleDeadline = @class.ClassModuleDeadlines.FirstOrDefault();
             var now = DateTime.Now;
 
-            if (moduleDeadline.EndDate >= now)
-            {
-                result.Message = "The submission deadline has not yet passed";
-                return result;
-            }
-
             var semester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             if (semester == null)
             {
