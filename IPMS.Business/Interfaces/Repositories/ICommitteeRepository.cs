@@ -2,7 +2,7 @@
 
 namespace IPMS.Business.Interfaces.Repositories
 {
-    public interface IAssessmentRepository : IGenericRepository<Assessment>
+    public interface ICommitteeRepository : IGenericRepository<Committee>
     {
     }
 }

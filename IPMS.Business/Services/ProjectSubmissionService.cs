@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NPOI.Util;
 using Org.BouncyCastle.Bcpg;
+using System.Collections.Immutable;
 using System.Reflection;
 
 namespace IPMS.Business.Services
@@ -28,7 +29,7 @@ namespace IPMS.Business.Services
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _presignedUrl = presignedUrl;
-            
+
         }
 
         public async Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId)
@@ -166,7 +167,7 @@ namespace IPMS.Business.Services
             }
 
             var x = _unitOfWork.ProjectSubmissionRepository.Get().OrderByDescending(ps => ps.SubmissionDate).Select(ps => ps.Id).ToList();
-            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().FirstOrDefaultAsync(ps => ps.Id.Equals(request.SubmissionId));
+            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId)).Include(s => s.SubmissionModule).FirstOrDefaultAsync();
 
             if (submission == null)
             {
@@ -174,7 +175,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)
+            @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Committees.Select(c => c.LecturerId).Contains(lecturerId)
                                         && c.Students.Any(s => s.ProjectId.Equals(submission.ProjectId)))
                                 .Include(c => c.ClassModuleDeadlines.Where(cm => cm.SubmissionModuleId.Equals(submission.SubmissionModuleId))) // can not set FirstOrDefault
                                 .Include(c => c.Committees.Where(c => c.LecturerId.Equals(lecturerId)))
@@ -183,6 +184,14 @@ namespace IPMS.Business.Services
             if (@class == null)
             {
                 result.Message = "Class cannot found";
+                return result;
+            }
+
+            var lastAss = await _unitOfWork.AssessmentRepository.Get().OrderByDescending(a => a.Order).FirstOrDefaultAsync();
+
+            if (lastAss!.Id != submission.SubmissionModule.AssessmentId && lecturerId != @class.LecturerId) // check committee grade final assessment
+            {
+                result.Message = "Committee cannot grade submission different final assessment";
                 return result;
             }
 
@@ -241,19 +250,24 @@ namespace IPMS.Business.Services
 
         public async Task GradeSubmission(GradeSubmissionRequest request, Guid lecturerId)
         {
-            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId)).FirstOrDefaultAsync();
+            var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId))
+                                    .Include(s => s.SubmissionModule)
+                                    .FirstOrDefaultAsync();
 
-            @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)
+            @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Committees.Select(c => c.LecturerId).Contains(lecturerId)
                                        && c.Students.Any(s => s.ProjectId.Equals(submission.ProjectId)))
-                               .Include(c => c.ClassModuleDeadlines.Where(cm => cm.SubmissionModuleId.Equals(submission.SubmissionModuleId))) // can not set FirstOrDefault
-                               .Include(c => c.Committees.Where(c => c.LecturerId.Equals(lecturerId)))
-                               .FirstOrDefaultAsync();
-            var grade = await _unitOfWork.LecturerGradeRepository.Get().FirstOrDefaultAsync(lg => lg.CommitteeId.Equals(@class.Committees.FirstOrDefault().Id) && lg.SubmissionId.Equals(request.SubmissionId));
+                                    .Include(c => c.Committees.Where(c => c.LecturerId.Equals(lecturerId)))
+                                    .FirstOrDefaultAsync();
+
+            var committee = await _unitOfWork.CommitteeRepository.Get().Where(c => c.ClassId.Equals(@class.Id)).ToListAsync();
+            var curCommittee = committee.FirstOrDefault(c => c.LecturerId.Equals(lecturerId))!.Id;
+            
+            var grade = await _unitOfWork.LecturerGradeRepository.Get().FirstOrDefaultAsync(lg => lg.CommitteeId.Equals(curCommittee) && lg.SubmissionId.Equals(request.SubmissionId));
             if (grade == null)
             {
                 grade = new LecturerGrade
                 {
-                    CommitteeId = @class.Committees.FirstOrDefault().Id,
+                    CommitteeId = curCommittee,
                     SubmissionId = request.SubmissionId,
                     Grade = request.Grade
 
@@ -265,6 +279,34 @@ namespace IPMS.Business.Services
                 grade.Grade = request.Grade;
                 _unitOfWork.LecturerGradeRepository.Update(grade);
             }
+            await _unitOfWork.SaveChangesAsync(); // save to cal average below
+
+            #region FinalGrade
+
+            var lastAss = await _unitOfWork.AssessmentRepository.Get().OrderByDescending(a => a.Order).FirstOrDefaultAsync();
+            if (lastAss.Id == submission.SubmissionModule.AssessmentId) //is final assessment --> Check with committee
+            {
+                var lecGrade = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => committee.Select(c => c.Id).Contains(lg.CommitteeId) && lg.SubmissionId.Equals(submission.Id)).ToListAsync();
+                if (committee.Count() == lecGrade.Count()) // all committee graded
+                {
+                    decimal avg = 0;
+                    foreach (var c in committee)
+                    {
+                        avg += c.Percentage / 100 * lecGrade.First(lg => lg.CommitteeId.Equals(c.Id)).Grade!.Value;
+                    }
+
+                    submission.FinalGrade = avg;
+                }
+
+            }
+            else // is not final assessment --> Add final grade because just lecturer grade  ---- have validate for lecturer is teaching this class
+            {
+                submission.FinalGrade = request.Grade;
+            }
+
+            _unitOfWork.ProjectSubmissionRepository.Update(submission);
+
+            #endregion
 
             await _unitOfWork.SaveChangesAsync();
         }
@@ -280,13 +322,13 @@ namespace IPMS.Business.Services
             classes = _unitOfWork.IPMSClassRepository.Get().Where(c => c.SemesterId.Equals(semester.Id) && c.LecturerId.Equals(lecturerId))
                 .Include(c => c.Students)
                 .Select(c => new GetClassesCommitteeResponse
-            {
-                ClassId = c.Id,
-                GroupNum = c.Students.Where(s => s.ProjectId != null).GroupBy(s => s.ProjectId).Count(),
-                ClassCode = c.ShortName,
-                ClassName = c.Name,
-                StudentNum = c.Students.Count()
-            }).ToList();
+                {
+                    ClassId = c.Id,
+                    GroupNum = c.Students.Where(s => s.ProjectId != null).GroupBy(s => s.ProjectId).Count(),
+                    ClassCode = c.ShortName,
+                    ClassName = c.Name,
+                    StudentNum = c.Students.Count()
+                }).ToList();
 
             return classes;
         }
