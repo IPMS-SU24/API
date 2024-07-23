@@ -170,7 +170,7 @@ namespace IPMS.Business.Services
                 ProjectFromId = reporterProject.Id,
                 ProjectToId = memberSwapForProject.Id,
                 IPMSClassId = _commonServices.GetClass()!.Id,
-                ProjectToStatus = RequestStatus.Waiting,
+                ProjectFromStatus = RequestStatus.Waiting,
                 MemberSwapStatus = RequestStatus.Waiting
             };
             await _unitOfWork.MemberHistoryRepository.InsertAsync(memberHistory);
