@@ -164,7 +164,7 @@ namespace IPMS.Business.Services
             return new MemberInGroupResponse()
             {
                 TotalMember = await _unitOfWork.StudentRepository.Get().CountAsync(x => x.ClassId == request.Students.ClassId),
-                MemberInfo = memberInfos.Select(x => new MemberInGroupData
+                MemberInfo = memberInfos.OrderBy(x=>x.Students.First().Project.GroupNum).Select(x => new MemberInGroupData
                 {
                     Id = x.Id,
                     GroupName = x.Students.First().ProjectId != null ? $"{x.Students.First().Project.GroupNum}" : NoGroup.Name,
