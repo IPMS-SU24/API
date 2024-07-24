@@ -127,7 +127,10 @@ namespace IPMS.API.Filters
             {
                 Status = ResponseStatus.DataNotFound
             };
-
+            if (!string.IsNullOrEmpty(exception.Message))
+            {
+                details.Message = exception.Message;
+            }
             context.Result = new OkObjectResult(details);
 
             context.ExceptionHandled = true;

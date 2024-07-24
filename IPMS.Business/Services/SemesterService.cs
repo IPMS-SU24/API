@@ -62,6 +62,11 @@ namespace IPMS.Business.Services
                                                                         Total = x.Count(),
                                                                         GroupNum = x.Where(x=>x.ProjectId != null).Select(y => y.ProjectId).Distinct().Count()
                                                                     }).ToListAsync();
+            var classTopicCount = await _unitOfWork.ClassTopicRepository.Get().Select(x => new
+            {
+                x.ClassId,
+                x.TopicId
+            } ).ToListAsync();
             var result = new List<ClassInSemesterInfo>();
             foreach (var @class in classesQuery)
             {
@@ -83,7 +88,8 @@ namespace IPMS.Business.Services
                         MaxMembers = @class.MaxMembers,
                         Enroll = student.Enroll,
                         GroupNum = student.GroupNum,
-                        Total = student.Total
+                        Total = student.Total,
+                        TopicCount = classTopicCount.Count(x=>x.ClassId == @class.ClassId)
                     });
                 }
             }

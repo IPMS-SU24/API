@@ -17,4 +17,9 @@ namespace IPMS.Business.Responses.Topic
         public virtual ICollection<string> IotComponents { get; set; }  = new List<string>();
         
     }
+
+    public class LecturerTopicIotComponentReponse : TopicIotComponentReponse
+    {
+        public Guid? PickedBy { get; set; }
+    }
 }

@@ -6,6 +6,7 @@ using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ClassTopic;
 using IPMS.Business.Requests.Topic;
+using IPMS.Business.Responses.Topic;
 using Microsoft.AspNetCore.Mvc;
 using static IPMS.API.Common.Extensions.UserExtensions;
 
@@ -30,6 +31,19 @@ namespace IPMS.API.Controllers
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
             var classTopics = await _classTopicService.GetClassTopicsAvailable(currentUserId, request);
             var response = await classTopics.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("[action]")]
+        public async Task<IActionResult> ClassTopicsByLecturer([FromRoute] LecturerClassTopicRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            var classTopics = await _classTopicService.GetClassTopicsByLecturer(currentUserId, request);
+            var response = new IPMSResponse<IList<LecturerTopicIotComponentReponse>>()
+            {
+                Data = classTopics
+            };
             return GetActionResponse(response);
         }
 
