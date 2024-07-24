@@ -339,11 +339,22 @@ namespace IPMS.Business.Services
             }
 
             var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)
-                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
+                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).Include(p => p.Topic).ThenInclude(t => t.Class).ToListAsync();
             if (projects.Count != request.Projects.Count()) // check all request project need to be existed and have Id same lecturer Id updated
             {
                 result.Message = "Have project invalid";
                 return result;
+            }
+
+            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+
+            foreach (var prj in projects) // if have project so that semester was worked or is working -- just check difference with current Semester
+            {
+                if (prj.Topic.Class.SemesterId.Equals(currentSemesterId))
+                {
+                    result.Message = "Cannot publish project in current semester";
+                    return result;
+                }
             }
 
             result.Message = string.Empty;
