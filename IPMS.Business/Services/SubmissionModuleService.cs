@@ -7,8 +7,7 @@ using IPMS.Business.Requests.SubmissionModule;
 using IPMS.Business.Responses.SubmissionModule;
 using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection;
-using System.Text.RegularExpressions;
+using MongoDB.Driver.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -158,8 +157,6 @@ namespace IPMS.Business.Services
                 Message = "Operation did not successfully"
             };
         
-            
-
             Semester semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(_currentSemesterId));
             if (semester == null)
             {
@@ -253,6 +250,143 @@ namespace IPMS.Business.Services
                 }).ToListAsync();
 
             return submissions;
+        }
+
+        public async Task<ValidationResultModel> LecturerEvaluateValidator(LecturerEvaluateRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            var isAbnormalPer = request.Members.Any(s => s.Percentage < 0 || s.Percentage > 100);
+            if (isAbnormalPer)
+            {
+                result.Message = "Percentage must be between 0 and 100";
+                return result;
+            }
+            
+            _currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.SemesterId.Equals(_currentSemesterId) && c.LecturerId.Equals(lecturerId));
+            if (@class == null)
+            {
+                result.Message = "Class does not exist";
+                return result;
+            }
+
+            var prjStudents = await _unitOfWork.StudentRepository.Get().Where(s =>s.ProjectId.Equals(request.GroupId) && s.ClassId.Equals(request.ClassId))
+                                    .ToListAsync();
+            
+            if (prjStudents.Count() != request.Members.Count())
+            {
+                result.Message = "Please evaluate all members in group";
+                return result;
+            }
+
+            var isAnyOutGroup = prjStudents.Any(ps => request.Members.Select(m => m.StudentId).Contains(ps.Id) == false);
+            if (isAnyOutGroup == true)
+            {
+                result.Message = "Student does not in group";
+                return result;
+            }
+
+            return await CheckFinalGradeSubmission(_currentSemesterId, lecturerId, @class.Id);
+
+        }
+
+        public async Task LecturerEvaluate(LecturerEvaluateRequest request, Guid lecturerId)
+        {
+            var _currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+
+            var prjStudents = await _unitOfWork.StudentRepository.Get().Where(s => s.ProjectId.Equals(request.GroupId) && s.ClassId.Equals(request.ClassId))
+                                    .ToListAsync();
+
+            #region CalcStuFinalGrade
+            var assessments = await _unitOfWork.AssessmentRepository.Get().Where(a => a.SyllabusId.Equals(_currentSemester.SyllabusId))
+                                    .Include(a => a.Modules.Where(sm => sm.SemesterId.Equals(_currentSemester.Id) && sm.LectureId.Equals(lecturerId)))
+                                    .ThenInclude(sm => sm.ClassModuleDeadlines.Where(cd => cd.ClassId.Equals(request.ClassId)))
+                                    .ToListAsync();
+            decimal totalAvg = 0;
+            foreach (var ass in assessments)
+            {
+                decimal assessmentAvg = 0;
+                foreach (var sub in ass.Modules)
+                {
+                    var prjSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => 
+                        ps.SubmissionDate <= sub.ClassModuleDeadlines.First().EndDate 
+                        && ps.ProjectId.Equals(request.GroupId)
+                        && ps.SubmissionModuleId.Equals(sub.Id)).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
+
+                    if (prjSubmission != null)
+                    {
+                        assessmentAvg += sub.Percentage / 100 * prjSubmission.FinalGrade == null ? 0 : prjSubmission.FinalGrade!.Value;
+                    }
+                }
+                totalAvg += ass.Percentage / 100 * assessmentAvg;
+            }
+
+            foreach (var stu in prjStudents)
+            {
+                stu.FinalPercentage = request.Members.First(s => s.StudentId.Equals(stu.Id)).Percentage;
+                stu.FinalGrade = stu.FinalPercentage / 100 * totalAvg;
+                _unitOfWork.StudentRepository.Update(stu);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            // update final percentage and final grade
+            // cal final grade
+            // 1.1 get all assessment
+            // 1.2 get all submission module on every assessment
+            // 1.3 get all last submission of current project of every submission module
+            //  If any last submission does not have final grade -> Prevent evaluate
+            //  If have submission module but not have submission: Grade = 0
+            // 1.4 Calc submission base on submission module percentage -> assessment grade
+            // 1.5 Base on assessment grade -> Calc final grade
+            // 1.6 From final grade --> Calc for student with final percentage
+            #endregion
+
+        }
+
+        public async Task<ValidationResultModel> CheckFinalGradeSubmission(Guid semesterId, Guid lecturerId, Guid classId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+            var subModules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => 
+                                sm.SemesterId.Equals(semesterId) 
+                                && sm.LectureId.Equals(lecturerId))
+                                .Include(sm => 
+                                    sm.ClassModuleDeadlines.Where(cd => cd.ClassId.Equals(classId)))
+                                .ToListAsync();
+
+            var submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => subModules.Select(sm => sm.Id).Contains(ps.SubmissionModuleId)).OrderByDescending(ps => ps.SubmissionDate).ToListAsync();
+            foreach (var module in subModules)
+            {
+                var sub = submissions.FirstOrDefault(s => s.SubmissionDate <= module.ClassModuleDeadlines.First().EndDate && s.SubmissionModuleId.Equals(module.Id));
+                if (sub != null)
+                {
+                    if (sub.FinalGrade == null)
+                    {
+                        result.Message = "Please grade all submission before evaluate percentage";
+                        return result;
+                    }
+                }
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public Task<ValidationResultModel> CalcFinalGradeValidator(CalcFinalGradeRequest request, Guid lecturerId)
+        {
+            throw new NotImplementedException();
+        }
+        public Task CalcFinalGrade(CalcFinalGradeRequest request, Guid lecturerId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

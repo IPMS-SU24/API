@@ -5,6 +5,7 @@ namespace IPMS.DataAccess.Models
     public class Student : BaseModel
     {
         public decimal? ContributePercentage { get; set; }
+        public decimal? FinalPercentage { get; set; }
         public decimal? FinalGrade { get; set; }
         public Guid? ProjectId { get; set; }
         public Guid InformationId { get; set; }

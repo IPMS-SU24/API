@@ -102,6 +102,7 @@ namespace IPMS.DataAccess
                     .HasKey(e => e.Id);
 
                 entity.Property(e => e.ContributePercentage).HasPrecision(3, 0);
+                entity.Property(e => e.FinalPercentage).HasPrecision(3, 0);
 
                 entity.Property(e => e.FinalGrade).HasPrecision(4, 2);
                 entity.HasIndex(e => new { e.ClassId, e.InformationId }).IsUnique();
