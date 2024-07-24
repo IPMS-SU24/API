@@ -100,5 +100,14 @@ namespace IPMS.API.Controllers
             await _studentGroupService.AddStudentsToGroup(request, lecturerId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+
+        [EnumAuthorize(UserRole.Leader)]
+        [HttpPut("[action]")]
+        public async Task<IActionResult> EvaluateMembers([FromBody] LeaderEvaluateMembersRequest request)
+        {
+            var leaderId = User.Claims.GetUserId();
+            await _studentGroupService.EvaluateMembers(request, leaderId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }

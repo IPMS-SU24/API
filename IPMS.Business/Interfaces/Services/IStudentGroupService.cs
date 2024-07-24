@@ -22,5 +22,7 @@ namespace IPMS.Business.Interfaces.Services
         Task AddMember(Guid studentId, Guid projectId);
         Task AddStudentsToGroup(LecturerAddStudentsToGroupRequest request, Guid lecturerId);
         Task<ValidationResultModel> CheckValidForLecturerAddStudentToGroup(LecturerAddStudentsToGroupRequest request, Guid lecturerId);
+        Task EvaluateMembers(LeaderEvaluateMembersRequest request, Guid leaderId);
+        Task<ValidationResultModel> CheckValidEvaluateMembers(IList<MemberContribute> x);
     }
 }
