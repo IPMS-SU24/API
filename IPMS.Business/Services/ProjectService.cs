@@ -348,13 +348,10 @@ namespace IPMS.Business.Services
 
             var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
-            foreach (var prj in projects) // if have project so that semester was worked or is working -- just check difference with current Semester
-            {
-                if (prj.Topic.Class.SemesterId.Equals(currentSemesterId))
-                {
-                    result.Message = "Cannot publish project in current semester";
-                    return result;
-                }
+            var isInSemester = projects.Any(p => p.Topic.Class.SemesterId.Equals(currentSemesterId)); // if have project so that semester was worked or is working -- just check difference with current Semester
+            if (isInSemester == true) {
+                result.Message = "Cannot publish project in current semester";
+                return result;
             }
 
             result.Message = string.Empty;
