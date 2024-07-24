@@ -170,6 +170,39 @@ namespace IPMS.Business.Services
             return true;
         }
 
+        public async Task<IList<LecturerTopicIotComponentReponse>> GetClassTopicsByLecturer(Guid currentUserId, LecturerClassTopicRequest request)
+        {
+            var availableClassTopics = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopics are available and include Topic
+                                                                      .Where(ct => ct.ClassId.Equals(request.ClassId) &&
+                                                                                    ct.Class.LecturerId == currentUserId &&
+                                                                                   ct.Topic!.Status == RequestStatus.Approved // Only Topic Approved can choose
+                                                                                                                                 )
+                                                                      .Include(ct => ct.Topic);
+
+            /*
+                In TopicIotComponentResponse have ComponentsMaster can query base on MasterType = Topic && MasterId == currentTopicId but we not need to specific these 
+                -> Just see that any ComponentMaster Exist 
+                -> have IoTComponent -> Get Name + Description
+
+             */
+
+            var componentsOfTopic = _unitOfWork.ComponentsMasterRepository.Get() // Get component that just for topic
+                                                                                .Where(cm => cm.MasterType == ComponentsMasterType.Topic);
+
+            var responses = await availableClassTopics.Select(ct => new LecturerTopicIotComponentReponse
+            {
+                Id = ct.Topic!.Id,
+                TopicName = ct.Topic.Name,
+                Description = ct.Topic.Description,
+                Detail = ct.Topic.Detail,
+                IotComponents = componentsOfTopic
+                        .Where(cm => cm.MasterId.Equals(ct.TopicId))
+                        .Select(cm => cm.Component!.Name).ToList(),
+                PickedBy = ct.ProjectId
+            }).ToListAsync();
+            if (responses == null || !responses.Any()) throw new DataNotFoundException("Not found any topic or class is not belong to lecturer");
+            return responses;
+        }
     }
 
 }
