@@ -7,7 +7,7 @@ namespace IPMS.Business.Interfaces.Services
 {
     public interface IBorrowIoTService
     {
-        Task<bool> CheckIoTValid(IoTModelRequest request, Guid leaderId);
+        Task<ValidationResultModel> CheckIoTValid(IoTModelRequest request, Guid leaderId);
         Task RegisterIoTForProject(Guid leaderId, IEnumerable<IoTModelRequest> borrowIoTModels);
         Task<IEnumerable<BorrowIoTComponentInformation>> GetAvailableIoTComponents(GetAvailableComponentRequest request, Guid leaderId);
         Task<IEnumerable<ReportIoTComponentInformation>> GetGetReportIoTComponents();

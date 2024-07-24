@@ -33,28 +33,54 @@ namespace IPMS.Business.Services
             _context = context;
         }
 
-        public async Task<bool> CheckIoTValid(IoTModelRequest request, Guid leaderId)
+        public async Task<ValidationResultModel> CheckIoTValid(IoTModelRequest request, Guid leaderId)
         {
-            if (request.Quantity <= 0) return false;
+            var result = new ValidationResultModel()
+            {
+                Message = "Cannot borrow"
+            };
+            if (request.Quantity <= 0)
+            {
+                result.Message = "Quantity must be greater than 0";
+                return result;
+            };
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var studiesIn = await _commonServices.GetStudiesIn(leaderId);
             var project = await _commonServices.GetProject(leaderId);
             var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId), currentSemester.Id);
             //Check borrow Assessment Status => Not In Progress => Validate Fail
             var borrowAssessmentStatus = await _commonServices.GetBorrowIoTStatus(project.Id, @class);
-            if (borrowAssessmentStatus != AssessmentStatus.InProgress) return false;
+            if (borrowAssessmentStatus != AssessmentStatus.InProgress)
+            {
+                result.Message = "Cannot borrow at this time";
+                return result;
+            }
             //Check Exist
             var iot = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.ComponentId);
-            if (iot == null) return false;
+            if (iot == null)
+            {
+                result.Message = "Component does not exists";
+                return result;
+            }
             //Check iot in iot list of Topic
             var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id && x.Topic.Status == RequestStatus.Approved).Select(x => x.TopicId).FirstOrDefaultAsync(); //checked project get topic
             var isInTopicComponent = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents()
                                                                                     .Where(x => x.MasterId == topicId && x.ComponentId == request.ComponentId).AnyAsync();
-            if (!isInTopicComponent) return false;
+            if (!isInTopicComponent)
+            {
+                result.Message = "Component is not allowed to borrow";
+                return result;
+            }
             //Check remain Quantity
             var remainQuantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId, request.ComponentId);
-            if (remainQuantity < request.Quantity) return false;
-            return true;
+            if (remainQuantity < request.Quantity)
+            {
+                result.Message = $"You cannot borrow more than {remainQuantity} devices";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
         }
 
         public async Task<IEnumerable<BorrowIoTComponentInformation>> GetAvailableIoTComponents(GetAvailableComponentRequest request, Guid leaderId)
