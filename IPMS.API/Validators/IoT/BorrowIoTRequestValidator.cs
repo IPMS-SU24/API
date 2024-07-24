@@ -21,7 +21,14 @@ namespace IPMS.API.Validators.IoT
         {
             _borrowIoTService = borrowIoTService;
             var leaderId = context.HttpContext.User.Claims.GetUserId();
-            RuleFor(x => x).MustAsync(async (x, cancellationToken) => await _borrowIoTService.CheckIoTValid(x, leaderId)).WithMessage("IoT Component Not Valid");
+            RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
+            {
+                var validationResult = await _borrowIoTService.CheckIoTValid(x, leaderId);
+                if (!validationResult.Result)
+                {
+                    validationContext.AddBusinessFailure(validationResult.Message);
+                }
+            });
         }
     }
 }

@@ -582,5 +582,51 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
+
+        public async Task EvaluateMembers(LeaderEvaluateMembersRequest request, Guid leaderId)
+        {
+            var group = _commonServices.GetProject()!;
+            var members = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == group.Id).ToListAsync();
+            foreach (var mem in members)
+            {
+                mem.ContributePercentage = request.Members.Where(x => x.MemberId == mem.InformationId)
+                                        .Select(x => x.Percentage).FirstOrDefault();
+                _unitOfWork.StudentRepository.Update(mem);
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<ValidationResultModel> CheckValidEvaluateMembers(IList<MemberContribute> membersInRequest)
+        {
+            var result = new ValidationResultModel()
+            {
+                Message = "Cannot evalute"
+            };
+
+            if(!membersInRequest.Any())
+            {
+                result.Message = "Please add Member Contribute Information";
+                return result;
+            }
+            // duplicate
+            if(membersInRequest.Select(x => x.MemberId).Any(x=>membersInRequest.Count(m=>m.MemberId == x) != 1))
+            {
+                result.Message = "Duplicate Member Contribute Information";
+                return result;
+            }
+            var group = _commonServices.GetProject()!;
+            var members = await _unitOfWork.StudentRepository.Get()
+                                                    .Where(x => x.ProjectId == group.Id && x.FinalGrade == null)
+                                                    .Select(x=> x.InformationId).ToListAsync();
+            //Check all mem is required for evaluate
+            if(membersInRequest.Count != members.Count || membersInRequest.Any(x=> !members.Contains(x.MemberId)))
+            {
+                result.Message = "Member Information is not correct";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
     }
 }
