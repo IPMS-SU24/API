@@ -1,7 +1,6 @@
 ﻿using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Singleton;
 using IPMS.Business.Interfaces;
-using IPMS.DataAccess.Common.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Common.Utils
