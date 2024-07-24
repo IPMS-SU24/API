@@ -46,13 +46,13 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-      /*  [EnumAuthorize(UserRole.Lecturer)]
-        [HttpPut]
-        public async Task<IActionResult> LecturerEvaluate([FromBody] ConfigureSubmissionModuleRequest request)
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("lecturer-evaluate")]
+        public async Task<IActionResult> LecturerEvaluate([FromBody] LecturerEvaluateRequest request)
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();
-            await _submissionModuleService.ConfigureSubmissionModule(request, currentUserId);
+            await _submissionModuleService.LecturerEvaluate(request, currentUserId);
             return GetActionResponse(new IPMSResponse<object>());
-        }*/
+        }
     }
 }
