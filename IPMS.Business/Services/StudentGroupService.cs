@@ -641,5 +641,51 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
+
+        public async Task<IList<MemberEvaluateResponse>> GetEvaluateMembers(Guid studentId)
+        {
+            var project = _commonServices.GetProject();
+            if (project == null) throw new DataNotFoundException("Not Found Group");
+            var memberInfoQuery = _unitOfWork.StudentRepository.Get()
+                .Include(x => x.Information).Where(x => x.ProjectId == project.Id);
+            return await memberInfoQuery.Select(x => new MemberEvaluateResponse
+            {
+                MemberId = x.InformationId,
+                Name = x.Information.FullName,
+                LeaderSetPercentage = x.ContributePercentage,
+                LecturerSetPercentage = x.FinalPercentage
+            }).ToListAsync();
+        }
+
+        public async Task<IList<MemberEvaluateResponse>> GetEvaluateMembersByLecturer(GetMemberContributionRequest request)
+        {
+            var project = await _unitOfWork.ProjectRepository.Get().SingleAsync(x => x.Id == request.GroupId);
+            var memberInfoQuery = _unitOfWork.StudentRepository.Get()
+                .Include(x => x.Information).Where(x => x.ProjectId == project.Id);
+            return await memberInfoQuery.Select(x => new MemberEvaluateResponse
+            {
+                MemberId = x.InformationId,
+                Name = x.Information.FullName,
+                LeaderSetPercentage = x.ContributePercentage,
+                LecturerSetPercentage = x.FinalPercentage
+            }).ToListAsync();
+        }
+
+        public async Task<ValidationResultModel> CheckGetContributeByLecturer(GetMemberContributionRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Cannot get contribute"
+            };
+            var group = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(x => x.Id == request.GroupId && x.OwnerId == lecturerId);
+            if(group == null)
+            {
+                result.Message = "Not found group or group not in your class";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
     }
 }

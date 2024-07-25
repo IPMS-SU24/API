@@ -3,7 +3,7 @@
     public class DataNotFoundException : Exception
     {
         public DataNotFoundException()
-            : base()
+            : base(string.Empty)
         {
         }
 
