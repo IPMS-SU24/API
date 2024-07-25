@@ -1,6 +1,7 @@
 ﻿using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
+using IPMS.DataAccess.Models;
 
 namespace IPMS.Business.Interfaces.Services
 {
@@ -13,5 +14,6 @@ namespace IPMS.Business.Interfaces.Services
         Task AddStudentAsync(AddStudentsToClassRequest request);
         Task<ValidationResultModel> CheckImportStudentValidAsync(AddStudentsToClassRequest request, Guid lecturerId);
         Task<JobImportStatusResponse> GetImportStudentStatusAsync(Guid classId);
+        Task<IPMSClass> GetClassDetail(Guid classId);
     }
 }
