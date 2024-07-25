@@ -4,12 +4,14 @@ using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
+using IPMS.Business.Requests.Assessment;
 using IPMS.Business.Responses.Assessment;
 using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.Business.Responses.SubmissionModule;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+
 namespace IPMS.Business.Services
 {
     public class AssessmentService : IAssessmentService
@@ -54,7 +56,7 @@ namespace IPMS.Business.Services
                 result.Message = ("Assessment does not exist");
                 return result;
             }
-               
+
             result.Message = string.Empty;
             result.Result = true;
             return result;
@@ -68,7 +70,7 @@ namespace IPMS.Business.Services
             //Get currentProjectId
             // --> Get SubmissionModule
             //Can get ProjectSubmission base on projectId + submissionModule Id
-            
+
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
             IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
             Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
@@ -93,7 +95,7 @@ namespace IPMS.Business.Services
                                                                         Id = ps.Id,
                                                                         Name = ps.Name,
                                                                         SubmitTime = ps.SubmissionDate,
-                                                                        Link = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission,ps.Id,ps.Name)) ?? string.Empty //Get base on name on S3 
+                                                                        Link = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, ps.Id, ps.Name)) ?? string.Empty //Get base on name on S3 
 
                                                                     }).ToList()
                                                                 }).ToList();
@@ -104,6 +106,36 @@ namespace IPMS.Business.Services
                 Name = assessment.Name,
                 SubmissionModules = submissionsModule
             };
+            return response;
+        }
+
+        public async Task<IEnumerable<GetAllAssessmentsResponse>> GetAllAssessments(GetAllAssessmentsRequest request)
+        {
+
+            if (request.Name == null)
+            {
+                request.Name = "";
+            }
+            IQueryable<Assessment> assessments;
+            if (request.Id != Guid.Empty)
+            {
+                assessments = _unitOfWork.AssessmentRepository.Get().Where(a => a.Name.ToLower().Contains(request.Name.ToLower()) || a.Id.Equals(request.Id)).Include(a => a.Syllabus);
+            }
+            else
+            {
+                assessments = _unitOfWork.AssessmentRepository.Get().Where(a => a.Name.ToLower().Contains(request.Name.ToLower())).Include(a => a.Syllabus);
+            }
+
+            IEnumerable<GetAllAssessmentsResponse> response = assessments.Select(a => new GetAllAssessmentsResponse
+            {
+                Id = a.Id,
+                Order = a.Order,
+                Name = a.Name,
+                Percentage = a.Percentage,
+                Description = a.Description,
+                SyllabusName = a.Syllabus.Name
+            });
+
             return response;
         }
     }

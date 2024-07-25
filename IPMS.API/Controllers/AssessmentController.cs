@@ -1,5 +1,4 @@
 ﻿using IPMS.API.Common.Attributes;
-using IPMS.API.Common.Enums;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
@@ -33,6 +32,18 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-       
+        /// <summary>
+        /// Get All Assessments
+        /// https://docs.google.com/spreadsheets/d/1FLYnGkUGJMFVO-G5EsxWFwZ5rjQMVt92GUpUOn5JUFY/edit?gid=0#gid=0
+        /// </summary>
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("get-all")]
+        public async Task<IActionResult> GetAllAssessments([FromQuery] GetAllAssessmentsRequest request)
+        {
+            var assessments = await _assessmentService.GetAllAssessments(request);
+            var response = await assessments.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
+
     }
 }
