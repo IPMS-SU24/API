@@ -565,11 +565,24 @@ namespace IPMS.Business.Services
                 result.Message = "Group does not exist";
                 return result;
             }
-            var isAllStudentExist = await _unitOfWork.StudentRepository.Get()
-                .AnyAsync(x => request.Students.Contains(x.Id) && x.ProjectId == null && x.ClassId == request.ClassId);
-            if (!isAllStudentExist)
+
+            var studentExist = await _unitOfWork.StudentRepository.Get()
+                .Where(x => request.Students.Contains(x.Id)).ToListAsync();
+            if (studentExist.Count() != request.Students.Count())
             {
-                result.Message = "Student does not exist or current in a group";
+                result.Message = "Student does not exist";
+                return result;
+            }
+            var isInAGroup = studentExist.Any(x => x.ProjectId != null);
+            if (isInAGroup)
+            {
+                result.Message = "Student currently is in a group";
+                return result;
+            }
+            var isDifferentClass = studentExist.Any(x => x.ClassId != request.ClassId);
+            if (isDifferentClass)
+            {
+                result.Message = "Student is in a differenct class";
                 return result;
             }
             var existedMembers = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == request.GroupId).CountAsync();
