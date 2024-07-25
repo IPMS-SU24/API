@@ -21,6 +21,7 @@ namespace IPMS.API.Controllers
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
+            HttpContext.Session.Clear();
             var userResult = await _authenticationService.Login(request);
             var response = new IPMSResponse<TokenModel>
             {
@@ -37,6 +38,7 @@ namespace IPMS.API.Controllers
         [Route("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] TokenModel request)
         {
+            HttpContext.Session.Clear();
             var rs = await _authenticationService.RefreshToken(request);
 
             var response = new IPMSResponse<TokenModel>
