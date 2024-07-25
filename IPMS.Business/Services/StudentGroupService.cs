@@ -567,7 +567,7 @@ namespace IPMS.Business.Services
             }
 
             var studentExist = await _unitOfWork.StudentRepository.Get()
-                .Where(x => request.Students.Contains(x.Id)).ToListAsync();
+                .Where(x => request.Students.Contains(x.InformationId)).ToListAsync();
             if (studentExist.Count() != request.Students.Count())
             {
                 result.Message = "Student does not exist";
