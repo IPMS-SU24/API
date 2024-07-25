@@ -8,6 +8,8 @@ namespace IPMS.Business.Interfaces.Services
     {
         Task<AssessmentSubmissionProjectResponse> GetAssessmentById(Guid assessmentId);
         Task<IEnumerable<GetAllAssessmentsResponse>> GetAllAssessments(GetAllAssessmentsRequest request);
+        Task ConfigureAssessments(ConfigureAssessmentsRequest request);
+        Task<ValidationResultModel> ConfigureAssessmentsValidators(ConfigureAssessmentsRequest request);
         Task<ValidationResultModel> GetAssessmentByIdValidators(Guid assessmentId);
     }
 }

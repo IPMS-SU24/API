@@ -8,5 +8,6 @@
         public decimal Percentage { get; set; }
         public string Description { get; set; }
         public string SyllabusName { get; set; }
+        public bool IsEdited { get; set; }
     }
 }

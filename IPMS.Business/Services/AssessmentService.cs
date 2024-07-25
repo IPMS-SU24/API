@@ -10,7 +10,9 @@ using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.Business.Responses.SubmissionModule;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
+using NPOI.SS.Formula.Functions;
 
 namespace IPMS.Business.Services
 {
@@ -119,13 +121,23 @@ namespace IPMS.Business.Services
             IQueryable<Assessment> assessments;
             if (request.Id != Guid.Empty)
             {
-                assessments = _unitOfWork.AssessmentRepository.Get().Where(a => a.Name.ToLower().Contains(request.Name.ToLower()) || a.Id.Equals(request.Id)).Include(a => a.Syllabus);
+                assessments = _unitOfWork.AssessmentRepository.Get().Where(a => a.Name.ToLower().Contains(request.Name.ToLower()) || a.Id.Equals(request.Id)).Include(a => a.Syllabus).ThenInclude(s => s.Semesters);
             }
             else
             {
-                assessments = _unitOfWork.AssessmentRepository.Get().Where(a => a.Name.ToLower().Contains(request.Name.ToLower())).Include(a => a.Syllabus);
+                assessments = _unitOfWork.AssessmentRepository.Get().Where(a => a.Name.ToLower().Contains(request.Name.ToLower())).Include(a => a.Syllabus).ThenInclude(s => s.Semesters);
             }
 
+            var semesterId = await _unitOfWork.SemesterRepository.Get().Select(s => s.Id).ToListAsync();
+
+            var now = DateTime.Now;
+            var curSemester = (await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.EndDate > now && x.StartDate < now)); //null .Id = 500
+            Guid curSemesterId = Guid.Empty;
+            if (curSemester != null)
+            {
+                curSemesterId = curSemester.Id;
+
+            }
             IEnumerable<GetAllAssessmentsResponse> response = assessments.Select(a => new GetAllAssessmentsResponse
             {
                 Id = a.Id,
@@ -133,10 +145,116 @@ namespace IPMS.Business.Services
                 Name = a.Name,
                 Percentage = a.Percentage,
                 Description = a.Description,
-                SyllabusName = a.Syllabus.Name
+                SyllabusName = a.Syllabus.Name,
+                IsEdited = a.Syllabus.Semesters.All(s => s.Id.Equals(curSemesterId) == false)
             });
 
             return response;
         }
+        public async Task<ValidationResultModel> ConfigureAssessmentsValidators(ConfigureAssessmentsRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+            var isNewDelete = request.Assessments.Any(a => a.IsDelete == true && a.Id == Guid.Empty);
+            if (isNewDelete)
+            {
+                result.Message = "Cannot set new Assessment Deleted";
+                return result;
+            }
+
+            var dupRequestId = request.Assessments
+                    .GroupBy(g => g.Id)
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToList();
+            if (dupRequestId.Any())
+            {
+                result.Message = "Does not send duplicate request";
+                return result;
+            }
+
+            var dupRequestOrder = request.Assessments
+                    .GroupBy(g => g.Order)
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToList();
+            if (dupRequestOrder.Any())
+            {
+                result.Message = "Does not send duplicate Order";
+                return result;
+            }
+
+            var syllabus = await _unitOfWork.SyllabusRepository.Get().Where(s => s.Id.Equals(request.SyllabusId)).Include(s => s.Semesters).Include(s => s.Assessments).FirstOrDefaultAsync();
+            if (syllabus == null)
+            {
+                result.Message = "Syllabus not found";
+                return result;
+            }
+            
+            var assMatches = syllabus.Assessments.Select(a => request.Assessments.Select(ra => ra.Id).Contains(a.Id)).Count();
+            var reqAssExisted = request.Assessments.Where(a => a.Id != Guid.Empty).Count();
+            if (assMatches != reqAssExisted)
+            {
+                result.Message = "Please send all assessments existed";
+                return result;
+            }
+
+            var sumPercentage = request.Assessments.Where(a => a.IsDelete == false).Sum(a => a.Percentage);
+            if (sumPercentage != 100)
+            {
+                result.Message = "Please set percentage is 100%";
+                return result;
+            }
+
+            var now = DateTime.Now;
+            var curSemester = (await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.EndDate > now && x.StartDate < now)); //null .Id = 500
+            if (curSemester != null)
+            {
+                var isInCurSemester = syllabus.Semesters.Any(s => s.Id.Equals(curSemester.Id));
+                if (isInCurSemester)
+                {
+                    result.Message = "Cannot set Assessments in current semester";
+                    return result;
+                }
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        public async Task ConfigureAssessments(ConfigureAssessmentsRequest request)
+        {
+            var insertList = new List<Assessment>();
+            foreach(var ass in request.Assessments)
+            {
+                if (ass.Id == Guid.Empty)
+                {
+                    insertList.Add(new Assessment
+                    {
+                        Name = ass.Name,
+                        Order = ass.Order,
+                        Description = ass.Description,
+                        Percentage = ass.Percentage,
+                        SyllabusId = request.SyllabusId,
+                    });
+                } else
+                {
+                    var uptAss = await _unitOfWork.AssessmentRepository.Get().FirstOrDefaultAsync(a => a.Id.Equals(ass.Id));
+                    uptAss.Name = ass.Name;
+                    uptAss.Order = ass.Order;
+                    uptAss.Description = ass.Description;
+                    uptAss.Percentage = ass.Percentage;
+                    uptAss.IsDeleted = ass.IsDelete;
+                    _unitOfWork.AssessmentRepository.Update(uptAss);
+
+                }
+            }
+            await _unitOfWork.AssessmentRepository.InsertRangeAsync(insertList);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+
     }
 }
