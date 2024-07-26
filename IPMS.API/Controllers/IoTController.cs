@@ -52,6 +52,30 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
+    //    [EnumAuthorize(UserRole.Admin)]
+        [HttpPost("Add")]
+        public async Task<IActionResult> AddIoTDevice([FromBody] AddIoTDeviceRequest request)
+        {
+            await _IoTDataService.AddIoTDevice(request);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
+      //  [EnumAuthorize(UserRole.Admin)]
+        [HttpPut("Update")]
+        public async Task<IActionResult> UpdateIoTDevice([FromBody] UpdateIoTDeviceRequest request)
+        {
+            await _IoTDataService.UpdateIoTDevice(request);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
+     //   [EnumAuthorize(UserRole.Admin)]
+        [HttpDelete("Delete")]
+        public async Task<IActionResult> DeleteIoTDevice([FromBody] DeleteIoTDeviceRequest request)
+        {
+            await _IoTDataService.DeleteIoTDevice(request);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
         [EnumAuthorize(UserRole.Student)]
         [HttpGet("report")]
         public async Task<IActionResult> GetReportIoTComponents()

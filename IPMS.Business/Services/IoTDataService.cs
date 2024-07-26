@@ -25,6 +25,23 @@ namespace IPMS.Business.Services
             _userManager = userManager;
         }
 
+        public async Task<ValidationResultModel> AddIoTDeviceValidators(AddIoTDeviceRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        public async Task AddIoTDevice(AddIoTDeviceRequest request)
+        {
+            await _unitOfWork.IoTComponentRepository.InsertAsync(new IoTComponent { Name = request.Name, Description = request.Description });
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         public async Task<ValidationResultModel> CheckLecturerUpdateIoTValid(UpdateIoTQuantityRequest request, Guid lectuerId)
         {
             var result = new ValidationResultModel
@@ -37,10 +54,10 @@ namespace IPMS.Business.Services
             var ioTBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents()
                                                                             .Where(x => projects.Contains(x.MasterId) && x.ComponentId == request.Id)
                                                                             .GroupBy(x => x.ComponentId, x => x.Id,
-                                                                            (master, com) => 
+                                                                            (master, com) =>
                                                                                  com.Count()
                                                                             ).FirstOrDefaultAsync();
-            if(ioTBorrowed > request.Quantity)
+            if (ioTBorrowed > request.Quantity)
             {
                 result.Message = "Quantity borrowed greater than quantity you want to request";
                 return result;
@@ -107,6 +124,68 @@ namespace IPMS.Business.Services
             iotMaster.Quantity = request.Quantity;
             _unitOfWork.ComponentsMasterRepository.Update(iotMaster);
             await _unitOfWork.SaveChangesAsync();
-        } 
+        }
+
+        public async Task<ValidationResultModel> UpdateIoTDeviceValidators(UpdateIoTDeviceRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            var device = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.Id);
+            if (device == null)
+            {
+                result.Message = "Device does not exist";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public async Task UpdateIoTDevice(UpdateIoTDeviceRequest request)
+        {
+            var device = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.Id);
+            device!.Name = request.Name;
+            device!.Description = request.Description;
+            _unitOfWork.IoTComponentRepository.Update(device);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<ValidationResultModel> DeleteIoTDeviceValidators(DeleteIoTDeviceRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            var device = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.Id);
+            if (device == null)
+            {
+                result.Message = "Device does not exist";
+                return result;
+            }
+
+            var isInTopic = await _unitOfWork.ComponentsMasterRepository.Get().AnyAsync(cm => cm.ComponentId.Equals(request.Id) && cm.MasterType.Equals(ComponentsMasterType.Topic));
+            if (isInTopic)
+            {
+                result.Message = "Cannot delete device in topic";
+                return result;
+
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        public async Task DeleteIoTDevice(DeleteIoTDeviceRequest request)
+        {
+            var device = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.Id);
+            _unitOfWork.IoTComponentRepository.Delete(device);
+            await _unitOfWork.SaveChangesAsync();
+
+        }
+
+
     }
 }
