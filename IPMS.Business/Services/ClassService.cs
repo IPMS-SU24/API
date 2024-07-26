@@ -266,9 +266,28 @@ namespace IPMS.Business.Services
             }
         }
 
-        public async Task<IPMSClass> GetClassDetail(Guid classId)
+        public async Task<GetClassDetailResponse> GetClassDetail(Guid classId)
         {
-            return await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(classId)).Include(c => c.Semester).Include(c => c.Committees).FirstOrDefaultAsync();
+            GetClassDetailResponse @class = new GetClassDetailResponse();
+            var classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(classId)).Include(c => c.Students).Include(c => c.Semester).FirstOrDefaultAsync();
+            if (classRaw == null)
+            {
+                return @class;
+            }
+
+            var lecturer = await _userManager.FindByIdAsync(classRaw.LecturerId.ToString());
+            if (lecturer == null)
+            {
+                return @class;
+            }
+
+            @class.Id = classRaw.Id;
+            @class.Semester = classRaw.Semester.Name;
+            @class.ShortName = classRaw.ShortName;
+            @class.Name = classRaw.Name;
+            @class.Lecturer = lecturer.FullName;
+            @class.NumOfStudents = classRaw.Students.Count();
+            return @class;
         }
     }
 }

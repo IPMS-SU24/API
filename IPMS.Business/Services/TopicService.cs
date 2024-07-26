@@ -55,6 +55,7 @@ namespace IPMS.Business.Services
                 result.Message = "Student is not studying";
                 return result;
             }
+
             if (@class.ChangeTopicDeadline < DateTime.Now)
             {
                 result.Message = "Change Topic Deadline is expired";
@@ -65,6 +66,13 @@ namespace IPMS.Business.Services
             if (project == null)
             {
                 result.Message = "Student is not in project";
+                return result;
+            }
+
+            var isRegister = await _unitOfWork.ClassTopicRepository.Get().FirstOrDefaultAsync(ct => ct.ClassId.Equals(@class.Id) && ct.ProjectId.Equals(project.Id));
+            if (isRegister != null)
+            {
+                result.Message = "Can suggest only 1 topic";
                 return result;
             }
             //Check must have IoT
