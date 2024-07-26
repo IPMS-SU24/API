@@ -50,9 +50,7 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> ConfigureAssessments([FromBody] ConfigureAssessmentsRequest request)
         {
             await _assessmentService.ConfigureAssessments(request);
-            //  var response = await assessments.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-            //  return GetActionResponse(response);
-            return Ok();
+            return GetActionResponse(new IPMSResponse<object>());
         }
 
     }
