@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using IPMS.Business.Responses.Class;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http.Extensions;
+using IPMS.DataAccess.Models;
 
 namespace IPMS.API.Controllers
 {
@@ -74,6 +75,19 @@ namespace IPMS.API.Controllers
                 Data = dataResponse
             };
             return GetActionResponse(response);   
+        }
+
+      //  [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("{classId}/[action]")]
+        public async Task<IActionResult> GetClassDetail(Guid classId)
+        {
+            var detail = await _classService.GetClassDetail(classId);
+            IPMSClass dataResponse = detail != null ? detail : new IPMSClass();
+            var response = new IPMSResponse<IPMSClass>()
+            {
+                Data = dataResponse
+            };
+            return GetActionResponse(response);
         }
     }
 }

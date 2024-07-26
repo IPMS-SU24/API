@@ -118,5 +118,8 @@ namespace IPMS.API.Controllers
             await _IoTDataService.UpdateIoTQuantity(request, lecturerId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+
+
+       
     }
 }

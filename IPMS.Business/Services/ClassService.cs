@@ -13,7 +13,6 @@ using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver.Linq;
@@ -265,6 +264,11 @@ namespace IPMS.Business.Services
                 }
                 else throw;
             }
+        }
+
+        public async Task<IPMSClass> GetClassDetail(Guid classId)
+        {
+            return await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(classId)).Include(c => c.Semester).Include(c => c.Committees).FirstOrDefaultAsync();
         }
     }
 }

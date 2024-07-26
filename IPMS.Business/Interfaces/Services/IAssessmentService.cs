@@ -1,17 +1,15 @@
 ﻿using IPMS.Business.Models;
+using IPMS.Business.Requests.Assessment;
 using IPMS.Business.Responses.Assessment;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IPMS.Business.Interfaces.Services
 {
     public interface IAssessmentService
     {
         Task<AssessmentSubmissionProjectResponse> GetAssessmentById(Guid assessmentId);
+        Task<IEnumerable<GetAllAssessmentsResponse>> GetAllAssessments(GetAllAssessmentsRequest request);
+        Task ConfigureAssessments(ConfigureAssessmentsRequest request);
+        Task<ValidationResultModel> ConfigureAssessmentsValidators(ConfigureAssessmentsRequest request);
         Task<ValidationResultModel> GetAssessmentByIdValidators(Guid assessmentId);
     }
 }
