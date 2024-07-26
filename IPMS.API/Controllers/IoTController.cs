@@ -48,11 +48,11 @@ namespace IPMS.API.Controllers
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] GetIoTComponentRequest request)
         {
-            var response = await _IoTDataService.GetAll(request).GetPaginatedResponse();
+            var response = await _IoTDataService.GetAll(request).GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return GetActionResponse(response);
         }
 
-    //    [EnumAuthorize(UserRole.Admin)]
+        [EnumAuthorize(UserRole.Admin)]
         [HttpPost("Add")]
         public async Task<IActionResult> AddIoTDevice([FromBody] AddIoTDeviceRequest request)
         {
@@ -60,7 +60,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(new IPMSResponse<object>());
         }
 
-      //  [EnumAuthorize(UserRole.Admin)]
+        [EnumAuthorize(UserRole.Admin)]
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateIoTDevice([FromBody] UpdateIoTDeviceRequest request)
         {
@@ -68,7 +68,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(new IPMSResponse<object>());
         }
 
-     //   [EnumAuthorize(UserRole.Admin)]
+        [EnumAuthorize(UserRole.Admin)]
         [HttpDelete("Delete")]
         public async Task<IActionResult> DeleteIoTDevice([FromBody] DeleteIoTDeviceRequest request)
         {
