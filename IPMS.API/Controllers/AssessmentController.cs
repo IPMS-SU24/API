@@ -45,7 +45,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-       // [EnumAuthorize(UserRole.Admin)]
+        [EnumAuthorize(UserRole.Admin)]
         [HttpPut("configure")]
         public async Task<IActionResult> ConfigureAssessments([FromBody] ConfigureAssessmentsRequest request)
         {
