@@ -82,8 +82,8 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> GetClassDetail(Guid classId)
         {
             var detail = await _classService.GetClassDetail(classId);
-            IPMSClass dataResponse = detail != null ? detail : new IPMSClass();
-            var response = new IPMSResponse<IPMSClass>()
+            GetClassDetailResponse dataResponse = detail != null ? detail : new GetClassDetailResponse();
+            var response = new IPMSResponse<GetClassDetailResponse>()
             {
                 Data = dataResponse
             };
