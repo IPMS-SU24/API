@@ -1,5 +1,4 @@
-﻿
-namespace IPMS.Business.Responses.Assessment
+﻿namespace IPMS.Business.Requests.Assessment
 {
     public class ConfigureAssessmentsRequest
     {

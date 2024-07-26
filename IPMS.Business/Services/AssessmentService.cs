@@ -166,7 +166,7 @@ namespace IPMS.Business.Services
 
             var dupRequestId = request.Assessments
                     .GroupBy(g => g.Id)
-                    .Where(g => g.Count() > 1)
+                    .Where(g => g.Count() > 1 && g.Key != Guid.Empty)
                     .Select(g => g.Key)
                     .ToList();
             if (dupRequestId.Any())
@@ -175,7 +175,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var dupRequestOrder = request.Assessments
+            var dupRequestOrder = request.Assessments // for case delete, undeleted just set order not same
                     .GroupBy(g => g.Order)
                     .Where(g => g.Count() > 1)
                     .Select(g => g.Key)
@@ -193,8 +193,8 @@ namespace IPMS.Business.Services
                 return result;
             }
             
-            var assMatches = syllabus.Assessments.Select(a => request.Assessments.Select(ra => ra.Id).Contains(a.Id)).Count();
-            var reqAssExisted = request.Assessments.Where(a => a.Id != Guid.Empty).Count();
+            var assMatches = syllabus.Assessments.Count(a => request.Assessments.Select(ra => ra.Id).Contains(a.Id));
+            var reqAssExisted = request.Assessments.Count(a => a.Id != Guid.Empty);
             if (assMatches != reqAssExisted)
             {
                 result.Message = "Please send all assessments existed";
@@ -215,7 +215,7 @@ namespace IPMS.Business.Services
                 var isInCurSemester = syllabus.Semesters.Any(s => s.Id.Equals(curSemester.Id));
                 if (isInCurSemester)
                 {
-                    result.Message = "Cannot set Assessments in current semester";
+                    result.Message = "Cannot configure Assessments in current semester";
                     return result;
                 }
             }
@@ -226,7 +226,7 @@ namespace IPMS.Business.Services
         }
         public async Task ConfigureAssessments(ConfigureAssessmentsRequest request)
         {
-            var insertList = new List<Assessment>();
+            var insertList = new List<Assessment>();    
             foreach(var ass in request.Assessments)
             {
                 if (ass.Id == Guid.Empty)
