@@ -121,8 +121,9 @@ namespace IPMS.Business.Services
                     TopicId = topic?.Id,
                     TopicName = topic?.Name ?? string.Empty,
                     Description = topic?.Description ?? string.Empty,
-                    EndDate = @class.ChangeTopicDeadline,
-                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline.Value, @class.ChangeGroupDeadline.Value)
+                    EndDate = @class!.ChangeTopicDeadline,
+                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline!.Value, @class.ChangeGroupDeadline!.Value),
+                    
                 },
                 BorrowInfo = new()
                 {
@@ -131,6 +132,16 @@ namespace IPMS.Business.Services
                     IoTComponents = _mapper.Map<List<BorrowIoTComponentInformation>>(componentBorrowed)
                 }
             };
+            if(topic != null)
+            {
+                response.TopicInfo.FileLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, topic.Id, topic.Detail)) ?? string.Empty;
+                response.TopicInfo.Iots = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x => x.Component).Where(x => x.MasterId == topic.Id).Select(x => new TopicIoTInfo
+                {
+                    Id = x.Id,
+                    Quantity = x.Quantity,
+                    Name = x.Component.Name
+                }).ToListAsync();
+            }
             var projectSubmissions = await _commonServices.GetProjectSubmissions(project.Id);
             var submissions = projectSubmissions.GroupBy(x => (Guid)x.SubmissionModule!.AssessmentId!).ToDictionary(x => x.Key);
             var mapAssessmentInformationTasks = new List<Task<AssessmentInformation>>();

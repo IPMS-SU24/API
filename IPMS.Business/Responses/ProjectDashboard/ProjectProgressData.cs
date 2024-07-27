@@ -25,6 +25,8 @@ namespace IPMS.Business.Responses.ProjectDashboard
         public string TopicName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public DateTime? EndDate { get; set; }
+        public string FileLink { get; set; }
+        public List<TopicIoTInfo> Iots { get; set; } = new List<TopicIoTInfo>();
     }
     public class BorrowInformation
     {
@@ -67,5 +69,12 @@ namespace IPMS.Business.Responses.ProjectDashboard
         }
         public DateTime EndDate { get; set; }
         public DateTime StartDate { get; set; }
+    }
+
+    public class TopicIoTInfo
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public int Quantity { get; set; }
     }
 }
