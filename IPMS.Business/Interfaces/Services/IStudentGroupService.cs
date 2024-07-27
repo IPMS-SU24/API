@@ -28,5 +28,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<IList<MemberEvaluateResponse>> GetEvaluateMembersByLecturer(GetMemberContributionRequest request);
         Task<ValidationResultModel> CheckGetContributeByLecturer(GetMemberContributionRequest request, Guid lecturerId);
         Task RemoveGroupAsync(Guid groupId);
+        Task AssignLeaderByLecturer(AssignLeaderByLecturerRequest request, Guid lecturerId);
+        Task<ValidationResultModel> CheckValidAssignLeaderByLecturer(AssignLeaderByLecturerRequest request, Guid lecturerId);
     }
 }
