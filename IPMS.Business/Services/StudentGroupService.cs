@@ -267,6 +267,7 @@ namespace IPMS.Business.Services
                     result.Message = "Member not in the same class";
                     return result;
                 }
+
             }
             if (reporterProject.Id == memberForSwapProject.Id)
             {

@@ -4,6 +4,7 @@
     {
         public int TotalMember { get; set; }
         public IQueryable<MemberInGroupData> MemberInfo { get; set; }
+        public DateTime? ChangeMemberDeadline { get; set; }
     }
     public class MemberInGroupData
     {

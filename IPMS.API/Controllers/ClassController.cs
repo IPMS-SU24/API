@@ -52,7 +52,8 @@ namespace IPMS.API.Controllers
                 Data = new
                 {
                     resultQuery.TotalMember,
-                    MemberInfo = memberInfoResponse.Data
+                    MemberInfo = memberInfoResponse.Data,
+                    resultQuery.ChangeMemberDeadline
                 }
             };
             return GetActionResponse(response);
