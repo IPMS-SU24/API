@@ -2,7 +2,6 @@
 using AutoFilterer.Enums;
 using AutoFilterer.Types;
 using IPMS.DataAccess.Models;
-using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
 
 namespace IPMS.Business.Requests.Class

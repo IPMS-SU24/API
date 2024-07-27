@@ -19,5 +19,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<GetClassDetailResponse> GetClassDetail(Guid classId);
         Task<ValidationResultModel> UpdateClassDetailValidators(UpdateClassDetailRequest request);
         Task UpdateClassDetail(UpdateClassDetailRequest request);
+        Task<IEnumerable<GetClassDetailResponse>> GetClassList(GetClassListRequest request);
     }
 }
