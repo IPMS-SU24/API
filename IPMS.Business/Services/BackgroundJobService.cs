@@ -23,6 +23,7 @@ namespace IPMS.Business.Services
     public class BackgroundJobService : IBackgoundJobService
     {
         private readonly UserManager<IPMSUser> _userManager;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly MailServer _mailServer;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMessageService _messageService;
@@ -34,7 +35,8 @@ namespace IPMS.Business.Services
                                     IUnitOfWork unitOfWork,
                                     IMessageService messageService,
                                     IHttpContextAccessor httpContext,
-                                    IConfiguration configuration)
+                                    IConfiguration configuration,
+                                    RoleManager<IdentityRole<Guid>> roleManager)
         {
             _userManager = userManager;
             _mailServer = mailServer;
@@ -42,6 +44,7 @@ namespace IPMS.Business.Services
             _messageService = messageService;
             _httpContext = httpContext;
             _mailHost = configuration["MailFrom"];
+            _roleManager = roleManager;
         }
 
         public async Task AddJobIdToStudent(string jobId,Guid classId, string email)
@@ -77,6 +80,10 @@ namespace IPMS.Business.Services
                     if (!result.Succeeded)
                     {
                         throw new CannotCreateAccountException();
+                    }
+                    if (!await _roleManager.RoleExistsAsync(UserRole.Student.ToString()))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole<Guid>(UserRole.Student.ToString()));
                     }
                     await _userManager.AddToRoleAsync(stuAccount,UserRole.Student.ToString());
                     existUser = await _userManager.FindByEmailAsync(student.Email);
