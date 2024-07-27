@@ -691,5 +691,13 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
+
+        public async Task RemoveGroupAsync(Guid groupId)
+        {
+            //Cascade to all student
+            var group = await _unitOfWork.ProjectRepository.Get().FirstAsync(x => x.Id == groupId);
+            _unitOfWork.ProjectRepository.Delete(group);
+            await _unitOfWork.SaveChangesAsync();
+        }
     }
 }

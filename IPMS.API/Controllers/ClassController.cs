@@ -76,6 +76,13 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("[action]")]
+        public async Task<IActionResult> RemoveOutOfClass([FromBody] RemoveOutOfClassRequest request)
+        {
+            await _classService.RemoveOutOfClassAsync(request);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
 
         //  [EnumAuthorize(UserRole.Admin)]
         [HttpGet("{classId}/[action]")]
