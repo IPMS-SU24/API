@@ -124,7 +124,7 @@ namespace IPMS.API.Controllers
 
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet("lecturer-evaluate-members/{groupId}")]
-        public async Task<IActionResult> GetEvaluateMembersByLecturer(GetMemberContributionRequest request)
+        public async Task<IActionResult> GetEvaluateMembersByLecturer([FromRoute] GetMemberContributionRequest request)
         {
             var response = await _studentGroupService.GetEvaluateMembersByLecturer(request);
             return GetActionResponse(new IPMSResponse<IList<MemberEvaluateResponse>>
