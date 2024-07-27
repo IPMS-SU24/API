@@ -26,7 +26,7 @@ namespace IPMS.API.Controllers
         {
             var lecturerId = User.Claims.GetUserId();
             await _classService.SetMaxMember(lecturerId, request);
-            return GetActionResponse(new IPMSResponse<object>());   
+            return GetActionResponse(new IPMSResponse<object>());
         }
         [Authorize]
         [HttpGet("{classId}/[action]")]
@@ -55,14 +55,14 @@ namespace IPMS.API.Controllers
                     MemberInfo = memberInfoResponse.Data
                 }
             };
-            return GetActionResponse(response);   
+            return GetActionResponse(response);
         }
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpPost("[action]")]
         public async Task<IActionResult> AddStudents([FromBody] AddStudentsToClassRequest request)
         {
             await _classService.AddStudentAsync(request);
-            return GetActionResponse(new IPMSResponse<object>());   
+            return GetActionResponse(new IPMSResponse<object>());
         }
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet("{classId}/[action]")]
@@ -74,10 +74,10 @@ namespace IPMS.API.Controllers
             {
                 Data = dataResponse
             };
-            return GetActionResponse(response);   
+            return GetActionResponse(response);
         }
 
-      //  [EnumAuthorize(UserRole.Admin)]
+        //  [EnumAuthorize(UserRole.Admin)]
         [HttpGet("{classId}/[action]")]
         public async Task<IActionResult> GetClassDetail(Guid classId)
         {
@@ -89,5 +89,13 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+
+        //  [EnumAuthorize(UserRole.Admin)]
+        /*[HttpPut("update")]
+        public async Task<IActionResult> UpdateClassDetail([FromBody] UpdateClassDetailRequest request)
+        {
+            await _classService.UpdateClassDetail(request);
+            return GetActionResponse(new IPMSResponse<object>());
+        }*/
     }
 }

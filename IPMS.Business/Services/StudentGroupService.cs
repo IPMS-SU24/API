@@ -10,6 +10,7 @@ using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
@@ -465,7 +466,14 @@ namespace IPMS.Business.Services
             {
                 Message = "Operation did not successfully"
             };
-            var student = await _unitOfWork.StudentRepository.Get().Where(s => s.Id.Equals(request.StudentId)).Include(s => s.Class).Include(s => s.Project).FirstOrDefaultAsync();
+            var project = await _commonServices.GetProject(request.StudentId);
+            if (project == null)
+            {
+                result.Message = "Student is not in project";
+                return result;
+            }
+            var student = await _unitOfWork.StudentRepository.Get().Where(s => s.InformationId.Equals(request.StudentId) && s.ProjectId.Equals(project.Id)).Include(s => s.Class)
+                        .Include(s => s.Project).FirstOrDefaultAsync();
             if (student == null)
             {
                 result.Message = "Student cannot found";
@@ -475,12 +483,6 @@ namespace IPMS.Business.Services
             if (student.Class == null)
             {
                 result.Message = "Student is not in class";
-                return result;
-            }
-
-            if (student.Project == null)
-            {
-                result.Message = "Student is not in project";
                 return result;
             }
 
@@ -520,7 +522,9 @@ namespace IPMS.Business.Services
 
         public async Task RemoveStudentOutGroup(RemoveStudentOutGroupRequest request, Guid lecturerId)
         {
-            var student = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(request.StudentId));
+            var project = await _commonServices.GetProject(request.StudentId);
+
+            var student = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(s => s.InformationId.Equals(request.StudentId) && s.ProjectId.Equals(project.Id));
 
             student.ProjectId = null; // just remove group of student - not remove out of class
             _unitOfWork.StudentRepository.Update(student);

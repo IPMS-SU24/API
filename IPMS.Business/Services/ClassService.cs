@@ -3,6 +3,7 @@ using Ganss.Excel;
 using Ganss.Excel.Exceptions;
 using Hangfire;
 using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Models;
 using IPMS.Business.Common.Utils;
@@ -289,5 +290,133 @@ namespace IPMS.Business.Services
             @class.NumOfStudents = classRaw.Students.Count();
             return @class;
         }
+        public async Task<ValidationResultModel> UpdateClassDetailValidators(UpdateClassDetailRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+
+            };
+
+            var @class = await _unitOfWork.IPMSClassRepository.GetByIDAsync(request.Id);
+            if (@class == null)
+            {
+                result.Message = "Class cannot found";
+                return result;
+            }
+
+            if (request.MaxMember < 1)
+            {
+                result.Message = "Cannot set member lower than 1";
+                return result;
+            }
+
+            var dupCommitteeId = request.Committees
+                    .GroupBy(g => g.Id)
+                    .Where(g => g.Count() > 1 && g.Key != Guid.Empty)
+                    .Select(g => g.Key)
+                    .ToList();
+            if (dupCommitteeId.Any())
+            {
+                result.Message = "Cannot have duplicate committee";
+                return result;
+            }
+
+            var isLecturerCommit = request.Committees.Where(c => c.Id.Equals(request.LecturerId)).Count();
+            if (isLecturerCommit != 1)
+            {
+                result.Message = "Lecturer must have permission to commit";
+                return result;
+            }
+
+            decimal percentage = 0;
+            var allLecturers = (await _userManager.GetUsersInRoleAsync(UserRole.Lecturer.ToString())).Select(x => x.Id).ToList(); // Find leader of project
+
+            foreach (var committee in request.Committees)
+            {
+                percentage += committee.Percentage;
+                if (committee.Percentage < 1 || committee.Percentage > 100)
+                {
+                    result.Message = "Percentage must in range 1 to 100";
+                    return result;
+                }
+                var lecCommit = await _userManager.FindByIdAsync(committee.Id.ToString());
+                if (lecCommit == null)
+                {
+                    result.Message = "Lecturer cannot found";
+                    return result;
+                }
+
+                var isRoleLecturer = allLecturers.Any(al => al.Equals(committee.Id));
+                if (isRoleLecturer == false)
+                {
+                    result.Message = "Committee must be a Lecturer";
+                    return result;
+                }
+            }
+
+            if (percentage != 100)
+            {
+                result.Message = "Please set sum of percentage is 100";
+                return result;
+            }
+
+            var now = DateTime.Now;
+            var isValidSemester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.StartDate > now && x.Id.Equals(request.SemesterId));
+            if (isValidSemester == null)
+            {
+                result.Message = "Invalid semester";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+  /*      public async Task UpdateClassDetail(UpdateClassDetailRequest request)
+        {
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.Id)).FirstOrDefaultAsync();
+
+            @class.LecturerId = request.LecturerId;
+            @class.Name = request.Name;
+            @class.ShortName = request.ShortName;
+            @class.MaxMember = request.MaxMember;
+            @class.SemesterId = request.SemesterId;
+
+        *//*    var committees = await _unitOfWork.CommitteeRepository.Get().Where(c => c.ClassId.Equals(request.Id)).ToListAsync();
+            _unitOfWork.CommitteeRepository.DeleteRange(committees);
+        //    await _unitOfWork.SaveChangesAsync();
+
+            await _unitOfWork.CommitteeRepository.InsertRangeAsync(request.Committees.Select(c => new Committee
+            {
+                LecturerId = c.Id,
+                Percentage = c.Percentage,
+                ClassId = request.Id
+            }));*//*
+
+       //     await _unitOfWork.SaveChangesAsync();
+
+            _unitOfWork.IPMSClassRepository.Attach(@class);
+
+            await _unitOfWork.SaveChangesAsync();
+        }*/
+        /* 
+         {
+  "id": "898657b4-c753-4783-8203-297079af9d82",
+  "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+  "name": "string",
+  "shortName": "string",
+  "maxMember": 10,
+  "semesterId": "dd34672a-f484-40f4-937c-01dab32fd770",
+  "committees": [
+    {
+      "id": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+      "percentage": 100
+    }
+  ]
+}
+         
+         */
+
     }
 }
