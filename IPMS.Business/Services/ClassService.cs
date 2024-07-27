@@ -298,7 +298,7 @@ namespace IPMS.Business.Services
 
             };
 
-            var @class = await _unitOfWork.IPMSClassRepository.GetByIDAsync(request.Id);
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.Id));
             if (@class == null)
             {
                 result.Message = "Class cannot found";
@@ -373,9 +373,9 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
-  /*      public async Task UpdateClassDetail(UpdateClassDetailRequest request)
+        public async Task UpdateClassDetail(UpdateClassDetailRequest request)
         {
-            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.Id)).FirstOrDefaultAsync();
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.Id)).Include(c => c.Committees).FirstOrDefaultAsync();
 
             @class.LecturerId = request.LecturerId;
             @class.Name = request.Name;
@@ -383,25 +383,22 @@ namespace IPMS.Business.Services
             @class.MaxMember = request.MaxMember;
             @class.SemesterId = request.SemesterId;
 
-        *//*    var committees = await _unitOfWork.CommitteeRepository.Get().Where(c => c.ClassId.Equals(request.Id)).ToListAsync();
-            _unitOfWork.CommitteeRepository.DeleteRange(committees);
-        //    await _unitOfWork.SaveChangesAsync();
+            _unitOfWork.CommitteeRepository.DeleteRange(@class.Committees);
 
             await _unitOfWork.CommitteeRepository.InsertRangeAsync(request.Committees.Select(c => new Committee
             {
                 LecturerId = c.Id,
                 Percentage = c.Percentage,
                 ClassId = request.Id
-            }));*//*
-
-       //     await _unitOfWork.SaveChangesAsync();
+            }));
 
             _unitOfWork.IPMSClassRepository.Attach(@class);
 
             await _unitOfWork.SaveChangesAsync();
-        }*/
-        /* 
-         {
+        }
+         
+      /*   
+       *   {
   "id": "898657b4-c753-4783-8203-297079af9d82",
   "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
   "name": "string",
@@ -414,9 +411,6 @@ namespace IPMS.Business.Services
       "percentage": 100
     }
   ]
-}
-         
-         */
-
+}*/
     }
 }
