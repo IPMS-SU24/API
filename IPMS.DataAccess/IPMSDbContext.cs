@@ -388,7 +388,7 @@ namespace IPMS.DataAccess
                 entity.HasOne(e => e.Suggester)
                    .WithMany(p => p.SuggestedTopic)
                    .HasForeignKey("SuggesterId")
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<TopicFavorite>(entity =>

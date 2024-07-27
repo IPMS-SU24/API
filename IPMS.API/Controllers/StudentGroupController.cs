@@ -74,7 +74,7 @@ namespace IPMS.API.Controllers
             await _studentGroupService.RequestToJoinGroup(request,studentId);
             return GetActionResponse(new IPMSResponse<object>());
         }
-        [EnumAuthorize(UserRole.Leader, UserRole.Lecturer)]
+        [EnumAuthorize(UserRole.Leader)]
         [HttpPut("leader-assignment")]
         public async Task<IActionResult> AssignLeader([FromBody] AssignLeaderRequest request)
         {
@@ -124,13 +124,22 @@ namespace IPMS.API.Controllers
 
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet("lecturer-evaluate-members/{groupId}")]
-        public async Task<IActionResult> GetEvaluateMembersByLecturer(GetMemberContributionRequest request)
+        public async Task<IActionResult> GetEvaluateMembersByLecturer([FromRoute] GetMemberContributionRequest request)
         {
             var response = await _studentGroupService.GetEvaluateMembersByLecturer(request);
             return GetActionResponse(new IPMSResponse<IList<MemberEvaluateResponse>>
             {
                 Data = response
             });
+        }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("leader-assignment-by-lecturer")]
+        public async Task<IActionResult> AssignLeaderByLecturer([FromBody] AssignLeaderByLecturerRequest request)
+        {
+            var lecturerId = User.Claims.GetUserId();
+            await _studentGroupService.AssignLeaderByLecturer(request, lecturerId);
+            return GetActionResponse(new IPMSResponse<object>());
         }
     }
 }

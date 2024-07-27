@@ -62,17 +62,16 @@ namespace IPMS.Business.Services
                 return result;
             }
             //Check leader in project
-            var project = await _commonService.GetProject(leaderId);
+            var project = _commonService.GetProject();
             if (project == null)
             {
                 result.Message = "Student is not in project";
                 return result;
             }
-
-            var isRegister = await _unitOfWork.ClassTopicRepository.Get().FirstOrDefaultAsync(ct => ct.ClassId.Equals(@class.Id) && ct.ProjectId.Equals(project.Id));
-            if (isRegister != null)
+            //Check Project have topic
+            if(project.ClassTopicId == null)
             {
-                result.Message = "Can suggest only 1 topic";
+                result.Message = "Project already has topic";
                 return result;
             }
             //Check must have IoT

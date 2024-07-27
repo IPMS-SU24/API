@@ -32,6 +32,7 @@ namespace IPMS.Business.Services
                                                       .Select(x => x.SubmissionModuleId).ToListAsync();
             var nearDeadlineSubmissions = _unitOfWork.SubmissionModuleRepository.Get().Where(x=>x.SemesterId == currentSemester.CurrentSemester!.Id).SelectMany(x => x.ClassModuleDeadlines)
                                                            .Where(x => x.EndDate > DateTime.Now && x.ClassId == _commonService.GetClass()!.Id && !projectSubmissions.Contains(x.SubmissionModuleId))
+                                                           .OrderBy(x=>x.EndDate)
                                                            .Select(x => new NearDealineSubmission
                                                            {
                                                                AssessmentId = x.SubmissionModule.AssessmentId.ToString()!,

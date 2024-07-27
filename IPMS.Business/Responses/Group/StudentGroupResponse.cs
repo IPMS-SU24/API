@@ -9,7 +9,9 @@
         public ClassLecturerInfo Lecturer { get; set; } = null!;
 
         public ICollection<ClassGroupInfo> Groups { get; set; } = new List<ClassGroupInfo>();
+        public GroupDeadlineInfo GroupDeadline { get; set; }
     }
+
     public class ClassInfo
     {
         public string Semester { get; set; } = null!;
@@ -36,4 +38,9 @@
         public bool? IsLeader { get; set; }
     }
 
+    public class GroupDeadlineInfo
+    {
+        public DateTime? CreateGroupDeadline { get; set; }
+        public DateTime? ChangeGroupDeadline { get; set; }
+    }
 }

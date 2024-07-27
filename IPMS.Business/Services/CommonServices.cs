@@ -188,9 +188,7 @@ namespace IPMS.Business.Services
                         }
                     }
                 }
-
             }
-
         }
 
         public IPMSClass? GetClass()

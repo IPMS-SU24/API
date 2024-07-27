@@ -14,6 +14,8 @@ namespace IPMS.Business.Interfaces.Services
         Task AddStudentAsync(AddStudentsToClassRequest request);
         Task<ValidationResultModel> CheckImportStudentValidAsync(AddStudentsToClassRequest request, Guid lecturerId);
         Task<JobImportStatusResponse> GetImportStudentStatusAsync(Guid classId);
+        Task RemoveOutOfClassAsync(RemoveOutOfClassRequest request);
+        Task<ValidationResultModel> CheckValidRemoveOutOfClass(RemoveOutOfClassRequest request, Guid lecturerId);
         Task<GetClassDetailResponse> GetClassDetail(Guid classId);
         Task<ValidationResultModel> UpdateClassDetailValidators(UpdateClassDetailRequest request);
         Task UpdateClassDetail(UpdateClassDetailRequest request);

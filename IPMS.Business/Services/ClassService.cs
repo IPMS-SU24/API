@@ -13,6 +13,7 @@ using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
+using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -28,14 +29,24 @@ namespace IPMS.Business.Services
         private readonly IBackgoundJobService _backgoundJobService;
         private readonly IPresignedUrlService _presignedUrlService;
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly ICommonServices _commonServices;
+        private readonly IStudentGroupService _studentGroupService;
 
-        public ClassService(IUnitOfWork unitOfWork, UserManager<IPMSUser> userManager, IBackgoundJobService backgoundJobService, IPresignedUrlService presignedUrlService, IHttpContextAccessor contextAccessor)
+        public ClassService(IUnitOfWork unitOfWork,
+            UserManager<IPMSUser> userManager,
+            IBackgoundJobService backgoundJobService,
+            IPresignedUrlService presignedUrlService,
+            IHttpContextAccessor contextAccessor,
+            ICommonServices commonServices,
+            IStudentGroupService studentGroupService)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _backgoundJobService = backgoundJobService;
             _presignedUrlService = presignedUrlService;
             _contextAccessor = contextAccessor;
+            _commonServices = commonServices;
+            _studentGroupService = studentGroupService;
         }
         public async Task<ValidationResultModel> CheckSetMaxMemberRequestValid(Guid lecturerId, SetMaxMemberRequest request)
         {
@@ -164,13 +175,16 @@ namespace IPMS.Business.Services
             return new MemberInGroupResponse()
             {
                 TotalMember = await _unitOfWork.StudentRepository.Get().CountAsync(x => x.ClassId == request.Students.ClassId),
-                MemberInfo = memberInfos.OrderBy(x=>x.Students.First().Project.GroupNum).Select(x => new MemberInGroupData
+                MemberInfo = memberInfos.OrderBy(x => x.Students.First().Project.GroupNum).Select(x => new MemberInGroupData
                 {
                     Id = x.Id,
                     GroupName = x.Students.First().ProjectId != null ? $"{x.Students.First().Project.GroupNum}" : NoGroup.Name,
                     StudentId = x.UserName,
                     StudentName = x.FullName
-                })
+                }),
+                ChangeMemberDeadline = await _unitOfWork.IPMSClassRepository.Get().Include(x=>x.Semester)
+                                                                        .Where(x => x.Id == request.ClassId)
+                                                                        .Select(x=>x.Semester.StartDate).FirstOrDefaultAsync()
             };
         }
         public async Task AddStudentAsync(AddStudentsToClassRequest request)
@@ -267,6 +281,31 @@ namespace IPMS.Business.Services
             }
         }
 
+        public async Task<ValidationResultModel> CheckValidRemoveOutOfClass(RemoveOutOfClassRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Cannot Remove"
+            };
+            //Check student exists -> also class exists
+            var student = await _unitOfWork.StudentRepository.Get()
+                .FirstOrDefaultAsync(x => x.InformationId == request.StudentId &&
+                x.ClassId == request.ClassId &&
+                x.Class.LecturerId == lecturerId);
+            if (student == null)
+            {
+                result.Message = "Student doest not exist or in different class";
+                return result;
+            }
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester).FirstAsync(x => x.Id == request.ClassId);
+            if (@class.Semester.StartDate <= DateTime.Now)
+            {
+                result.Message = "Cannot remove at this time";
+                return result;
+            }
+            result.Message = string.Empty;
+            return result;
+        }
         public async Task<GetClassDetailResponse> GetClassDetail(Guid classId)
         {
             GetClassDetailResponse @class = new GetClassDetailResponse();
@@ -373,6 +412,14 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
+        
+
+        public async Task RemoveOutOfClassAsync(RemoveOutOfClassRequest request)
+        {
+            var student = await _unitOfWork.StudentRepository.Get().FirstAsync(x => x.InformationId == request.StudentId && x.ClassId == request.ClassId);
+            _unitOfWork.StudentRepository.Delete(student);
+            await _unitOfWork.SaveChangesAsync();
+        }
         public async Task UpdateClassDetail(UpdateClassDetailRequest request)
         {
             var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.Id)).Include(c => c.Committees).FirstOrDefaultAsync();
@@ -396,7 +443,7 @@ namespace IPMS.Business.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
-         
+
       /*   
        *   {
   "id": "898657b4-c753-4783-8203-297079af9d82",
@@ -411,6 +458,7 @@ namespace IPMS.Business.Services
       "percentage": 100
     }
   ]
-}*/
+}
+      */
     }
 }

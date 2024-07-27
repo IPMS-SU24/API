@@ -153,7 +153,12 @@ namespace IPMS.Business.Services
                 },
                 Groups = groupsInClass,
                 GroupJoinRequest = requestGroupModel?.GroupId,
-                MemberSwapRequest = requestGroupModel?.MemberForSwapId
+                MemberSwapRequest = requestGroupModel?.MemberForSwapId,
+                GroupDeadline = new()
+                {
+                    ChangeGroupDeadline = @class.ChangeGroupDeadline,
+                    CreateGroupDeadline = @class.CreateGroupDeadline
+                }
             };
         }
 
@@ -262,6 +267,7 @@ namespace IPMS.Business.Services
                     result.Message = "Member not in the same class";
                     return result;
                 }
+
             }
             if (reporterProject.Id == memberForSwapProject.Id)
             {
@@ -361,10 +367,11 @@ namespace IPMS.Business.Services
             };
             if (request.MemberId == studentId)
             {
-                result.Message = "Can Only assign to another member";
+                result.Message = "Can only assign to another member";
                 return result;
             }
-            var project = _commonServices.GetProject();
+            // Do not apply session because reuse from lecturer
+            var project = await _commonServices.GetProject(studentId);
             if (project == null)
             {
                 result.Message = "Not found Valid Project";
@@ -690,6 +697,50 @@ namespace IPMS.Business.Services
             result.Message = string.Empty;
             result.Result = true;
             return result;
+        }
+
+        public async Task RemoveGroupAsync(Guid groupId)
+        {
+            //Cascade to all student
+            var group = await _unitOfWork.ProjectRepository.Get().FirstAsync(x => x.Id == groupId);
+            _unitOfWork.ProjectRepository.Delete(group);
+            await _unitOfWork.SaveChangesAsync();
+        }
+        public async Task<ValidationResultModel> CheckValidAssignLeaderByLecturer(AssignLeaderByLecturerRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel()
+            {
+                Message = "Cannot assign leader"
+            };
+            var studentProject = await _commonServices.GetProject(request.MemberId);
+            if(studentProject == null)
+            {
+                result.Message = "Student is not in a project";
+                return result;
+            }
+            var lecturerProjectIds = await _commonServices.GetAllCurrentProjectsOfLecturer(lecturerId);
+            if(!lecturerProjectIds.Contains(studentProject.Id))
+            {
+                result.Message = "You are not teaching this class";
+                return result;
+            }
+            var memberIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == studentProject.Id).Select(x => x.InformationId).ToListAsync();
+            var leaderId = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Single(x => memberIds.Contains(x.Id)).Id;
+            return await CheckValidAssignLeaderRequest(new AssignLeaderRequest
+            {
+                MemberId = request.MemberId
+            }, leaderId);
+        }
+        public async Task AssignLeaderByLecturer(AssignLeaderByLecturerRequest request, Guid lecturerId)
+        {
+            var project = await _commonServices.GetProject(request.MemberId)!;
+            var memberIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == project.Id).Select(x => x.InformationId).ToListAsync();
+            var leaderId = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Single(x => memberIds.Contains(x.Id));
+            await AssignLeader(new AssignLeaderRequest
+            {
+                MemberId = request.MemberId
+            },
+            lecturerId);
         }
     }
 }
