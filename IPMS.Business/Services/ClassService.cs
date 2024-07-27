@@ -304,6 +304,7 @@ namespace IPMS.Business.Services
                 return result;
             }
             result.Message = string.Empty;
+            result.Result = true;
             return result;
         }
         public async Task<GetClassDetailResponse> GetClassDetail(Guid classId)
