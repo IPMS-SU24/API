@@ -4,4 +4,8 @@
     {
         public Guid MemberId { get; set; }
     }
+    public class AssignLeaderByLecturerRequest
+    {
+        public Guid MemberId { get; set; }
+    }
 }

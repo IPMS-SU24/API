@@ -137,7 +137,7 @@ namespace IPMS.Business.Services
                 response.TopicInfo.FileLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, topic.Id, topic.Detail)) ?? string.Empty;
                 response.TopicInfo.Iots = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x => x.Component).Where(x => x.MasterId == topic.Id).Select(x => new TopicIoTInfo
                 {
-                    Id = x.Id,
+                    Id = x.ComponentId,
                     Quantity = x.Quantity,
                     Name = x.Component.Name
                 }).ToListAsync();
