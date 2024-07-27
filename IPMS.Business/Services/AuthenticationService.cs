@@ -8,7 +8,6 @@ using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Authentication;
 using IPMS.DataAccess.Models;
-using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -19,6 +18,9 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using MathNet.Numerics.Distributions;
+using IPMS.Business.Interfaces;
+using IPMS.Business.Responses.Authentication;
 
 namespace IPMS.Business.Services
 {
@@ -31,13 +33,15 @@ namespace IPMS.Business.Services
         private readonly ILogger<AuthenticationService> _logger;
         private readonly JWTConfig _jwtConfig;
         private readonly string _mailHost;
+        private readonly IUnitOfWork _unitOfWork;
         public AuthenticationService(UserManager<IPMSUser> userManager,
                                    RoleManager<IdentityRole<Guid>> roleManager,
                                    IOptions<JWTConfig> jwtConfig,
                                    ILogger<AuthenticationService> logger,
                                    ICommonServices commonService,
                                    MailServer mailServer,
-                                   IConfiguration configuration)
+                                   IConfiguration configuration,
+                                   IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -46,11 +50,55 @@ namespace IPMS.Business.Services
             _commonService = commonService;
             _mailServer = mailServer;
             _mailHost = configuration["MailFrom"];
+            _unitOfWork = unitOfWork;
         }
 
-        public Task<IdentityResult> AddLecturerAccount(AddLecturerAccountRequest registerModel)
+        public async Task AddLecturerAccount(AddLecturerAccountRequest registerModel)
         {
-            throw new NotImplementedException();
+            await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
+            {
+
+                var newLecturer = new IPMSUser
+                {
+                    Email = registerModel.Email,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    UserName = registerModel.Email.Split("@").First(),
+                    PhoneNumber = registerModel.Phone,
+                    FullName = registerModel.FullName
+                };
+                var password = PasswordGeneratorUtils.GenerateRandomPassword();
+                var rs = await _userManager.CreateAsync(newLecturer, password);
+                if (rs.Succeeded)
+                {
+                    if (!await _roleManager.RoleExistsAsync(UserRole.Lecturer.ToString())) await _roleManager.CreateAsync(new IdentityRole<Guid>(UserRole.Lecturer.ToString()));
+                    await _userManager.AddToRoleAsync(newLecturer, UserRole.Lecturer.ToString());
+                    //Send mail Confirm
+                    var confirmEmailToken = await _userManager.GenerateEmailConfirmationTokenAsync(newLecturer);
+                    var confirmURL = PathUtils.GetConfirmURL(newLecturer.Id, confirmEmailToken);
+                    EmailSendOperation emailSendOperation = await _mailServer.Client.SendAsync(
+                                WaitUntil.Started,
+                                _mailHost,
+                                registerModel.Email,
+                                ConfirmEmailTemplate.Subject,
+                                EmailUtils.GetFullMailContent(ConfirmEmailTemplate.GetBody(confirmURL, password)));
+                }
+                else
+                {
+                    throw new ValidationException(rs.Errors.Select(x=> new FluentValidation.Results.ValidationFailure
+                    {
+                        PropertyName = x.Code,
+                        ErrorMessage = x.Description
+                    }));
+                }
+            });
+        }
+        public async Task<IList<LectureAccountResponse>> GetLecturerAsync()
+        {
+            return (await _userManager.GetUsersInRoleAsync(UserRole.Lecturer.ToString())).Select(x => new LectureAccountResponse
+            {
+                Id = x.Id,
+                Name = x.FullName,
+            }).ToList();
         }
 
         public string GenerateAccessToken(IEnumerable<Claim> claims)
