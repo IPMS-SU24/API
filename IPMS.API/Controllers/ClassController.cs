@@ -85,7 +85,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(new IPMSResponse<object>());
         }
 
-        //  [EnumAuthorize(UserRole.Admin)]
+        [EnumAuthorize(UserRole.Admin)]
         [HttpGet("{classId}/[action]")]
         public async Task<IActionResult> GetClassDetail(Guid classId)
         {
@@ -98,12 +98,12 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-        //  [EnumAuthorize(UserRole.Admin)]
-        /*[HttpPut("update")]
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpPut("update")]
         public async Task<IActionResult> UpdateClassDetail([FromBody] UpdateClassDetailRequest request)
         {
             await _classService.UpdateClassDetail(request);
             return GetActionResponse(new IPMSResponse<object>());
-        }*/
+        }
     }
 }
