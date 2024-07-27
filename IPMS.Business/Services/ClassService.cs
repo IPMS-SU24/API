@@ -181,7 +181,10 @@ namespace IPMS.Business.Services
                     GroupName = x.Students.First().ProjectId != null ? $"{x.Students.First().Project.GroupNum}" : NoGroup.Name,
                     StudentId = x.UserName,
                     StudentName = x.FullName
-                })
+                }),
+                ChangeMemberDeadline = await _unitOfWork.IPMSClassRepository.Get().Include(x=>x.Semester)
+                                                                        .Where(x => x.Id == request.ClassId)
+                                                                        .Select(x=>x.Semester.StartDate).FirstOrDefaultAsync()
             };
         }
         public async Task AddStudentAsync(AddStudentsToClassRequest request)
