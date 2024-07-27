@@ -91,11 +91,11 @@ namespace IPMS.API.Controllers
         }
 
         //  [EnumAuthorize(UserRole.Admin)]
-        [HttpPut("update")]
+        /*[HttpPut("update")]
         public async Task<IActionResult> UpdateClassDetail([FromBody] UpdateClassDetailRequest request)
         {
             await _classService.UpdateClassDetail(request);
             return GetActionResponse(new IPMSResponse<object>());
-        }
+        }*/
     }
 }

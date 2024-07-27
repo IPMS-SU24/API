@@ -283,7 +283,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var isAnyOutGroup = prjStudents.Any(ps => request.Members.Select(m => m.StudentId).Contains(ps.Id) == false);
+            var isAnyOutGroup = prjStudents.Any(ps => request.Members.Select(m => m.StudentId).Contains(ps.InformationId) == false);
             if (isAnyOutGroup == true)
             {
                 result.Message = "Student does not in group";
@@ -327,7 +327,7 @@ namespace IPMS.Business.Services
 
             foreach (var stu in prjStudents)
             {
-                stu.FinalPercentage = request.Members.First(s => s.StudentId.Equals(stu.Id)).Percentage;
+                stu.FinalPercentage = request.Members.First(s => s.StudentId.Equals(stu.InformationId)).Percentage;
                 stu.FinalGrade = stu.FinalPercentage / 100 * totalAvg;
                 _unitOfWork.StudentRepository.Update(stu);
             }

@@ -322,7 +322,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var isLecturerCommit = request.Committees.Select(c => c.Id.Equals(request.LecturerId)).Count();
+            var isLecturerCommit = request.Committees.Where(c => c.Id.Equals(request.LecturerId)).Count();
             if (isLecturerCommit != 1)
             {
                 result.Message = "Lecturer must have permission to commit";
@@ -373,9 +373,9 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
-        public async Task UpdateClassDetail(UpdateClassDetailRequest request)
+  /*      public async Task UpdateClassDetail(UpdateClassDetailRequest request)
         {
-            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.Id)).Include(c => c.Committees).FirstOrDefaultAsync();
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.Id)).FirstOrDefaultAsync();
 
             @class.LecturerId = request.LecturerId;
             @class.Name = request.Name;
@@ -383,19 +383,40 @@ namespace IPMS.Business.Services
             @class.MaxMember = request.MaxMember;
             @class.SemesterId = request.SemesterId;
 
-            _unitOfWork.CommitteeRepository.DeleteRange(@class.Committees);
+        *//*    var committees = await _unitOfWork.CommitteeRepository.Get().Where(c => c.ClassId.Equals(request.Id)).ToListAsync();
+            _unitOfWork.CommitteeRepository.DeleteRange(committees);
+        //    await _unitOfWork.SaveChangesAsync();
+
             await _unitOfWork.CommitteeRepository.InsertRangeAsync(request.Committees.Select(c => new Committee
             {
                 LecturerId = c.Id,
                 Percentage = c.Percentage,
                 ClassId = request.Id
-            }));
+            }));*//*
 
-            _unitOfWork.IPMSClassRepository.Update(@class);
+       //     await _unitOfWork.SaveChangesAsync();
+
+            _unitOfWork.IPMSClassRepository.Attach(@class);
 
             await _unitOfWork.SaveChangesAsync();
-        }
-
+        }*/
+        /* 
+         {
+  "id": "898657b4-c753-4783-8203-297079af9d82",
+  "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+  "name": "string",
+  "shortName": "string",
+  "maxMember": 10,
+  "semesterId": "dd34672a-f484-40f4-937c-01dab32fd770",
+  "committees": [
+    {
+      "id": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+      "percentage": 100
+    }
+  ]
+}
+         
+         */
 
     }
 }
