@@ -153,7 +153,12 @@ namespace IPMS.Business.Services
                 },
                 Groups = groupsInClass,
                 GroupJoinRequest = requestGroupModel?.GroupId,
-                MemberSwapRequest = requestGroupModel?.MemberForSwapId
+                MemberSwapRequest = requestGroupModel?.MemberForSwapId,
+                GroupDeadline = new()
+                {
+                    ChangeGroupDeadline = @class.ChangeGroupDeadline,
+                    CreateGroupDeadline = @class.CreateGroupDeadline
+                }
             };
         }
 
