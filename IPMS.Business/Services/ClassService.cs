@@ -13,7 +13,6 @@ using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
-using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -370,7 +369,7 @@ namespace IPMS.Business.Services
             }
 
             decimal percentage = 0;
-            var allLecturers = (await _userManager.GetUsersInRoleAsync(UserRole.Lecturer.ToString())).Select(x => x.Id).ToList(); // Find leader of project
+            var allLecturers = (await _userManager.GetUsersInRoleAsync(UserRole.Lecturer.ToString())).Select(x => x.Id).ToList(); // Find lecturers
 
             foreach (var committee in request.Committees)
             {
@@ -443,9 +442,8 @@ namespace IPMS.Business.Services
             _unitOfWork.IPMSClassRepository.Attach(@class);
 
             await _unitOfWork.SaveChangesAsync();
-        }
 
-      /*   
+            /*   
        *   {
   "id": "898657b4-c753-4783-8203-297079af9d82",
   "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
@@ -461,5 +459,46 @@ namespace IPMS.Business.Services
   ]
 }
       */
+        }
+
+        public async Task<IEnumerable<GetClassDetailResponse>> GetClassList(GetClassListRequest request)
+        {
+            IEnumerable<GetClassDetailResponse> classes = new List<GetClassDetailResponse>();
+            if (request.Name == null)
+            {
+                request.Name = "";
+            }
+
+            var allLecturers = (await _userManager.GetUsersInRoleAsync(UserRole.Lecturer.ToString())).ToList(); // Find lecturers
+            List<IPMSClass> classRaw = new List<IPMSClass>();
+            if (request.SemesterId != Guid.Empty)
+            {
+                classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c =>  c.SemesterId.Equals(request.SemesterId)).Include(c => c.Semester).ToListAsync();
+            } else
+            {
+                classRaw = await _unitOfWork.IPMSClassRepository.Get().Include(c => c.Semester).ToListAsync();
+
+            }
+            if (request.Id != Guid.Empty)
+            {
+                classRaw = classRaw.Where(c => c.Name.ToLower().Contains(request.Name.ToLower()) || c.Id.Equals(request.Id)).ToList(); ;
+            } else
+            {
+                classRaw = classRaw.Where(c => c.Name.ToLower().Contains(request.Name.ToLower())).ToList();
+
+            }
+
+            classes = classRaw.Select(c => new GetClassDetailResponse
+            {
+                Id = c.Id,
+                Name = c.Name,
+                ShortName = c.ShortName,
+                Lecturer = allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId)) == null ? "None" : allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId))!.FullName,
+                Semester = c.Semester.Name,
+                NumOfStudents = c.Students.Count(),
+            }).ToList();
+
+            return classes;
+        }
     }
 }

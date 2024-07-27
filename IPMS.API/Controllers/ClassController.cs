@@ -99,6 +99,15 @@ namespace IPMS.API.Controllers
         }
 
         [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("class-list")]
+        public async Task<IActionResult> GetClassList([FromQuery] GetClassListRequest request)
+        {
+            var classes = await _classService.GetClassList(request);
+            var response = await classes.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
         [HttpPut("update")]
         public async Task<IActionResult> UpdateClassDetail([FromBody] UpdateClassDetailRequest request)
         {
