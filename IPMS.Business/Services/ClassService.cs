@@ -564,7 +564,7 @@ namespace IPMS.Business.Services
             }
             var jobConnection = JobStorage.Current.GetConnection();
             var states = new List<JobImportClassStatusRecord>();
-            var processingStatus = "Processing";
+            var processingStatus = "Processing Or Not Found Job";
             foreach (var job in importJobIds)
             {
                 states.Add(new JobImportClassStatusRecord()
