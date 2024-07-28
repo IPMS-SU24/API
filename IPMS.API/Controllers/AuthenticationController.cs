@@ -31,7 +31,6 @@ namespace IPMS.API.Controllers
             {
                 response.Status = ResponseStatus.Unauthorized;
             }
-
             return GetActionResponse(response);
         }
         [HttpPost]
