@@ -22,5 +22,6 @@ namespace IPMS.Business.Interfaces.Services
         Task UpdateClassDetail(UpdateClassDetailRequest request);
         Task<bool> IsClassCodeExistInSemesterAsync(string classCode, Guid semesterId);
         Task<IEnumerable<GetClassDetailResponse>> GetClassList(GetClassListRequest request);
+        Task<JobImportStatusResponse?> GetImportClassStatusAsync(Guid semesterId);
     }
 }
