@@ -459,14 +459,14 @@ namespace IPMS.Business.Services
                     }
 
                     //Continue validate classCode exist, lecturerId exist
-                    if (!await IsClassCodeExistInSemesterAsync(@class.ClassCode, semesterId))
+                    if (await IsClassCodeExistInSemesterAsync(@class.ClassCode, semesterId))
                     {
                         throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
                     }
                     var lecturer = await _userManager.FindByIdAsync(@class.LecturerId.ToString());
                     if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
                     {
-                        throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
+                        throw new BaseBadRequestException("Lecturer is not found");
                     }
                     //Create student account
                     var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddClassToSemester(@class, semesterId));
