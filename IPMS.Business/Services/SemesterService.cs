@@ -26,9 +26,12 @@ namespace IPMS.Business.Services
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var semesters =  await _unitOfWork.SemesterRepository.Get().Select(x=>new SemesterInfo
             {
+                Id = x.Id,
                 Code = x.ShortName,
                 Name = x.Name,
                 IsCurrent = currentSemester.Id == x.Id,
+                EndDate = x.EndDate,
+                StartDate = x.StartDate
             }).ToListAsync();
             if(semesters == null || !semesters.Any())
             {
