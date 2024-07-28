@@ -68,8 +68,10 @@ namespace IPMS.Business.Services
                     LecturerId = @class.LecturerId,
                     ShortName = @class.ClassCode,
                     SemesterId = semesterId,
-                    Name = string.Empty
+                    Name = string.Empty,
+                    JobImportId = int.Parse(JobContext.CurrentJobId)
                 };
+                await _unitOfWork.IPMSClassRepository.InsertAsync(newClass);
                 await _unitOfWork.SaveChangesAsync();
                 //Send noti to lecturer
                 await _messageService.SendMessage(new NotificationMessage()

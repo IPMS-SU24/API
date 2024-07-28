@@ -18,6 +18,7 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<Student> Students { get; set; } = new List<Student>();
         public virtual ICollection<ClassTopic> Topics {get; set;} = new List<ClassTopic>();
         public virtual ICollection<ClassModuleDeadline> ClassModuleDeadlines { get; set; } = new List<ClassModuleDeadline>();
+        public int? JobImportId { get; set; }
     }
 }
     

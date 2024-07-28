@@ -124,5 +124,18 @@ namespace IPMS.API.Controllers
             await _classService.AddClassesAsync(request);
             return GetActionResponse(new IPMSResponse<object>());
         }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("{classId}/[action]")]
+        public async Task<IActionResult> ImportClassStatus(Guid classId)
+        {
+            var states = await _classService.GetImportClassStatusAsync(classId);
+            dynamic dataResponse = states != null ? states : "Processing";
+            var response = new IPMSResponse<dynamic>()
+            {
+                Data = dataResponse
+            };
+            return GetActionResponse(response);
+        }
     }
 }
