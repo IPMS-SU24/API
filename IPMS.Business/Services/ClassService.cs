@@ -310,7 +310,7 @@ namespace IPMS.Business.Services
         public async Task<GetClassDetailResponse> GetClassDetail(Guid classId)
         {
             GetClassDetailResponse @class = new GetClassDetailResponse();
-            var classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(classId)).Include(c => c.Students).Include(c => c.Semester).FirstOrDefaultAsync();
+            var classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(classId)).Include(c => c.Students).Include(c => c.Semester).Include(c => c.Committees).ThenInclude(c => c.Lecturer).FirstOrDefaultAsync();
             if (classRaw == null)
             {
                 return @class;
@@ -323,11 +323,19 @@ namespace IPMS.Business.Services
             }
 
             @class.Id = classRaw.Id;
+            @class.SemesterId = classRaw.SemesterId;
             @class.Semester = classRaw.Semester.Name;
             @class.ShortName = classRaw.ShortName;
             @class.Name = classRaw.Name;
+            @class.LecturerId = classRaw.LecturerId;
             @class.Lecturer = lecturer.FullName;
             @class.NumOfStudents = classRaw.Students.Count();
+            @class.Committees = classRaw.Committees.Select(c => new CommitteeResponse
+            {
+                CommitteeId = c.LecturerId,
+                Name = c.Lecturer.FullName,
+                Percentage = c.Percentage
+            }).ToList();
             return @class;
         }
         public async Task<ValidationResultModel> UpdateClassDetailValidators(UpdateClassDetailRequest request)
@@ -407,6 +415,13 @@ namespace IPMS.Business.Services
             {
                 result.Message = "Invalid semester";
                 return result;
+            }
+
+            if (await IsClassCodeExistInSemesterAsync(@class.Id, @class.ShortName, request.SemesterId))
+            {
+                result.Message = "Class Code " + @class.ShortName +  " is existed";
+                return result;
+
             }
 
             result.Message = string.Empty;
@@ -510,7 +525,11 @@ namespace IPMS.Business.Services
         {
             return await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x => x.ShortName == classCode && x.SemesterId == semesterId);
         }
-        
+        public async Task<bool> IsClassCodeExistInSemesterAsync(Guid classId, string classCode, Guid semesterId)
+        {
+            return await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x => x.ShortName == classCode && x.SemesterId == semesterId && x.Id.Equals(classId) == false);
+        }
+
         public async Task<IEnumerable<GetClassDetailResponse>> GetClassList(GetClassListRequest request)
         {
             IEnumerable<GetClassDetailResponse> classes = new List<GetClassDetailResponse>();
@@ -523,10 +542,10 @@ namespace IPMS.Business.Services
             List<IPMSClass> classRaw = new List<IPMSClass>();
             if (request.SemesterId != Guid.Empty)
             {
-                classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c =>  c.SemesterId.Equals(request.SemesterId)).Include(c => c.Semester).ToListAsync();
+                classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c =>  c.SemesterId.Equals(request.SemesterId)).Include(c => c.Students).Include(c => c.Semester).ToListAsync();
             } else
             {
-                classRaw = await _unitOfWork.IPMSClassRepository.Get().Include(c => c.Semester).ToListAsync();
+                classRaw = await _unitOfWork.IPMSClassRepository.Get().Include(c => c.Semester).Include(c => c.Students).ToListAsync();
 
             }
             if (request.Id != Guid.Empty)
@@ -543,7 +562,9 @@ namespace IPMS.Business.Services
                 Id = c.Id,
                 Name = c.Name,
                 ShortName = c.ShortName,
+                LecturerId = c.LecturerId,
                 Lecturer = allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId)) == null ? "None" : allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId))!.FullName,
+                SemesterId = c.SemesterId,
                 Semester = c.Semester.Name,
                 NumOfStudents = c.Students.Count(),
             }).ToList();
