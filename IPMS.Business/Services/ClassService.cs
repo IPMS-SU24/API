@@ -466,7 +466,7 @@ namespace IPMS.Business.Services
                     var lecturer = await _userManager.FindByIdAsync(@class.LecturerId.ToString());
                     if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
                     {
-                        throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
+                        throw new BaseBadRequestException("Lecturer is not found");
                     }
                     //Create student account
                     var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddClassToSemester(@class, semesterId));
