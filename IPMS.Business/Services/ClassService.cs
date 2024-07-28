@@ -459,7 +459,7 @@ namespace IPMS.Business.Services
                     }
 
                     //Continue validate classCode exist, lecturerId exist
-                    if (!await IsClassCodeExistInSemesterAsync(@class.ClassCode, semesterId))
+                    if (await IsClassCodeExistInSemesterAsync(@class.ClassCode, semesterId))
                     {
                         throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
                     }
