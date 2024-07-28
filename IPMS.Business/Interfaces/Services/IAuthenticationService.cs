@@ -1,6 +1,7 @@
 ﻿using IPMS.Business.Models;
 using IPMS.Business.Requests.Admin;
 using IPMS.Business.Requests.Authentication;
+using IPMS.Business.Responses.Admin;
 using IPMS.Business.Responses.Authentication;
 using System.Security.Claims;
 
@@ -18,5 +19,6 @@ namespace IPMS.Business.Interfaces.Services
         Task ChangePasswordAsync(ChangePasswordRequest request, Guid userId);
         Task<IList<LectureAccountResponse>> GetLecturerAsync();
         Task<IEnumerable<LectureAccountResponse>> GetLecturerList(GetLecturerListRequest request);
+        Task<GetLecturerDetailResponse> GetLecturerDetail(Guid lecturerId);
     }
 }

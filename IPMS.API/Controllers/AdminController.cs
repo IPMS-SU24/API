@@ -7,6 +7,8 @@ using IPMS.Business.Requests.Admin;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Common.Attributes;
 using IPMS.Business.Common.Enums;
+using IPMS.Business.Responses.Class;
+using IPMS.Business.Responses.Admin;
 
 namespace IPMS.API.Controllers
 {
@@ -38,12 +40,26 @@ namespace IPMS.API.Controllers
 
         [EnumAuthorize(UserRole.Admin)]
         [HttpGet("lecturer-list")]
-        public async Task<IActionResult> GetLecturerList([FromQuery]GetLecturerListRequest request)
+        public async Task<IActionResult> GetLecturerList([FromQuery] GetLecturerListRequest request)
         {
 
             var lecturers = await _authenticationService.GetLecturerList(request);
             var response = await lecturers.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-           
+
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("lecturer-detail")]
+        public async Task<IActionResult> GetLecturerDetail([FromQuery] Guid lecturerId)
+        {
+
+            var lecturers = await _authenticationService.GetLecturerDetail(lecturerId);
+            GetLecturerDetailResponse dataResponse = lecturers != null ? lecturers : new GetLecturerDetailResponse();
+            var response = new IPMSResponse<GetLecturerDetailResponse>()
+            {
+                Data = dataResponse
+            };
             return GetActionResponse(response);
         }
     }

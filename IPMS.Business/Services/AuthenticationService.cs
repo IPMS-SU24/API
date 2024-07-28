@@ -18,12 +18,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MathNet.Numerics.Distributions;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Responses.Authentication;
 using IPMS.Business.Requests.Admin;
-using Hangfire.States;
-using MongoDB.Bson.Serialization.Serializers;
+using IPMS.Business.Responses.Admin;
+using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
 {
@@ -360,6 +359,25 @@ namespace IPMS.Business.Services
 
 
             return lecturers;
+        }
+
+        public async Task<GetLecturerDetailResponse> GetLecturerDetail(Guid lecturerId)
+        {
+            var lecturerRaw = await _userManager.FindByIdAsync(lecturerId.ToString());
+            var classes = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)).Select(c => new ClassInfoLecDetail
+            {
+                ClassId = c.Id,
+                Name = c.Name,
+                ShortName = c.ShortName
+            }).ToListAsync();
+
+            return new GetLecturerDetailResponse
+            {
+                Id = lecturerRaw.Id,
+                Name = lecturerRaw.FullName,
+                Email = lecturerRaw.Email,
+                Classes = classes
+            };
         }
     }
 }
