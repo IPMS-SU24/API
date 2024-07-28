@@ -192,7 +192,7 @@ namespace IPMS.DataAccess
                 entity.Property(e => e.Name);
 
                 entity.Property(e => e.ShortName).HasMaxLength(50);
-                entity.HasIndex(e => e.ShortName).IsUnique();
+                entity.HasIndex(e => new { e.ShortName, e.SemesterId}).IsUnique();
                 entity.HasOne(e => e.Semester)
                     .WithMany(p => p.Classes)
                     .HasForeignKey("SemesterId")

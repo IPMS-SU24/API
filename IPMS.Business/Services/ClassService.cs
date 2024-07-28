@@ -181,9 +181,9 @@ namespace IPMS.Business.Services
                     StudentId = x.UserName,
                     StudentName = x.FullName
                 }),
-                ChangeMemberDeadline = await _unitOfWork.IPMSClassRepository.Get().Include(x=>x.Semester)
+                ChangeMemberDeadline = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
                                                                         .Where(x => x.Id == request.ClassId)
-                                                                        .Select(x=>x.Semester.StartDate).FirstOrDefaultAsync()
+                                                                        .Select(x => x.Semester.StartDate).FirstOrDefaultAsync()
             };
         }
         public async Task AddStudentAsync(AddStudentsToClassRequest request)
@@ -412,13 +412,74 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
-        
+
 
         public async Task RemoveOutOfClassAsync(RemoveOutOfClassRequest request)
         {
             var student = await _unitOfWork.StudentRepository.Get().FirstAsync(x => x.InformationId == request.StudentId && x.ClassId == request.ClassId);
             _unitOfWork.StudentRepository.Delete(student);
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task AddClassesAsync(ImportClassRequest request)
+        {
+            var importFileUrl = _presignedUrlService.GeneratePresignedDownloadUrl(request.FileName); // FE add Prefix
+            if (importFileUrl == null)
+            {
+                throw new DataNotFoundException();
+            }
+            await ProcessImportClassesAsync(importFileUrl, request.SemesterId);
+        }
+
+        private async Task ProcessImportClassesAsync(string importFileUrl, Guid semesterId)
+        {
+            var httpClient = new HttpClient();
+
+            var httpResult = await httpClient.GetAsync(importFileUrl);
+            var tempFile = Path.GetTempFileName();
+            using (var fileStream = File.Create(tempFile))
+            {
+                using var resultStream = await httpResult.Content.ReadAsStreamAsync();
+                await resultStream.CopyToAsync(fileStream);
+            }
+            try
+            {
+                var excelMapper = new ExcelMapper(tempFile);
+                var classes = excelMapper.Fetch<ClassDataRow>().ToList();
+                var validationResults = new List<ValidationResult>();
+                foreach (var @class in classes)
+                {
+                    validationResults.Clear();
+                    var validationContext = new ValidationContext(@class);
+                    bool isValid = Validator.TryValidateObject(@class, validationContext, validationResults, true);
+
+                    if (!isValid)
+                    {
+                        throw new ExcelMapperConvertException("File format is not valid!");
+                    }
+
+                    //Continue validate classCode exist, lecturerId exist
+                    if (!await IsClassCodeExistInSemesterAsync(@class.ClassCode, semesterId))
+                    {
+                        throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
+                    }
+                    var lecturer = await _userManager.FindByIdAsync(@class.LecturerId.ToString());
+                    if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
+                    {
+                        throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
+                    }
+                    //Create student account
+                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddClassToSemester(@class, semesterId));
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex is ExcelMapperConvertException || ex is NPOI.OpenXml4Net.Exceptions.InvalidFormatException)
+                {
+                    throw new BaseBadRequestException("Import file is not exist or cannot map to class data", ex);
+                }
+                else throw;
+            }
         }
         public async Task UpdateClassDetail(UpdateClassDetailRequest request)
         {
@@ -442,25 +503,13 @@ namespace IPMS.Business.Services
             _unitOfWork.IPMSClassRepository.Attach(@class);
 
             await _unitOfWork.SaveChangesAsync();
-
-            /*   
-       *   {
-  "id": "898657b4-c753-4783-8203-297079af9d82",
-  "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
-  "name": "string",
-  "shortName": "string",
-  "maxMember": 10,
-  "semesterId": "dd34672a-f484-40f4-937c-01dab32fd770",
-  "committees": [
-    {
-      "id": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
-      "percentage": 100
-    }
-  ]
-}
-      */
         }
 
+        public async Task<bool> IsClassCodeExistInSemesterAsync(string classCode, Guid semesterId)
+        {
+            return await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x => x.ShortName == classCode && x.SemesterId == semesterId);
+        }
+        
         public async Task<IEnumerable<GetClassDetailResponse>> GetClassList(GetClassListRequest request)
         {
             IEnumerable<GetClassDetailResponse> classes = new List<GetClassDetailResponse>();
@@ -500,5 +549,23 @@ namespace IPMS.Business.Services
 
             return classes;
         }
+
+
+        /*   
+         *   {
+    "id": "898657b4-c753-4783-8203-297079af9d82",
+    "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+    "name": "string",
+    "shortName": "string",
+    "maxMember": 10,
+    "semesterId": "dd34672a-f484-40f4-937c-01dab32fd770",
+    "committees": [
+      {
+        "id": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+        "percentage": 100
+      }
+    ]
+  }
+        */
     }
 }
