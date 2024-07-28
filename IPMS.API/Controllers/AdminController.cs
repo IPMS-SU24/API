@@ -1,10 +1,12 @@
-﻿using IPMS.API.Common.Attributes;
-using IPMS.Business.Common.Enums;
-using IPMS.Business.Interfaces.Services;
+﻿using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using IPMS.API.Responses;
 using IPMS.Business.Responses.Authentication;
+using IPMS.Business.Requests.Admin;
+using IPMS.API.Common.Extensions;
+using IPMS.API.Common.Attributes;
+using IPMS.Business.Common.Enums;
 
 namespace IPMS.API.Controllers
 {
@@ -31,6 +33,17 @@ namespace IPMS.API.Controllers
             {
                 Data = await _authenticationService.GetLecturerAsync()
             };
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("lecturer-list")]
+        public async Task<IActionResult> GetLecturerList([FromQuery]GetLecturerListRequest request)
+        {
+
+            var lecturers = await _authenticationService.GetLecturerList(request);
+            var response = await lecturers.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+           
             return GetActionResponse(response);
         }
     }

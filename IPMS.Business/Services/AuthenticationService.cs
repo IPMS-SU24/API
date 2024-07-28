@@ -21,6 +21,9 @@ using System.Text.Json;
 using MathNet.Numerics.Distributions;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Responses.Authentication;
+using IPMS.Business.Requests.Admin;
+using Hangfire.States;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace IPMS.Business.Services
 {
@@ -329,6 +332,34 @@ namespace IPMS.Business.Services
                     throw new CannotResetPasswordException(result.Errors.Select(x => x.Description).ToArray());
                 }
             }
+        }
+
+        public async Task<IEnumerable<LectureAccountResponse>> GetLecturerList(GetLecturerListRequest request)
+        {
+            var lecturers = (await _userManager.GetUsersInRoleAsync(UserRole.Lecturer.ToString())).Select(x => new LectureAccountResponse
+            {
+                Id = x.Id,
+                Name = x.FullName,
+                Email = x.Email
+            }).ToList();
+            if (request.Name != null && request.Email != null)
+            {
+
+                lecturers = lecturers.Where(l => l.Name.ToLower().Contains(request.Name.ToLower()) || l.Email.ToLower().Contains(request.Email.ToLower())).ToList();
+            }
+            else if (request.Name != null)
+            {
+                lecturers = lecturers.Where(l => l.Name.ToLower().Contains(request.Name.ToLower())).ToList();
+
+            }
+            else if (request.Email != null)
+            {
+                lecturers = lecturers.Where(l => l.Email.ToLower().Contains(request.Email.ToLower())).ToList();
+
+            }
+
+
+            return lecturers;
         }
     }
 }

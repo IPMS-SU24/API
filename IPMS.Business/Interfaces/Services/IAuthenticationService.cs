@@ -1,7 +1,7 @@
 ﻿using IPMS.Business.Models;
+using IPMS.Business.Requests.Admin;
 using IPMS.Business.Requests.Authentication;
 using IPMS.Business.Responses.Authentication;
-using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
 namespace IPMS.Business.Interfaces.Services
@@ -17,5 +17,6 @@ namespace IPMS.Business.Interfaces.Services
         Task ResetPasswordAsync(ResetPasswordRequest request);
         Task ChangePasswordAsync(ChangePasswordRequest request, Guid userId);
         Task<IList<LectureAccountResponse>> GetLecturerAsync();
+        Task<IEnumerable<LectureAccountResponse>> GetLecturerList(GetLecturerListRequest request);
     }
 }
