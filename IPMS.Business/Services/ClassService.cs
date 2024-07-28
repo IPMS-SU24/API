@@ -516,7 +516,7 @@ namespace IPMS.Business.Services
                 ClassId = request.Id
             }));
 
-            _unitOfWork.IPMSClassRepository.Attach(@class);
+            _unitOfWork.IPMSClassRepository.Update(@class);
 
             await _unitOfWork.SaveChangesAsync();
         }
