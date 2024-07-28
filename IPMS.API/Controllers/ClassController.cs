@@ -126,7 +126,7 @@ namespace IPMS.API.Controllers
         }
 
         [EnumAuthorize(UserRole.Admin)]
-        [HttpGet("{semesterId}/[action]")]
+        [HttpGet("[action]/{semesterId}")]
         public async Task<IActionResult> ImportClassStatus(Guid semesterId)
         {
             var states = await _classService.GetImportClassStatusAsync(semesterId);

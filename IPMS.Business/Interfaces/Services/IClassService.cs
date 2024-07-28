@@ -13,7 +13,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<MemberInGroupResponse> GetMemberInGroupAsync(MemberInGroupRequest request);
         Task AddStudentAsync(AddStudentsToClassRequest request);
         Task<ValidationResultModel> CheckImportStudentValidAsync(AddStudentsToClassRequest request, Guid lecturerId);
-        Task<JobImportStatusResponse> GetImportStudentStatusAsync(Guid classId);
+        Task<JobImportStatusResponse<JobImportStudentStatusRecord>?> GetImportStudentStatusAsync(Guid classId);
         Task RemoveOutOfClassAsync(RemoveOutOfClassRequest request);
         Task<ValidationResultModel> CheckValidRemoveOutOfClass(RemoveOutOfClassRequest request, Guid lecturerId);
         Task<GetClassDetailResponse> GetClassDetail(Guid classId);
@@ -22,6 +22,6 @@ namespace IPMS.Business.Interfaces.Services
         Task UpdateClassDetail(UpdateClassDetailRequest request);
         Task<bool> IsClassCodeExistInSemesterAsync(string classCode, Guid semesterId);
         Task<IEnumerable<GetClassDetailResponse>> GetClassList(GetClassListRequest request);
-        Task<JobImportStatusResponse?> GetImportClassStatusAsync(Guid semesterId);
+        Task<JobImportStatusResponse<JobImportClassStatusRecord>?> GetImportClassStatusAsync(Guid semesterId);
     }
 }

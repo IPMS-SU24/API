@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace IPMS.Business.Responses.Class
 {
-    public class JobImportStatusResponse
+    public class JobImportStatusResponse<TState>
     {
         public bool IsDone { get; set; } = false;
-        public List<IJobImportStatusRecord> States { get; set; } = new List<IJobImportStatusRecord>();
+        public List<TState> States { get; set; } = new List<TState>();
     }
     public class JobImportStudentStatusRecord : IJobImportStatusRecord
     {
