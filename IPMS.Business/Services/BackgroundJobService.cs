@@ -58,6 +58,29 @@ namespace IPMS.Business.Services
             });
         }
 
+        public async Task ProcessAddClassToSemester(ClassDataRow @class, Guid semesterId)
+        {
+            await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
+            {
+                //save class
+                var newClass = new IPMSClass()
+                {
+                    LecturerId = @class.LecturerId,
+                    ShortName = @class.ClassCode,
+                    SemesterId = semesterId,
+                    Name = string.Empty
+                };
+                await _unitOfWork.SaveChangesAsync();
+                //Send noti to lecturer
+                await _messageService.SendMessage(new NotificationMessage()
+                {
+                    AccountId = @class.LecturerId,
+                    Message = $"You are added into Class {@class.ClassCode}",
+                    Title = "New Class Assigned"
+                });
+            });
+        }
+
         public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId)
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>

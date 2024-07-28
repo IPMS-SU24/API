@@ -18,7 +18,9 @@ namespace IPMS.Business.Interfaces.Services
         Task<ValidationResultModel> CheckValidRemoveOutOfClass(RemoveOutOfClassRequest request, Guid lecturerId);
         Task<GetClassDetailResponse> GetClassDetail(Guid classId);
         Task<ValidationResultModel> UpdateClassDetailValidators(UpdateClassDetailRequest request);
+        Task AddClassesAsync(ImportClassRequest request);
         Task UpdateClassDetail(UpdateClassDetailRequest request);
+        Task<bool> IsClassCodeExistInSemesterAsync(string classCode, Guid semesterId);
         Task<IEnumerable<GetClassDetailResponse>> GetClassList(GetClassListRequest request);
     }
 }
