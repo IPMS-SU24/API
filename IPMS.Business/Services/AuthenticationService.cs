@@ -18,9 +18,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MathNet.Numerics.Distributions;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Responses.Authentication;
+using IPMS.Business.Requests.Admin;
+using IPMS.Business.Responses.Admin;
+using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
 {
@@ -329,6 +331,53 @@ namespace IPMS.Business.Services
                     throw new CannotResetPasswordException(result.Errors.Select(x => x.Description).ToArray());
                 }
             }
+        }
+
+        public async Task<IEnumerable<LectureAccountResponse>> GetLecturerList(GetLecturerListRequest request)
+        {
+            var lecturers = (await _userManager.GetUsersInRoleAsync(UserRole.Lecturer.ToString())).Select(x => new LectureAccountResponse
+            {
+                Id = x.Id,
+                Name = x.FullName,
+                Email = x.Email
+            }).ToList();
+            if (request.Name != null && request.Email != null)
+            {
+
+                lecturers = lecturers.Where(l => l.Name.ToLower().Contains(request.Name.ToLower()) || l.Email.ToLower().Contains(request.Email.ToLower())).ToList();
+            }
+            else if (request.Name != null)
+            {
+                lecturers = lecturers.Where(l => l.Name.ToLower().Contains(request.Name.ToLower())).ToList();
+
+            }
+            else if (request.Email != null)
+            {
+                lecturers = lecturers.Where(l => l.Email.ToLower().Contains(request.Email.ToLower())).ToList();
+
+            }
+
+
+            return lecturers;
+        }
+
+        public async Task<GetLecturerDetailResponse> GetLecturerDetail(Guid lecturerId)
+        {
+            var lecturerRaw = await _userManager.FindByIdAsync(lecturerId.ToString());
+            var classes = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.LecturerId.Equals(lecturerId)).Select(c => new ClassInfoLecDetail
+            {
+                ClassId = c.Id,
+                Name = c.Name,
+                ShortName = c.ShortName
+            }).ToListAsync();
+
+            return new GetLecturerDetailResponse
+            {
+                Id = lecturerRaw.Id,
+                Name = lecturerRaw.FullName,
+                Email = lecturerRaw.Email,
+                Classes = classes
+            };
         }
     }
 }
