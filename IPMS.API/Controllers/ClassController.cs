@@ -137,5 +137,14 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("update-deadline")]
+        public async Task<IActionResult> UpdateClassDeadline([FromBody] UpdateClassDeadlineRequest request)
+        {
+            var lecturerId = User.Claims.GetUserId();
+            await _classService.UpdateClassDeadline(request, lecturerId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }

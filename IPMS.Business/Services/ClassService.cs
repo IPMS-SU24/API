@@ -519,6 +519,24 @@ namespace IPMS.Business.Services
             _unitOfWork.IPMSClassRepository.Update(@class);
 
             await _unitOfWork.SaveChangesAsync();
+            #region Data
+            /*   
+       *   {
+  "id": "898657b4-c753-4783-8203-297079af9d82",
+  "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+  "name": "string",
+  "shortName": "string",
+  "maxMember": 10,
+  "semesterId": "dd34672a-f484-40f4-937c-01dab32fd770",
+  "committees": [
+    {
+      "id": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
+      "percentage": 100
+    }
+  ]
+}
+      */
+            #endregion
         }
 
         public async Task<bool> IsClassCodeExistInSemesterAsync(string classCode, Guid semesterId)
@@ -597,22 +615,68 @@ namespace IPMS.Business.Services
             } : null;
         }
 
+        public async Task<ValidationResultModel> UpdateClassDeadlineValidators(UpdateClassDeadlineRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
 
-        /*   
-         *   {
-    "id": "898657b4-c753-4783-8203-297079af9d82",
-    "lecturerId": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
-    "name": "string",
-    "shortName": "string",
-    "maxMember": 10,
-    "semesterId": "dd34672a-f484-40f4-937c-01dab32fd770",
-    "committees": [
-      {
-        "id": "cc76a4b5-bc4b-4539-ad02-c74c3fde8d32",
-        "percentage": 100
-      }
-    ]
-  }
-        */
+            };
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+            if (@class == null)
+            {
+                result.Message = "Class cannot found";
+                return result;
+            }
+            var _currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+
+            if (@class.SemesterId != _currentSemester.Id)
+            {
+                result.Message = "Class not in current semester";
+                return result;
+            }
+            var endSemester = _currentSemester.EndDate;
+            if (request.CreateGroup > endSemester || request.ChangeGroup > endSemester || request.ChangeTopic > endSemester || request.BorrowIot > endSemester)
+            {
+                result.Message = "Deadline must before end of semester";
+                return result;
+            }
+
+            // create group -> change topic -> change group , borrow 2 cái này cùng cấp, không cần so sánh
+            if (request.CreateGroup > request.ChangeTopic)
+            {
+                result.Message = "Please set Create Group deadline before Change Topic Deadline";
+                return result;
+            }
+
+            if (request.ChangeTopic > request.ChangeGroup)
+            {
+                result.Message = "Please set Change Topic deadline before Change Group Deadline";
+                return result;
+            }
+
+            if (request.ChangeTopic > request.BorrowIot)
+            {
+                result.Message = "Please set Change Topic deadline before Borrow Iot Devices Deadline";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        
+        public async Task UpdateClassDeadline(UpdateClassDeadlineRequest request, Guid lecturerId)
+        {
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+            @class.CreateGroupDeadline = request.CreateGroup;
+            @class.ChangeGroupDeadline = request.ChangeGroup;
+            @class.ChangeTopicDeadline = request.ChangeTopic;
+            @class.BorrowIoTComponentDeadline = request.BorrowIot;
+            _unitOfWork.IPMSClassRepository.Update(@class);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+
+
     }
 }
