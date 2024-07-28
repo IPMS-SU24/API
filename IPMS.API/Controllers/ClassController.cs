@@ -119,9 +119,9 @@ namespace IPMS.API.Controllers
         }
         [EnumAuthorize(UserRole.Admin)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ClassImport([FromBody] AddStudentsToClassRequest request)
+        public async Task<IActionResult> ClassImport([FromBody] ImportClassRequest request)
         {
-            await _classService.AddStudentAsync(request);
+            await _classService.AddClassesAsync(request);
             return GetActionResponse(new IPMSResponse<object>());
         }
     }
