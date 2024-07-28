@@ -569,7 +569,7 @@ namespace IPMS.Business.Services
             {
                 states.Add(new JobImportClassStatusRecord()
                 {
-                    JobStatus = jobConnection.GetStateData(job.JobImportId.ToString())?.Name ?? processingStatus,
+                    JobStatus = jobConnection.GetStateData(job.JobImportId.ToString() ?? string.Empty)?.Name ?? processingStatus,
                     ClassCode = job.ShortName
                 });
             }
