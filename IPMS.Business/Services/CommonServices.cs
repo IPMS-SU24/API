@@ -128,7 +128,7 @@ namespace IPMS.Business.Services
                                                                                 .Join(_unitOfWork.StudentRepository.Get().Where(x => x.ProjectId != null),
                                                                                       @class => @class.Id,
                                                                                       stu => stu.ClassId,
-                                                                                      (@class, stu) => stu.ProjectId.Value).ToListAsync();
+                                                                                      (@class, stu) => stu.ProjectId.Value).Distinct().ToListAsync();
         }
 
         public (DateTime startDate, DateTime endDate) GetAssessmentTime(Guid assessmentId, Guid classId)
