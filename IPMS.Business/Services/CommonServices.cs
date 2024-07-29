@@ -1,4 +1,5 @@
 ﻿using IPMS.Business.Common.Enums;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Extensions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
@@ -135,6 +136,7 @@ namespace IPMS.Business.Services
             var modules = _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(x => x.ClassId == classId))
                                                                 .Where(x => x.AssessmentId == assessmentId).SelectMany(x => x.ClassModuleDeadlines);
             //Check Assessment Deadline, Start Date
+            if (!modules.Any()) throw new DataNotFoundException("Not Found Module for Assessment");
             var deadline = modules.Max(x => x.EndDate);
             var start = modules.Min(x => x.StartDate);
             return new()

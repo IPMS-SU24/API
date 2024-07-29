@@ -100,14 +100,14 @@ namespace IPMS.Business.Services
             {
                 Message = "Operation did not successfully"
             };
-            var submissionModule = _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(y => y.ClassId == _commonServices.GetClass()!.Id)).FirstOrDefault(sm => sm.Id.Equals(request.SubmissionModuleId)); // Find submission module
+            var submissionModule = _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines).FirstOrDefault(sm => sm.Id.Equals(request.SubmissionModuleId)); // Find submission module
             if (submissionModule == null)
             {
                 result.Message = "Submission module does not exist";
                 return result;
             }
 
-            if (submissionModule.ClassModuleDeadlines.First().EndDate < request.SubmissionDate) // Validation submit time
+            if (submissionModule.ClassModuleDeadlines.Where(y => y.ClassId == _commonServices.GetClass()!.Id).First().EndDate < request.SubmissionDate) // Validation submit time
             {
                 result.Message = "Cannot submit at this time";
                 return result;
