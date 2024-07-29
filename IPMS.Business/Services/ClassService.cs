@@ -696,7 +696,20 @@ namespace IPMS.Business.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
+        public async Task<GetClassDeadlineResponse> GetClassDeadline(Guid classId, Guid lecturerId)
+        {
+            var classDeadline = new GetClassDeadlineResponse();
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(classId) && c.LecturerId.Equals(lecturerId));
+            if (@class == null)
+            {
+                return classDeadline;
+            }
 
-
+            classDeadline.CreateGroup = @class.CreateGroupDeadline;
+            classDeadline.ChangeGroup = @class.ChangeGroupDeadline;
+            classDeadline.ChangeTopic = @class.ChangeTopicDeadline;
+            classDeadline.BorrowIot = @class.BorrowIoTComponentDeadline;
+            return classDeadline;
+        }
     }
 }

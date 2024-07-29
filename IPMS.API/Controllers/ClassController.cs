@@ -146,5 +146,18 @@ namespace IPMS.API.Controllers
             await _classService.UpdateClassDeadline(request, lecturerId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("deadline")]
+        public async Task<IActionResult> GetClassDeadline([FromQuery] Guid classId)
+        {
+            var lecturerId = User.Claims.GetUserId();
+            var deadlines = await _classService.GetClassDeadline(classId, lecturerId);
+            var response = new IPMSResponse<dynamic>()
+            {
+                Data = deadlines
+            };
+            return GetActionResponse(response);
+        }
     }
 }
