@@ -109,6 +109,7 @@ namespace IPMS.Business.Services
             var classes = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
                                                                 .Where(x => x.Semester.ShortName == request.SemesterCode && x.LecturerId == currentUserId)
                                                                 .Select(x => x.Id).ToListAsync();
+            var semesterId = _unitOfWork.SemesterRepository.Get().First(x => x.ShortName == request.SemesterCode).Id;
             foreach (var submissionModule in request.SubmissionModules)
             {
                 if (submissionModule.ModuleId == Guid.Empty) // create
@@ -120,7 +121,7 @@ namespace IPMS.Business.Services
                         Name = submissionModule.ModuleName,
                         Description = submissionModule.Description,
                         Percentage = submissionModule.Percentage,
-                        SemesterId = _currentSemesterId,
+                        SemesterId = semesterId,
                         AssessmentId = request.AssessmentId,
                         LectureId = currentUserId,
                         ClassModuleDeadlines = classes.Select(classId=> new ClassModuleDeadline
