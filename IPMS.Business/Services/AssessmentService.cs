@@ -85,12 +85,12 @@ namespace IPMS.Business.Services
                                                                         && sm.SemesterId.Equals(currentSemesterId)
                                                                         && sm.LectureId.Equals(@class.LecturerId))
                                                                 .Include(sm => sm.ProjectSubmissions.Where(pm => pm.ProjectId.Equals(project.Id)))
-                                                                .Include(sm => sm.ClassModuleDeadlines.Where(cl => cl.ClassId == @class.Id)).Select(sm => new SubmissionModuleResponse
+                                                                .Include(sm => sm.ClassModuleDeadlines).Select(sm => new SubmissionModuleResponse
                                                                 {
                                                                     ModuleId = sm.Id,
                                                                     Name = sm.Name,
-                                                                    StartDate = sm.ClassModuleDeadlines.First().StartDate,
-                                                                    EndDate = sm.ClassModuleDeadlines.First().EndDate,
+                                                                    StartDate = sm.ClassModuleDeadlines.Where(cl => cl.ClassId.Equals(@class.Id)).First().StartDate,
+                                                                    EndDate = sm.ClassModuleDeadlines.Where(cl => cl.ClassId.Equals(@class.Id)).First().EndDate,
                                                                     Description = sm.Description,
                                                                     ProjectSubmissions = sm.ProjectSubmissions.Select(ps => new ProjectSubmissionResponse
                                                                     {

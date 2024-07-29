@@ -54,6 +54,12 @@ namespace IPMS.Business.Services
                 result.Message = "Student is not studying";
                 return result;
             }
+            var isInTime = currentClass.CreateGroupDeadline > DateTime.Now;
+            if (!isInTime)
+            {
+                result.Message = "Cannot create at this time";
+                return result;
+            }
             var projectInClassCount = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == currentClass.Id).Select(x => x.ProjectId).Distinct().CountAsync();
             var topicOfClassCount = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ClassId == currentClass.Id && x.Topic.Status == RequestStatus.Approved).CountAsync();
             if (projectInClassCount == topicOfClassCount)

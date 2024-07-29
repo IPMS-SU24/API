@@ -615,6 +615,22 @@ namespace IPMS.Business.Services
             } : null;
         }
 
+        public async Task<ValidationResultModel> CheckImportClassValidAsync(ImportClassRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Cannot Import Class"
+            };
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.Id == request.SemesterId);
+            if(semester == null)
+            {
+                result.Message = "Not found Semester";
+                return result;
+            }
+            if(semester.StartDate <= DateTime.Now)
+            {
+                result.Message = "Cannot add class at this time";
+                }
         public async Task<ValidationResultModel> UpdateClassDeadlineValidators(UpdateClassDeadlineRequest request, Guid lecturerId)
         {
             var result = new ValidationResultModel
