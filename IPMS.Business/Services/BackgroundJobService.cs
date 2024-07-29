@@ -72,6 +72,13 @@ namespace IPMS.Business.Services
                     JobImportId = int.Parse(JobContext.CurrentJobId)
                 };
                 await _unitOfWork.IPMSClassRepository.InsertAsync(newClass);
+                var committee = new Committee()
+                {
+                    ClassId = newClass.Id,
+                    LecturerId = @class.LecturerId,
+                    Percentage = 100
+                };
+                await _unitOfWork.CommitteeRepository.InsertAsync(committee);
                 await _unitOfWork.SaveChangesAsync();
                 //Send noti to lecturer
                 await _messageService.SendMessage(new NotificationMessage()
