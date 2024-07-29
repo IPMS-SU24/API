@@ -187,7 +187,8 @@ namespace IPMS.Business.Services
         public async Task<IEnumerable<GetAssessmentSubmissionModuleByClassResponse>> GetAssessmentSubmissionModuleByClass(GetSubmissionModuleByClassRequest request, Guid currentUserId)
         {
             List<GetAssessmentSubmissionModuleByClassResponse> assessments = new List<GetAssessmentSubmissionModuleByClassResponse>();
-            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.ClassModuleDeadlines.Where(y=>y.ClassId == request.classId)).Where(sm => sm.SemesterId.Equals(_currentSemesterId)
+            var semesterId = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == request.classId);
+            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.ClassModuleDeadlines.Where(y=>y.ClassId == request.classId)).Where(sm => sm.SemesterId.Equals(semesterId)
                                             && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
             List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.CommitteeId.Equals(currentUserId)).ToListAsync();
 
