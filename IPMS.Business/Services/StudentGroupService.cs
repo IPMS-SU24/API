@@ -22,15 +22,22 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly IMessageService _messageService;
+        private readonly IMemberHistoryService _memberHistoryService;
         private readonly UserManager<IPMSUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-        public StudentGroupService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IMessageService messageService)
+        public StudentGroupService(IUnitOfWork unitOfWork,
+            ICommonServices commonServices,
+            UserManager<IPMSUser> userManager,
+            RoleManager<IdentityRole<Guid>> roleManager,
+            IMessageService messageService,
+            IMemberHistoryService memberHistoryService)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _userManager = userManager;
             _roleManager = roleManager;
             _messageService = messageService;
+            _memberHistoryService = memberHistoryService;
         }
 
         public async Task<ValidationResultModel> CheckStudentValidForCreateGroup(Guid studentId)
@@ -239,7 +246,14 @@ namespace IPMS.Business.Services
                 result.Message = "Leader cannot swap";
                 return result;
             }
-            var studiesIn = await _commonServices.GetStudiesIn(studentId);
+
+            var memberForSwap = await _userManager.FindByIdAsync(request.MemberId.ToString());
+            if (await _userManager.IsInRoleAsync(memberForSwap, UserRole.Leader.ToString()))
+            {
+                result.Message = "Cannot swap with leader";
+                return result;
+            }
+                var studiesIn = await _commonServices.GetStudiesIn(studentId);
             var @class = await _commonServices.GetCurrentClass(studiesIn.Select(x => x.ClassId));
             if (@class == null)
             {
