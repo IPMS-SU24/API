@@ -22,7 +22,6 @@ namespace IPMS.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
         private readonly IMessageService _messageService;
-        private readonly IMemberHistoryService _memberHistoryService;
         private readonly UserManager<IPMSUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         public StudentGroupService(IUnitOfWork unitOfWork,
@@ -37,7 +36,6 @@ namespace IPMS.Business.Services
             _userManager = userManager;
             _roleManager = roleManager;
             _messageService = messageService;
-            _memberHistoryService = memberHistoryService;
         }
 
         public async Task<ValidationResultModel> CheckStudentValidForCreateGroup(Guid studentId)
