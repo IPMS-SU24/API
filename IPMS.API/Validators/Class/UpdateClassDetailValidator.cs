@@ -12,7 +12,6 @@ namespace IPMS.API.Validators.Class
         {
             RuleFor(x => x.Name).NotEmpty();
             RuleFor(x => x.ShortName).NotEmpty();
-            RuleFor(x => x.MaxMember).GreaterThan(0);
             RuleFor(x => x.Committees.Select(c => c.Percentage)).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {

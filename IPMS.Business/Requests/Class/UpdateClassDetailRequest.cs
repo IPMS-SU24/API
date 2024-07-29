@@ -7,7 +7,6 @@ namespace IPMS.Business.Requests.Class
         public Guid LecturerId { get; set; }
         public string Name { get; set; }
         public string ShortName { get; set; }
-        public int MaxMember { get; set; }
         public Guid SemesterId { get; set; }
         public List<CommitteeInfo> Committees { get; set; } = new();
     }
