@@ -88,7 +88,7 @@ namespace IPMS.Business.Services
                         ClassId = @class.ClassId,
                         ClassName = @class.ClassName,
                         ClassCode = @class.ClassCode,
-                        MaxMembers = @class.MaxMembers,
+                        MaxMembers = @class.MaxMembers == int.MaxValue ? null: @class.MaxMembers,
                         Enroll = student.Enroll,
                         GroupNum = student.GroupNum,
                         Total = student.Total,

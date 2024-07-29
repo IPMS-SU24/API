@@ -12,7 +12,7 @@
         public int Total { get; set; }
         public int Enroll { get; set; }
         public int GroupNum { get; set; }
-        public int MaxMembers { get; set; }
+        public int? MaxMembers { get; set; }
         public int TopicCount { get; set; }
 
 
