@@ -95,6 +95,13 @@ namespace IPMS.Business.Services
                 result.Message = "At least one group have more member that max member you want";
                 return result;
             }
+            var isGreaterThanStudentInClass = await _unitOfWork.StudentRepository.Get()
+                .Where(x => request.ClassIds.Contains(x.ClassId)).GroupBy(x=>x.ClassId).AnyAsync(x=>x.Count() > request.MaxMember);
+            if (isGreaterThanStudentInClass)
+            {
+                result.Message = "Reach number of student of class";
+                return result;
+            }
             result.Result = true;
             result.Message = string.Empty;
             return result;

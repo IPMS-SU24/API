@@ -69,7 +69,7 @@ namespace IPMS.Business.Services
                 return result;
             }
             //Check Project have topic
-            if(project.ClassTopicId == null)
+            if(project.ClassTopicId != null)
             {
                 result.Message = "Project already has topic";
                 return result;

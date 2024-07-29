@@ -16,7 +16,7 @@ if [ "$(docker ps -a -q -f name=$REPOSITORY_NAME)" ]; then
 fi
 
 # Thực hiện start Docker container và map cổng 80 trên máy host với cổng 300 trên container
-docker run -e TZ=Asia/Ho_Chi_+++++++++++++++Minh -d -e ASPNETCORE_URLS='http://+:443' --name $REPOSITORY_NAME -p 443:443 $DOCKER_IMAGE
+docker run -e TZ=Asia/Ho_Chi_Minh -d -e ASPNETCORE_URLS='http://+:443' --name $REPOSITORY_NAME -p 443:443 $DOCKER_IMAGE
 docker image prune
 # Kiểm tra xem container đã khởi chạy thành công hay không
 if [ $? -eq 0 ]; then
