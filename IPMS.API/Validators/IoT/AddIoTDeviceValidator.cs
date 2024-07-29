@@ -9,7 +9,6 @@ namespace IPMS.API.Validators.IoT
         public AddIoTDeviceValidator(IIoTDataService topicService, IHttpContextAccessor context)
         {
             RuleFor(x => x.Name).NotEmpty();
-            RuleFor(x => x.Description).NotEmpty();
 
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
