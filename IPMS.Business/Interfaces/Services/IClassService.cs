@@ -26,5 +26,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<ValidationResultModel> CheckImportClassValidAsync(ImportClassRequest request);
         Task<ValidationResultModel> UpdateClassDeadlineValidators(UpdateClassDeadlineRequest request, Guid lecturerId);
         Task UpdateClassDeadline(UpdateClassDeadlineRequest request, Guid lecturerId);
+        Task<GetClassDeadlineResponse> GetClassDeadline(Guid classId, Guid lecturerId);
     }
 }
