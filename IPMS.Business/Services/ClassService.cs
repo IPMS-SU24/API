@@ -353,12 +353,6 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            if (request.MaxMember < 1)
-            {
-                result.Message = "Cannot set member lower than 1";
-                return result;
-            }
-
             var dupCommitteeId = request.Committees
                     .GroupBy(g => g.Id)
                     .Where(g => g.Count() > 1 && g.Key != Guid.Empty)
@@ -504,7 +498,6 @@ namespace IPMS.Business.Services
             @class.LecturerId = request.LecturerId;
             @class.Name = request.Name;
             @class.ShortName = request.ShortName;
-            @class.MaxMember = request.MaxMember;
             @class.SemesterId = request.SemesterId;
 
             _unitOfWork.CommitteeRepository.DeleteRange(@class.Committees);
