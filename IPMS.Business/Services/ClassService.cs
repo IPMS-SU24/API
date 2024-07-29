@@ -643,21 +643,20 @@ namespace IPMS.Business.Services
                 Message = "Operation did not successfully"
 
             };
-            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId)).Include(c => c.Semester).FirstOrDefaultAsync();
             if (@class == null)
             {
                 result.Message = "Class cannot found";
                 return result;
             }
-            var _currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-
-            if (@class.SemesterId != _currentSemester.Id)
+            if (@class.Semester == null)
             {
-                result.Message = "Class not in current semester";
+                result.Message = "Class not set semester";
                 return result;
             }
-            var endSemester = _currentSemester.EndDate;
-            if (request.CreateGroup > endSemester || request.ChangeGroup > endSemester || request.ChangeTopic > endSemester || request.BorrowIot > endSemester)
+
+            var endSemester = @class.Semester.EndDate;
+            if (request.CreateGroup > endSemester || request.ChangeGroup > endSemester || request.ChangeTopic > endSemester || request.BorrowIot > endSemester) // semester is continuous
             {
                 result.Message = "Deadline must before end of semester";
                 return result;

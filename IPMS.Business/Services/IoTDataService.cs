@@ -38,7 +38,7 @@ namespace IPMS.Business.Services
         }
         public async Task AddIoTDevice(AddIoTDeviceRequest request)
         {
-            await _unitOfWork.IoTComponentRepository.InsertAsync(new IoTComponent { Name = request.Name, Description = request.Description });
+            await _unitOfWork.IoTComponentRepository.InsertAsync(new IoTComponent { Name = request.Name, Description = request.Description == null ? "" : request.Description });
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -148,7 +148,7 @@ namespace IPMS.Business.Services
         {
             var device = await _unitOfWork.IoTComponentRepository.GetByIDAsync(request.Id);
             device!.Name = request.Name;
-            device!.Description = request.Description;
+            device!.Description = request.Description == null ? "" : request.Description;
             _unitOfWork.IoTComponentRepository.Update(device);
             await _unitOfWork.SaveChangesAsync();
         }

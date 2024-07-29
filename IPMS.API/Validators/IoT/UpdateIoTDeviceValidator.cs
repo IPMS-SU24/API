@@ -10,7 +10,6 @@ namespace IPMS.API.Validators.IoT
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.Name).NotEmpty();
-            RuleFor(x => x.Description).NotEmpty();
 
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
