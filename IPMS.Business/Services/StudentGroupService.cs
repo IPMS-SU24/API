@@ -28,8 +28,7 @@ namespace IPMS.Business.Services
             ICommonServices commonServices,
             UserManager<IPMSUser> userManager,
             RoleManager<IdentityRole<Guid>> roleManager,
-            IMessageService messageService,
-            IMemberHistoryService memberHistoryService)
+            IMessageService messageService)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
