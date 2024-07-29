@@ -125,10 +125,10 @@ namespace IPMS.Business.Services
         {
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             return await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId == currentSemester!.Id && x.LecturerId == lecturerId)
-                                                                                .Join(_unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId != null),
+                                                                                .Join(_unitOfWork.StudentRepository.Get().Where(x => x.ProjectId != null),
                                                                                       @class => @class.Id,
-                                                                                      classTopic => classTopic.ClassId,
-                                                                                      (@class, classTopic) => classTopic.ProjectId.Value).ToListAsync();
+                                                                                      stu => stu.ClassId,
+                                                                                      (@class, stu) => stu.ProjectId.Value).Distinct().ToListAsync();
         }
 
         public (DateTime startDate, DateTime endDate) GetAssessmentTime(Guid assessmentId, Guid classId)
