@@ -14,6 +14,7 @@
         public int GroupNum { get; set; }
         public int? MaxMembers { get; set; }
         public int TopicCount { get; set; }
+        public bool IsSetDeadline { get; set; }
 
 
     }

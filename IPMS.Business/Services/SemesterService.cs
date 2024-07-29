@@ -53,7 +53,11 @@ namespace IPMS.Business.Services
                                                              ClassCode = x.ShortName,
                                                              ClassId = x.Id,
                                                              ClassName = x.Name,
-                                                             MaxMembers = x.MaxMember
+                                                             MaxMembers = x.MaxMember,
+                                                             IsSetDeadline = x.ChangeGroupDeadline != null &&
+                                                                             x.CreateGroupDeadline != null && 
+                                                                             x.BorrowIoTComponentDeadline != null && 
+                                                                             x.ChangeTopicDeadline != null
                                                          }).ToListAsync();
 
             //Calculate enrolled Student (EmailConfirmed == true), total student, number of groups
@@ -92,7 +96,8 @@ namespace IPMS.Business.Services
                         Enroll = student.Enroll,
                         GroupNum = student.GroupNum,
                         Total = student.Total,
-                        TopicCount = classTopicCount.Count(x=>x.ClassId == @class.ClassId)
+                        TopicCount = classTopicCount.Count(x=>x.ClassId == @class.ClassId),
+                        IsSetDeadline = @class.IsSetDeadline
                     });
                 }
             }
