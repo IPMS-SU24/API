@@ -741,12 +741,12 @@ namespace IPMS.Business.Services
         {
             var project = await _commonServices.GetProject(request.MemberId)!;
             var memberIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == project.Id).Select(x => x.InformationId).ToListAsync();
-            var leaderId = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Single(x => memberIds.Contains(x.Id));
+            var leaderId = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Single(x => memberIds.Contains(x.Id)).Id;
             await AssignLeader(new AssignLeaderRequest
             {
                 MemberId = request.MemberId
             },
-            lecturerId);
+            leaderId);
         }
     }
 }
