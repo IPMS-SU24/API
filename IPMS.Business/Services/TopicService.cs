@@ -143,8 +143,8 @@ namespace IPMS.Business.Services
                         Name = c.Component.Name,
                         Quantity = c.Quantity
 
-                    }).ToList()
-
+                    }).ToList(),
+                    CreateAt = pre.CreatedAt
                 };
                 topics.Add(topic);
             }
