@@ -144,7 +144,8 @@ namespace IPMS.Business.Services
                         Quantity = c.Quantity
 
                     }).ToList(),
-                    CreateAt = pre.CreatedAt
+                    CreateAt = pre.CreatedAt,
+                    GroupNum = project.GroupNum
                 };
                 topics.Add(topic);
             }
@@ -301,7 +302,8 @@ namespace IPMS.Business.Services
                         Name = c.Component.Name,
                         Quantity = c.Quantity
 
-                    }).ToList()
+                    }).ToList(),
+                    CreateAt = pre.CreatedAt
 
                 };
                 topics.Add(topic);
