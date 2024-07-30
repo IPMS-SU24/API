@@ -96,7 +96,7 @@ namespace IPMS.Business.Services
                 return result;
             }
             var isGreaterThanStudentInClass = await _unitOfWork.StudentRepository.Get()
-                .Where(x => request.ClassIds.Contains(x.ClassId)).GroupBy(x=>x.ClassId).AnyAsync(x=>x.Count() > request.MaxMember);
+                .Where(x => request.ClassIds.Contains(x.ClassId)).GroupBy(x=>x.ClassId).AnyAsync(x=>request.MaxMember > x.Count());
             if (isGreaterThanStudentInClass)
             {
                 result.Message = "Reach number of student of class";
