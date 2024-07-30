@@ -388,14 +388,14 @@ namespace IPMS.Business.Services
             IQueryable<Project> prjQueryable;
             if (request.isPublished == true)
             {
-                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true)
+                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true && p.Topic.Topic.Status == RequestStatus.Approved)
                             .Include(p => p.Topic).ThenInclude(t => t.Topic)
                             .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
                             .Include(p => p.Submissions);
             }
             else
             {
-                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.Topic.Class.LecturerId.Equals(currentUserId) && p.IsPublished == false)
+                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.Topic.Class.LecturerId.Equals(currentUserId) && p.IsPublished == false && p.Topic.Topic.Status == RequestStatus.Approved)
                             .Include(p => p.Topic).ThenInclude(t => t.Topic)
                             .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
                             .Include(p => p.Submissions);
