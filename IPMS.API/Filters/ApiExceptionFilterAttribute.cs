@@ -49,7 +49,7 @@ namespace IPMS.API.Filters
                 Status = ResponseStatus.BadRequest,
                 Errors = new Dictionary<string, string[]>()
                 {
-                    { "Invalid request", !string.IsNullOrEmpty(exception.Message) ?  new string[1]{ exception.Message} : exception.Errors}
+                    { "Invalid request", exception.Errors.Any() ? exception.Errors : new string[] { exception.Message} }
                 }
             };
 
