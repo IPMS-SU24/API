@@ -7,7 +7,6 @@ using IPMS.Business.Requests.Admin;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Common.Attributes;
 using IPMS.Business.Common.Enums;
-using IPMS.Business.Responses.Class;
 using IPMS.Business.Responses.Admin;
 
 namespace IPMS.API.Controllers
@@ -25,8 +24,12 @@ namespace IPMS.API.Controllers
         [HttpPost("lecturer")]
         public async Task<IActionResult> AddLecturerAccount([FromBody] AddLecturerAccountRequest request)
         {
-            await _authenticationService.AddLecturerAccount(request);
-            return GetActionResponse(new IPMSResponse<object>());
+            var response = new IPMSResponse<AddLecturerAccountResponse>()
+            {
+                Data = await _authenticationService.AddLecturerAccount(request)
+            };
+            return GetActionResponse(response);
+
         }
         [HttpGet("lecturer")]
         public async Task<IActionResult> GetAllLecturer()
