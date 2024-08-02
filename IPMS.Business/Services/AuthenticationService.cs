@@ -56,9 +56,8 @@ namespace IPMS.Business.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<AddLecturerAccountResponse> AddLecturerAccount(AddLecturerAccountRequest registerModel)
+        public async Task AddLecturerAccount(AddLecturerAccountRequest registerModel)
         {
-            AddLecturerAccountResponse lecturer = new AddLecturerAccountResponse();
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
 
@@ -85,7 +84,6 @@ namespace IPMS.Business.Services
                                 registerModel.Email,
                                 ConfirmEmailTemplate.Subject,
                                 EmailUtils.GetFullMailContent(ConfirmEmailTemplate.GetBody(confirmURL, password)));
-                    lecturer.Id = newLecturer.Id;
                 }
                 else
                 {
@@ -97,7 +95,6 @@ namespace IPMS.Business.Services
                 }
             });
 
-            return lecturer;
         }
         public async Task<IList<LectureAccountResponse>> GetLecturerAsync()
         {

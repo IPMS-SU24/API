@@ -24,11 +24,9 @@ namespace IPMS.API.Controllers
         [HttpPost("lecturer")]
         public async Task<IActionResult> AddLecturerAccount([FromBody] AddLecturerAccountRequest request)
         {
-            var response = new IPMSResponse<AddLecturerAccountResponse>()
-            {
-                Data = await _authenticationService.AddLecturerAccount(request)
-            };
-            return GetActionResponse(response);
+            await _authenticationService.AddLecturerAccount(request);
+           
+            return GetActionResponse(new IPMSResponse<object>());
 
         }
         [HttpGet("lecturer")]
