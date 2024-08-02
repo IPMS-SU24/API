@@ -388,5 +388,38 @@ namespace IPMS.Business.Services
                 Classes = classes
             };
         }
+
+        public async Task UpdateLecturerAccount(UpdateLecturerAccountRequest updateModel)
+        {
+            if (updateModel.Id == null)
+            {
+                throw new DataNotFoundException("Lecturer cannot found");
+
+            }
+            var lecturer = await _userManager.FindByIdAsync(updateModel.Id.ToString());
+            if (lecturer == null)
+            {
+                throw new DataNotFoundException("Lecturer cannot found");
+
+            }
+            var isLecturer = await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString());
+
+            if (isLecturer == false) {
+                throw new DataNotFoundException("User is not lecturer");
+            }
+
+            lecturer.FullName = updateModel.FullName;
+            lecturer.PhoneNumber = updateModel.Phone;
+            lecturer.PhoneNumberConfirmed = true;
+            var rs = await _userManager.UpdateAsync(lecturer);
+            if (rs.Succeeded == false)
+            {
+                throw new ValidationException(rs.Errors.Select(x => new FluentValidation.Results.ValidationFailure
+                {
+                    PropertyName = x.Code,
+                    ErrorMessage = x.Description
+                }));
+            }
+        }
     }
 }

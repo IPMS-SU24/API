@@ -29,6 +29,14 @@ namespace IPMS.API.Controllers
             return GetActionResponse(new IPMSResponse<object>());
 
         }
+        [HttpPut("lecturer-update")]
+        public async Task<IActionResult> UpdateLecturerAccount([FromBody] UpdateLecturerAccountRequest request)
+        {
+            await _authenticationService.UpdateLecturerAccount(request);
+
+            return GetActionResponse(new IPMSResponse<object>());
+
+        }
         [HttpGet("lecturer")]
         public async Task<IActionResult> GetAllLecturer()
         {
