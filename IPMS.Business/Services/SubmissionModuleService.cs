@@ -205,7 +205,8 @@ namespace IPMS.Business.Services
                     Total = classTopics.Count(),
                     StartDate = sm.ClassModuleDeadlines.First().StartDate,
                     EndDate = sm.ClassModuleDeadlines.First().EndDate,
-                    Percentage = sm.Percentage
+                    Percentage = sm.Percentage,
+                    Description = sm.Description
 
                 }).ToList();
                 GetAssessmentSubmissionModuleByClassResponse submission = new GetAssessmentSubmissionModuleByClassResponse

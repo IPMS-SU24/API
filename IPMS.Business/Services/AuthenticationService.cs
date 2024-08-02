@@ -23,6 +23,7 @@ using IPMS.Business.Responses.Authentication;
 using IPMS.Business.Requests.Admin;
 using IPMS.Business.Responses.Admin;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace IPMS.Business.Services
 {
@@ -55,8 +56,9 @@ namespace IPMS.Business.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task AddLecturerAccount(AddLecturerAccountRequest registerModel)
+        public async Task<AddLecturerAccountResponse> AddLecturerAccount(AddLecturerAccountRequest registerModel)
         {
+            AddLecturerAccountResponse lecturer = new AddLecturerAccountResponse();
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
 
@@ -83,6 +85,7 @@ namespace IPMS.Business.Services
                                 registerModel.Email,
                                 ConfirmEmailTemplate.Subject,
                                 EmailUtils.GetFullMailContent(ConfirmEmailTemplate.GetBody(confirmURL, password)));
+                    lecturer.Id = newLecturer.Id;
                 }
                 else
                 {
@@ -93,6 +96,8 @@ namespace IPMS.Business.Services
                     }));
                 }
             });
+
+            return lecturer;
         }
         public async Task<IList<LectureAccountResponse>> GetLecturerAsync()
         {
@@ -102,7 +107,14 @@ namespace IPMS.Business.Services
                 Name = x.FullName,
             }).ToList();
         }
+        public static List<T> SortByField<T>(List<T> list, string sortBy)
+        {
+            var param = Expression.Parameter(typeof(T), "item");
+            var property = Expression.Property(param, sortBy);
+            var lambda = Expression.Lambda<Func<T, object>>(Expression.Convert(property, typeof(object)), param);
 
+            return list.AsQueryable().OrderBy(lambda).ToList();
+        }
         public string GenerateAccessToken(IEnumerable<Claim> claims)
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Secret));
