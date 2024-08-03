@@ -24,6 +24,7 @@ namespace IPMS.Business.Interfaces.Services
         Task SetCommonSessionUserEntity(Guid currentUserId);
         IPMSClass? GetClass();
         Project? GetProject();
+        Task<Project?> GetProject(Guid currentUserId, Guid currentClassId);
 
     }
 }

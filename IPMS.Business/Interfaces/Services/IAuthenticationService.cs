@@ -21,5 +21,8 @@ namespace IPMS.Business.Interfaces.Services
         Task<IList<LectureAccountResponse>> GetLecturerAsync();
         Task<IEnumerable<LectureAccountResponse>> GetLecturerList(GetLecturerListRequest request);
         Task<GetLecturerDetailResponse> GetLecturerDetail(Guid lecturerId);
+        Task<IEnumerable<GetAllStudentResponse>> GetAllStudent(GetAllStudentRequest request);
+        Task<GetStudentDetailResponse> GetStudentDetail(Guid studentId);
+
     }
 }
