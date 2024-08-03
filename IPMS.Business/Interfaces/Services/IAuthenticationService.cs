@@ -23,6 +23,12 @@ namespace IPMS.Business.Interfaces.Services
         Task<GetLecturerDetailResponse> GetLecturerDetail(Guid lecturerId);
         Task<IEnumerable<GetAllStudentResponse>> GetAllStudent(GetAllStudentRequest request);
         Task<GetStudentDetailResponse> GetStudentDetail(Guid studentId);
+        Task<IEnumerable<GetReportListResponse>> GetReportList(GetReportListRequest request);
+        Task<GetReportDetailResponse> GetReportDetail(Guid? reportId);
+        Task ResponseReport(ResponseReportRequest request);
+        Task<GetAssessmentDetailResponse> GetAssessmentDetail(Guid? assessmentId);
+        Task<IEnumerable<GetAllSyllabusResponse>> GetAllSyllabus(GetAllSyllabusRequest request);
+        Task<GetSyllabusDetailResponse> GetSyllabusDetail(Guid? syllabusId);
 
     }
 }

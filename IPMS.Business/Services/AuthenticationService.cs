@@ -24,6 +24,7 @@ using IPMS.Business.Requests.Admin;
 using IPMS.Business.Responses.Admin;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using IPMS.Business.Common.Constants;
 
 namespace IPMS.Business.Services
 {
@@ -37,6 +38,8 @@ namespace IPMS.Business.Services
         private readonly JWTConfig _jwtConfig;
         private readonly string _mailHost;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPresignedUrlService _presignedUrlService;
+
         public AuthenticationService(UserManager<IPMSUser> userManager,
                                    RoleManager<IdentityRole<Guid>> roleManager,
                                    IOptions<JWTConfig> jwtConfig,
@@ -44,7 +47,8 @@ namespace IPMS.Business.Services
                                    ICommonServices commonService,
                                    MailServer mailServer,
                                    IConfiguration configuration,
-                                   IUnitOfWork unitOfWork)
+                                   IUnitOfWork unitOfWork,
+                                   IPresignedUrlService presignedUrlService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -54,6 +58,7 @@ namespace IPMS.Business.Services
             _mailServer = mailServer;
             _mailHost = configuration["MailFrom"];
             _unitOfWork = unitOfWork;
+            _presignedUrlService = presignedUrlService;
         }
 
         public async Task AddLecturerAccount(AddLecturerAccountRequest registerModel)
@@ -393,13 +398,13 @@ namespace IPMS.Business.Services
         {
             if (updateModel.Id == null)
             {
-                throw new DataNotFoundException("Lecturer cannot found");
+                throw new DataNotFoundException("Lecturer not found");
 
             }
             var lecturer = await _userManager.FindByIdAsync(updateModel.Id.ToString());
             if (lecturer == null)
             {
-                throw new DataNotFoundException("Lecturer cannot found");
+                throw new DataNotFoundException("Lecturer not found");
 
             }
             var isLecturer = await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString());
@@ -446,7 +451,7 @@ namespace IPMS.Business.Services
                 stu.Project = studyIn.Project;
                 stu.ClassId = studyIn.ClassId;
                 stu.Class = studyIn.Class;
-                
+
                 students.Add(stu);
             }
 
@@ -466,7 +471,7 @@ namespace IPMS.Business.Services
             {
                 return student;
             }
-       
+
             student.Id = stuRaw.Id;
             student.Name = stuRaw.FullName;
             student.Email = stuRaw.Email;
@@ -478,7 +483,7 @@ namespace IPMS.Business.Services
             student.Project = studyIn.Project;
             student.ClassId = studyIn.ClassId;
             student.Class = studyIn.Class;
-            
+
             return student;
         }
         private async Task<GetStudyInResponse> GetStudyIn(Guid stuId)
@@ -530,6 +535,162 @@ namespace IPMS.Business.Services
             }
 
             return student;
+        }
+
+        public async Task<IEnumerable<GetReportListResponse>> GetReportList(GetReportListRequest request)
+        {
+            var reportRaw = await _unitOfWork.ReportRepository.Get().Include(r => r.Reporter).Include(r => r.ReportType).ToListAsync();
+
+            return reportRaw.Select(r => new GetReportListResponse
+            {
+                Id = r.Id,
+                Title = r.Title,
+                Email = r.Reporter.Email,
+                TypeId = r.ReportTypeId,
+                Type = r.ReportType.Name,
+                Date = r.CreatedAt,
+                Status = r.Status,
+                Content = r.Content,
+                ResponseContent = r.ResponseContent == null ? string.Empty : r.ResponseContent
+            });
+        }
+
+        public async Task<GetReportDetailResponse> GetReportDetail(Guid? reportId)
+        {
+            if (reportId == null || reportId == Guid.Empty)
+            {
+                return new GetReportDetailResponse();
+            }
+
+            var reportRaw = await _unitOfWork.ReportRepository.Get().Where(r => r.Id.Equals(reportId)).Include(r => r.Reporter).Include(r => r.ReportType).FirstOrDefaultAsync();
+
+            if (reportRaw == null)
+            {
+                return new GetReportDetailResponse();
+            }
+            return new GetReportDetailResponse
+            {
+                Id = reportRaw.Id,
+                Title = reportRaw.Title,
+                Email = reportRaw.Reporter.Email,
+                TypeId = reportRaw.ReportTypeId,
+                Type = reportRaw.ReportType.Name,
+                Date = reportRaw.CreatedAt,
+                Status = reportRaw.Status,
+                Content = reportRaw.Content,
+                ResponseContent = reportRaw.ResponseContent == null ? "" : reportRaw.ResponseContent,
+                ReportFile = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Report, reportRaw.Id, reportRaw.Title)) ?? string.Empty,
+            };
+
+        }
+
+        public async Task ResponseReport(ResponseReportRequest request)
+        {
+            if (request.Id == null)
+            {
+                throw new DataNotFoundException("Report not found");
+            }
+
+            if (request.ResponseContent == null)
+            {
+                throw new BaseBadRequestException("Please set Response");
+
+            }
+
+            request.ResponseContent = request.ResponseContent.Trim();
+
+            if (request.ResponseContent == string.Empty)
+            {
+                throw new BaseBadRequestException("Please set Response");
+
+            }
+            var report = await _unitOfWork.ReportRepository.Get().FirstOrDefaultAsync(r => r.Id.Equals(request.Id));
+            if (report == null)
+            {
+                throw new DataNotFoundException("Report not found");
+            }
+            report.ResponseContent = request.ResponseContent;
+            report.Status = request.Status;
+
+            _unitOfWork.ReportRepository.Update(report);
+            await _unitOfWork.SaveChangesAsync();
+
+        }
+
+        public async Task<GetAssessmentDetailResponse> GetAssessmentDetail(Guid? assessmentId)
+        {
+            if (assessmentId == null || assessmentId == Guid.Empty)
+            {
+                return new GetAssessmentDetailResponse();
+            }
+            var assessmentRaw = await _unitOfWork.AssessmentRepository.Get().Where(a => a.Id.Equals(assessmentId)).Include(a => a.Syllabus).FirstOrDefaultAsync();
+            if (assessmentRaw == null)
+            {
+                return new GetAssessmentDetailResponse();
+            }
+
+            return new GetAssessmentDetailResponse
+            {
+                Id = assessmentRaw.Id,
+                Name = assessmentRaw.Name,
+                Description = assessmentRaw.Description,
+                Order = assessmentRaw.Order,
+                Percentage = assessmentRaw.Percentage,
+                SyllabusId = assessmentRaw.SyllabusId,
+                SyllabusName = assessmentRaw.Syllabus.Name
+            };
+
+        }
+
+        public async Task<IEnumerable<GetAllSyllabusResponse>> GetAllSyllabus(GetAllSyllabusRequest request)
+        {
+            var syllabusRaw = await _unitOfWork.SyllabusRepository.Get().ToListAsync();
+            return syllabusRaw.Select(s => new GetAllSyllabusResponse
+            {
+                Id = s.Id,
+                Name = s.Name,
+                ShortName = s.ShortName,
+                Description = s.Description
+            });
+
+        }
+
+        public async Task<GetSyllabusDetailResponse> GetSyllabusDetail(Guid? syllabusId)
+        {
+            if (syllabusId == null || syllabusId == Guid.Empty)
+            {
+                return new GetSyllabusDetailResponse();
+            }
+            var syllabusRaw = await _unitOfWork.SyllabusRepository.Get().Where(s => s.Id.Equals(syllabusId))
+                        .Include(s => s.Assessments)
+                        .Include(s => s.Semesters)
+                        .FirstOrDefaultAsync();
+
+            if (syllabusRaw == null)
+            {
+                return new GetSyllabusDetailResponse();
+
+            }
+            return new GetSyllabusDetailResponse
+            {
+                Id = syllabusRaw.Id,
+                Name = syllabusRaw.Name,
+                ShortName = syllabusRaw.ShortName,
+                Description = syllabusRaw.Description,
+                AssessmentInfos = syllabusRaw.Assessments.Select(a => new SysAssessmentInfo
+                {
+                    AssessmentId = a.Id,
+                    Name = a.Name,
+                    Order = a.Order,
+                    Percentage = a.Percentage
+
+                }).ToList(),
+                SemesterInfos = syllabusRaw.Semesters.Select(s => new SysSemesterInfo
+                {
+                    SemesterId = s.Id,
+                    Name = s.Name
+                }).ToList()
+            };
         }
     }
 }

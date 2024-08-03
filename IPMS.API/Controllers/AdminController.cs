@@ -8,6 +8,7 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Common.Attributes;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Responses.Admin;
+using IPMS.DataAccess.Models;
 
 namespace IPMS.API.Controllers
 {
@@ -96,5 +97,81 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("report-list")]
+        public async Task<IActionResult> GetReportList([FromQuery] GetReportListRequest request)
+        {
+
+            var reports = await _authenticationService.GetReportList(request);
+
+            var response = await reports.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("report-detail")]
+        public async Task<IActionResult> GetReportDetail([FromQuery] Guid reportId)
+        {
+
+            var report = await _authenticationService.GetReportDetail(reportId);
+
+            var response = new IPMSResponse<GetReportDetailResponse>()
+            {
+                Data = report
+            };
+            return GetActionResponse(response);
+
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpPut("report-update")]
+        public async Task<IActionResult> ResponseReport([FromBody] ResponseReportRequest request)
+        {
+            await _authenticationService.ResponseReport(request);
+
+            return GetActionResponse(new IPMSResponse<object>());
+
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("assessment-detail")]
+        public async Task<IActionResult> GetAssessmentDetail([FromQuery] Guid assessmentId)
+        {
+
+            var assessment = await _authenticationService.GetAssessmentDetail(assessmentId);
+            var response = new IPMSResponse<GetAssessmentDetailResponse>()
+            {
+                Data = assessment
+            };
+            return GetActionResponse(response);
+
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("syllabus-list")]
+        public async Task<IActionResult> GetAllSyllabus([FromQuery] GetAllSyllabusRequest request)
+        {
+
+            var assessments = await _authenticationService.GetAllSyllabus(request);
+            var response = await assessments.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("syllabus-detail")]
+        public async Task<IActionResult> GetSyllabusDetail([FromQuery] Guid syllabusId)
+        {
+
+            var syllabus = await _authenticationService.GetSyllabusDetail(syllabusId);
+            var response = new IPMSResponse<GetSyllabusDetailResponse>()
+            {
+                Data = syllabus
+            };
+            return GetActionResponse(response);
+
+        }
+
     }
 }
