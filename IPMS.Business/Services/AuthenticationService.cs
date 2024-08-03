@@ -442,7 +442,9 @@ namespace IPMS.Business.Services
 
                 var studyIn = await GetStudyIn(s.Id, curSemester, leader);
                 stu.Role = studyIn.Role;
+                stu.ProjectId = studyIn.ProjectId;
                 stu.Project = studyIn.Project;
+                stu.ClassId = studyIn.ClassId;
                 stu.Class = studyIn.Class;
                 
                 students.Add(stu);
@@ -472,7 +474,9 @@ namespace IPMS.Business.Services
 
             var studyIn = await GetStudyIn(stuRaw.Id);
             student.Role = studyIn.Role;
+            student.ProjectId = studyIn.ProjectId;
             student.Project = studyIn.Project;
+            student.ClassId = studyIn.ClassId;
             student.Class = studyIn.Class;
             
             return student;
@@ -496,11 +500,13 @@ namespace IPMS.Business.Services
                 var @class = await _commonService.GetCurrentClass(stuId);
                 if (@class != null)
                 {
+                    student.ClassId = @class.Id;
                     student.Class = @class.Name;
                     student.Role = leader.FirstOrDefault(l => l.Equals(stuId)) == Guid.Empty ? UserRole.Student.ToString() : UserRole.Leader.ToString();
                     var project = await _commonService.GetProject(stuId, @class.Id);
                     if (project != null)
                     {
+                        student.ProjectId = project.Id;
                         student.Project = project.GroupNum.ToString();
                     }
                     else
