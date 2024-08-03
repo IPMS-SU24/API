@@ -87,7 +87,7 @@ namespace IPMS.Business.Services
                 }
                 else
                 {
-                    throw new ValidationException(rs.Errors.Select(x=> new FluentValidation.Results.ValidationFailure
+                    throw new ValidationException(rs.Errors.Select(x => new FluentValidation.Results.ValidationFailure
                     {
                         PropertyName = x.Code,
                         ErrorMessage = x.Description
@@ -174,9 +174,9 @@ namespace IPMS.Business.Services
                 {
                     //If student => Add ProjectId to Claim
                     var project = await _commonService.GetProject(user.Id);
-                    if(project != null)
+                    if (project != null)
                     {
-                        authClaims.Add(new("ProjectId",project.Id.ToString()));
+                        authClaims.Add(new("ProjectId", project.Id.ToString()));
                     }
                 }
                 var accessToken = GenerateAccessToken(authClaims);
@@ -226,7 +226,7 @@ namespace IPMS.Business.Services
             {
                 return null;
             }
-            string email = principal.FindFirst(x=>x.Type == ClaimTypes.Email).Value;
+            string email = principal.FindFirst(x => x.Type == ClaimTypes.Email).Value;
 
             var user = await _userManager.FindByEmailAsync(email);
             var oldActiveRefreshToken = user.RefreshTokens.Where(x => x.IsActive && x.Token == refreshToken).FirstOrDefault();
@@ -256,11 +256,11 @@ namespace IPMS.Business.Services
         public async Task ConfirmEmailAsync(Guid userId, string token)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
-            if(user == null)
+            if (user == null)
             {
                 throw new DataNotFoundException();
             }
-            if(await _userManager.IsEmailConfirmedAsync(user))
+            if (await _userManager.IsEmailConfirmedAsync(user))
             {
                 throw new EmailConfirmException("Email is already confirmed");
             }
@@ -301,7 +301,7 @@ namespace IPMS.Business.Services
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
-            if(user == null || !await _userManager.IsEmailConfirmedAsync(user))
+            if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
             {
                 throw new DataNotFoundException("Not Found Account");
             }
@@ -404,7 +404,8 @@ namespace IPMS.Business.Services
             }
             var isLecturer = await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString());
 
-            if (isLecturer == false) {
+            if (isLecturer == false)
+            {
                 throw new DataNotFoundException("User is not lecturer");
             }
 
@@ -420,6 +421,109 @@ namespace IPMS.Business.Services
                     ErrorMessage = x.Description
                 }));
             }
+        }
+
+        public async Task<IEnumerable<GetAllStudentResponse>> GetAllStudent(GetAllStudentRequest request)
+        {
+            List<GetAllStudentResponse> students = new List<GetAllStudentResponse>();
+            var studentsRaw = await _userManager.GetUsersInRoleAsync(UserRole.Student.ToString());
+            var leader = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(l => l.Id);
+            var now = DateTime.Now;
+            var curSemester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.EndDate > now && x.StartDate < now);
+            var project = new Project();
+
+            foreach (var s in studentsRaw)
+            {
+                var stu = new GetAllStudentResponse();
+                stu.Id = s.Id;
+                stu.Name = s.FullName;
+                stu.Email = s.Email;
+                stu.StudentId = s.UserName;
+
+                var studyIn = await GetStudyIn(s.Id, curSemester, leader);
+                stu.Role = studyIn.Role;
+                stu.Project = studyIn.Project;
+                stu.Class = studyIn.Class;
+                
+                students.Add(stu);
+            }
+
+            return students;
+        }
+
+        public async Task<GetStudentDetailResponse> GetStudentDetail(Guid studentId)
+        {
+            GetStudentDetailResponse student = new GetStudentDetailResponse();
+            if (studentId == Guid.Empty || studentId == null)
+            {
+                return student;
+            }
+
+            var stuRaw = await _userManager.FindByIdAsync(studentId.ToString());
+            if (stuRaw == null)
+            {
+                return student;
+            }
+       
+            student.Id = stuRaw.Id;
+            student.Name = stuRaw.FullName;
+            student.Email = stuRaw.Email;
+            student.StudentId = stuRaw.UserName;
+
+            var studyIn = await GetStudyIn(stuRaw.Id);
+            student.Role = studyIn.Role;
+            student.Project = studyIn.Project;
+            student.Class = studyIn.Class;
+            
+            return student;
+        }
+        private async Task<GetStudyInResponse> GetStudyIn(Guid stuId)
+        {
+            var now = DateTime.Now;
+            IEnumerable<Guid> leader = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(l => l.Id);
+
+            var curSemester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.EndDate > now && x.StartDate < now);
+
+            return await GetStudyIn(stuId, curSemester, leader);
+        }
+
+        private async Task<GetStudyInResponse> GetStudyIn(Guid stuId, Semester curSemester, IEnumerable<Guid> leader)
+        {
+            GetStudyInResponse student = new GetStudyInResponse();
+
+            if (curSemester != null)
+            {
+                var @class = await _commonService.GetCurrentClass(stuId);
+                if (@class != null)
+                {
+                    student.Class = @class.Name;
+                    student.Role = leader.FirstOrDefault(l => l.Equals(stuId)) == Guid.Empty ? UserRole.Student.ToString() : UserRole.Leader.ToString();
+                    var project = await _commonService.GetProject(stuId, @class.Id);
+                    if (project != null)
+                    {
+                        student.Project = project.GroupNum.ToString();
+                    }
+                    else
+                    {
+                        student.Project = "";
+                    }
+                }
+                else
+                {
+                    student.Class = "";
+                    student.Project = "";
+                    student.Role = "";
+                }
+
+            }
+            else
+            {
+                student.Role = "";
+                student.Class = "";
+                student.Project = "";
+            }
+
+            return student;
         }
     }
 }

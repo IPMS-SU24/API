@@ -25,7 +25,7 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> AddLecturerAccount([FromBody] AddLecturerAccountRequest request)
         {
             await _authenticationService.AddLecturerAccount(request);
-           
+
             return GetActionResponse(new IPMSResponse<object>());
 
         }
@@ -68,6 +68,31 @@ namespace IPMS.API.Controllers
             var response = new IPMSResponse<GetLecturerDetailResponse>()
             {
                 Data = dataResponse
+            };
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("student")]
+        public async Task<IActionResult> GetAllStudent([FromQuery] GetAllStudentRequest request)
+        {
+
+            var students = await _authenticationService.GetAllStudent(request);
+            var response = await students.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("student-detail")]
+        public async Task<IActionResult> GetStudentDetail([FromQuery] Guid studentId)
+        {
+
+            var student = await _authenticationService.GetStudentDetail(studentId);
+
+            var response = new IPMSResponse<GetStudentDetailResponse>()
+            {
+                Data = student
             };
             return GetActionResponse(response);
         }

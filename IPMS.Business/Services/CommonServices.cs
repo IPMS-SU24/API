@@ -62,6 +62,19 @@ namespace IPMS.Business.Services
             return project;
         }
 
+        public async Task<Project?> GetProject(Guid currentUserId, Guid currentClassId)
+        {
+            var currentStudyIn = await _unitOfWork.StudentRepository.Get()
+                        .Where(s => s.ClassId.Equals(currentClassId) && s.InformationId.Equals(currentUserId))
+                        .Include(s => s.Project)
+                        .FirstOrDefaultAsync(); // Get current studying
+
+            if (currentStudyIn == null)
+                return null;
+
+            return currentStudyIn.Project;
+        }
+
         public async Task<Topic?> GetProjectTopic(Guid projectId)
         {
             return await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
