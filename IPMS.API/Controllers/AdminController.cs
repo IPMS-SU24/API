@@ -135,17 +135,6 @@ namespace IPMS.API.Controllers
         }
 
         [EnumAuthorize(UserRole.Admin)]
-        [HttpGet("assessment-list")]
-        public async Task<IActionResult> GetAllAssessment([FromQuery] GetAllAssessmentRequest request)
-        {
-
-            var assessments = await _authenticationService.GetAllAssessment(request);
-            var response = await assessments.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-
-            return GetActionResponse(response);
-        }
-
-        [EnumAuthorize(UserRole.Admin)]
         [HttpGet("assessment-detail")]
         public async Task<IActionResult> GetAssessmentDetail([FromQuery] Guid assessmentId)
         {
