@@ -8,6 +8,7 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Common.Attributes;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Responses.Admin;
+using IPMS.DataAccess.Models;
 
 namespace IPMS.API.Controllers
 {
@@ -130,6 +131,31 @@ namespace IPMS.API.Controllers
             await _authenticationService.ResponseReport(request);
 
             return GetActionResponse(new IPMSResponse<object>());
+
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("assessment-list")]
+        public async Task<IActionResult> GetAllAssessment([FromQuery] GetAllAssessmentRequest request)
+        {
+
+            var assessments = await _authenticationService.GetAllAssessment(request);
+            var response = await assessments.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("assessment-detail")]
+        public async Task<IActionResult> GetAssessmentDetail([FromQuery] Guid assessmentId)
+        {
+
+            var assessment = await _authenticationService.GetAssessmentDetail(assessmentId);
+            var response = new IPMSResponse<GetAssessmentDetailResponse>()
+            {
+                Data = assessment
+            };
+            return GetActionResponse(response);
 
         }
 
