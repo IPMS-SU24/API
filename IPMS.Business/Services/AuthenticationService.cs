@@ -617,22 +617,6 @@ namespace IPMS.Business.Services
 
         }
 
-        public async Task<IEnumerable<GetAllAssessmentResponse>> GetAllAssessment(GetAllAssessmentRequest request)
-        {
-            var assessmentRaw = await _unitOfWork.AssessmentRepository.Get().Include(a => a.Syllabus).ToListAsync();
-            return assessmentRaw.Select(a => new GetAllAssessmentResponse
-            {
-                Id = a.Id,
-                Name = a.Name,
-                Description = a.Description,
-                Order = a.Order,
-                Percentage = a.Percentage,
-                SyllabusId = a.SyllabusId,
-                SyllabusName = a.Syllabus.Name
-
-            });
-        }
-
         public async Task<GetAssessmentDetailResponse> GetAssessmentDetail(Guid? assessmentId)
         {
             if (assessmentId == null || assessmentId == Guid.Empty)
