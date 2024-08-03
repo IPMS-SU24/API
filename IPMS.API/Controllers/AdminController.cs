@@ -73,7 +73,7 @@ namespace IPMS.API.Controllers
         }
 
         [EnumAuthorize(UserRole.Admin)]
-        [HttpGet("student")]
+        [HttpGet("student-list")]
         public async Task<IActionResult> GetAllStudent([FromQuery] GetAllStudentRequest request)
         {
 
