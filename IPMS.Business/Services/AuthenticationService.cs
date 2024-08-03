@@ -24,8 +24,6 @@ using IPMS.Business.Requests.Admin;
 using IPMS.Business.Responses.Admin;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using System;
-using System.Reflection.Metadata;
 using IPMS.Business.Common.Constants;
 
 namespace IPMS.Business.Services
@@ -584,6 +582,38 @@ namespace IPMS.Business.Services
                 ReportFile = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Report, reportRaw.Id, reportRaw.Title)) ?? string.Empty,
             };
 
+        }
+
+        public async Task ResponseReport(ResponseReportRequest request)
+        {
+            if (request.Id == null)
+            {
+                throw new DataNotFoundException("Report not found");
+            }
+
+            if (request.ResponseContent == null)
+            {
+                throw new BaseBadRequestException("Please set Response");
+
+            }
+
+            request.ResponseContent = request.ResponseContent.Trim();
+
+            if (request.ResponseContent ==  string.Empty) { 
+                throw new BaseBadRequestException("Please set Response");
+
+            }
+            var report = await _unitOfWork.ReportRepository.Get().FirstOrDefaultAsync(r => r.Id.Equals(request.Id));
+            if (report == null)
+            {
+                throw new DataNotFoundException("Report not found");
+            }
+            report.ResponseContent = request.ResponseContent;
+            report.Status = request.Status;
+
+            _unitOfWork.ReportRepository.Update(report);
+            await _unitOfWork.SaveChangesAsync();
+            
         }
     }
 }

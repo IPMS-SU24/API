@@ -123,5 +123,15 @@ namespace IPMS.API.Controllers
 
         }
 
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpPut("report-update")]
+        public async Task<IActionResult> ResponseReport([FromBody] ResponseReportRequest request)
+        {
+            await _authenticationService.ResponseReport(request);
+
+            return GetActionResponse(new IPMSResponse<object>());
+
+        }
+
     }
 }

@@ -25,6 +25,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<GetStudentDetailResponse> GetStudentDetail(Guid studentId);
         Task<IEnumerable<GetReportListResponse>> GetReportList(GetReportListRequest request);
         Task<GetReportDetailResponse> GetReportDetail(Guid? reportId);
+        Task ResponseReport(ResponseReportRequest request);
 
     }
 }
