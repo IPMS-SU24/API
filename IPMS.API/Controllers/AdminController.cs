@@ -96,5 +96,32 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("report-list")]
+        public async Task<IActionResult> GetReportList([FromQuery] GetReportListRequest request)
+        {
+
+            var reports = await _authenticationService.GetReportList(request);
+
+            var response = await reports.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("report-detail")]
+        public async Task<IActionResult> GetReportDetail([FromQuery] Guid reportId)
+        {
+
+            var report = await _authenticationService.GetReportDetail(reportId);
+
+            var response = new IPMSResponse<GetReportDetailResponse>()
+            {
+                Data = report
+            };
+            return GetActionResponse(response);
+
+        }
+
     }
 }

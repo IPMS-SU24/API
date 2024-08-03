@@ -24,6 +24,9 @@ using IPMS.Business.Requests.Admin;
 using IPMS.Business.Responses.Admin;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System;
+using System.Reflection.Metadata;
+using IPMS.Business.Common.Constants;
 
 namespace IPMS.Business.Services
 {
@@ -37,6 +40,8 @@ namespace IPMS.Business.Services
         private readonly JWTConfig _jwtConfig;
         private readonly string _mailHost;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPresignedUrlService _presignedUrlService;
+
         public AuthenticationService(UserManager<IPMSUser> userManager,
                                    RoleManager<IdentityRole<Guid>> roleManager,
                                    IOptions<JWTConfig> jwtConfig,
@@ -44,7 +49,8 @@ namespace IPMS.Business.Services
                                    ICommonServices commonService,
                                    MailServer mailServer,
                                    IConfiguration configuration,
-                                   IUnitOfWork unitOfWork)
+                                   IUnitOfWork unitOfWork,
+                                   IPresignedUrlService presignedUrlService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -54,6 +60,7 @@ namespace IPMS.Business.Services
             _mailServer = mailServer;
             _mailHost = configuration["MailFrom"];
             _unitOfWork = unitOfWork;
+            _presignedUrlService = presignedUrlService;
         }
 
         public async Task AddLecturerAccount(AddLecturerAccountRequest registerModel)
@@ -393,13 +400,13 @@ namespace IPMS.Business.Services
         {
             if (updateModel.Id == null)
             {
-                throw new DataNotFoundException("Lecturer cannot found");
+                throw new DataNotFoundException("Lecturer not found");
 
             }
             var lecturer = await _userManager.FindByIdAsync(updateModel.Id.ToString());
             if (lecturer == null)
             {
-                throw new DataNotFoundException("Lecturer cannot found");
+                throw new DataNotFoundException("Lecturer not found");
 
             }
             var isLecturer = await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString());
@@ -530,6 +537,53 @@ namespace IPMS.Business.Services
             }
 
             return student;
+        }
+
+        public async Task<IEnumerable<GetReportListResponse>> GetReportList(GetReportListRequest request)
+        {
+            var reportRaw = await _unitOfWork.ReportRepository.Get().Include(r => r.Reporter).Include(r => r.ReportType).ToListAsync();
+
+            return reportRaw.Select(r => new GetReportListResponse
+            {
+                Id = r.Id,
+                Title = r.Title,
+                Email = r.Reporter.Email,
+                TypeId = r.ReportTypeId,
+                Type = r.ReportType.Name,
+                Date = r.CreatedAt,
+                Status = r.Status,
+                Content = r.Content,
+                ResponseContent = r.ResponseContent == null ? string.Empty : r.ResponseContent
+            });
+        }
+
+        public async Task<GetReportDetailResponse> GetReportDetail(Guid? reportId)
+        {
+            if (reportId == null || reportId == Guid.Empty)
+            {
+                return new GetReportDetailResponse();
+            }
+
+            var reportRaw = await _unitOfWork.ReportRepository.Get().Where(r => r.Id.Equals(reportId)).Include(r => r.Reporter).Include(r => r.ReportType).FirstOrDefaultAsync();
+
+            if (reportRaw == null)
+            {
+                return new GetReportDetailResponse();
+            }
+            return new GetReportDetailResponse
+            {
+                Id = reportRaw.Id,
+                Title = reportRaw.Title,
+                Email = reportRaw.Reporter.Email,
+                TypeId = reportRaw.ReportTypeId,
+                Type = reportRaw.ReportType.Name,
+                Date = reportRaw.CreatedAt,
+                Status = reportRaw.Status,
+                Content = reportRaw.Content,
+                ResponseContent = reportRaw.ResponseContent == null ? "" : reportRaw.ResponseContent,
+                ReportFile = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Report, reportRaw.Id, reportRaw.Title)) ?? string.Empty,
+            };
+
         }
     }
 }
