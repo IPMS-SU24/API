@@ -159,5 +159,30 @@ namespace IPMS.API.Controllers
 
         }
 
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("syllabus-list")]
+        public async Task<IActionResult> GetAllSyllabus([FromQuery] GetAllSyllabusRequest request)
+        {
+
+            var assessments = await _authenticationService.GetAllSyllabus(request);
+            var response = await assessments.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("syllabus-detail")]
+        public async Task<IActionResult> GetSyllabusDetail([FromQuery] Guid syllabusId)
+        {
+
+            var syllabus = await _authenticationService.GetSyllabusDetail(syllabusId);
+            var response = new IPMSResponse<GetSyllabusDetailResponse>()
+            {
+                Data = syllabus
+            };
+            return GetActionResponse(response);
+
+        }
+
     }
 }

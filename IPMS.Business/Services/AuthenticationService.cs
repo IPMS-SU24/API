@@ -451,7 +451,7 @@ namespace IPMS.Business.Services
                 stu.Project = studyIn.Project;
                 stu.ClassId = studyIn.ClassId;
                 stu.Class = studyIn.Class;
-                
+
                 students.Add(stu);
             }
 
@@ -471,7 +471,7 @@ namespace IPMS.Business.Services
             {
                 return student;
             }
-       
+
             student.Id = stuRaw.Id;
             student.Name = stuRaw.FullName;
             student.Email = stuRaw.Email;
@@ -483,7 +483,7 @@ namespace IPMS.Business.Services
             student.Project = studyIn.Project;
             student.ClassId = studyIn.ClassId;
             student.Class = studyIn.Class;
-            
+
             return student;
         }
         private async Task<GetStudyInResponse> GetStudyIn(Guid stuId)
@@ -599,7 +599,8 @@ namespace IPMS.Business.Services
 
             request.ResponseContent = request.ResponseContent.Trim();
 
-            if (request.ResponseContent ==  string.Empty) { 
+            if (request.ResponseContent == string.Empty)
+            {
                 throw new BaseBadRequestException("Please set Response");
 
             }
@@ -613,7 +614,7 @@ namespace IPMS.Business.Services
 
             _unitOfWork.ReportRepository.Update(report);
             await _unitOfWork.SaveChangesAsync();
-            
+
         }
 
         public async Task<IEnumerable<GetAllAssessmentResponse>> GetAllAssessment(GetAllAssessmentRequest request)
@@ -653,8 +654,59 @@ namespace IPMS.Business.Services
                 Percentage = assessmentRaw.Percentage,
                 SyllabusId = assessmentRaw.SyllabusId,
                 SyllabusName = assessmentRaw.Syllabus.Name
-            }; 
-            
+            };
+
+        }
+
+        public async Task<IEnumerable<GetAllSyllabusResponse>> GetAllSyllabus(GetAllSyllabusRequest request)
+        {
+            var syllabusRaw = await _unitOfWork.SyllabusRepository.Get().ToListAsync();
+            return syllabusRaw.Select(s => new GetAllSyllabusResponse
+            {
+                Id = s.Id,
+                Name = s.Name,
+                ShortName = s.ShortName,
+                Description = s.Description
+            });
+
+        }
+
+        public async Task<GetSyllabusDetailResponse> GetSyllabusDetail(Guid? syllabusId)
+        {
+            if (syllabusId == null || syllabusId == Guid.Empty)
+            {
+                return new GetSyllabusDetailResponse();
+            }
+            var syllabusRaw = await _unitOfWork.SyllabusRepository.Get().Where(s => s.Id.Equals(syllabusId))
+                        .Include(s => s.Assessments)
+                        .Include(s => s.Semesters)
+                        .FirstOrDefaultAsync();
+
+            if (syllabusRaw == null)
+            {
+                return new GetSyllabusDetailResponse();
+
+            }
+            return new GetSyllabusDetailResponse
+            {
+                Id = syllabusRaw.Id,
+                Name = syllabusRaw.Name,
+                ShortName = syllabusRaw.ShortName,
+                Description = syllabusRaw.Description,
+                AssessmentInfos = syllabusRaw.Assessments.Select(a => new SysAssessmentInfo
+                {
+                    AssessmentId = a.Id,
+                    Name = a.Name,
+                    Order = a.Order,
+                    Percentage = a.Percentage
+
+                }).ToList(),
+                SemesterInfos = syllabusRaw.Semesters.Select(s => new SysSemesterInfo
+                {
+                    SemesterId = s.Id,
+                    Name = s.Name
+                }).ToList()
+            };
         }
     }
 }
