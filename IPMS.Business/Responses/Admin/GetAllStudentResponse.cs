@@ -8,7 +8,9 @@ namespace IPMS.Business.Responses.Admin
         public string Name { get; set; }
         public string Email { get; set; }
         public string Role { get; set; }
+        public Guid? ClassId { get; set; }
         public string Class { get; set; }
+        public Guid? ProjectId { get; set; }
         public string Project { get; set; }
     }
 }
