@@ -17,7 +17,7 @@ fi
 
 # Thực hiện start Docker container và map cổng 80 trên máy host với cổng 300 trên container
 docker run -e TZ=Asia/Ho_Chi_Minh -d -e ASPNETCORE_URLS='http://+:443' --name $REPOSITORY_NAME -p 443:443 $DOCKER_IMAGE
-docker image prune
+docker image prune -f
 # Kiểm tra xem container đã khởi chạy thành công hay không
 if [ $? -eq 0 ]; then
   echo "Container đã được khởi chạy thành công với tên: $REPOSITORY_NAME và port 80 trên máy host đã được map với port 300 trên container."
