@@ -193,6 +193,11 @@ namespace IPMS.Business.Services
                 return result;
             }
             
+            if (syllabus.Semesters.Count() > 0)
+            {
+                result.Message = "Cannot configure assessment used";
+                return result;
+            }
             var assMatches = syllabus.Assessments.Count(a => request.Assessments.Select(ra => ra.Id).Contains(a.Id));
             var reqAssExisted = request.Assessments.Count(a => a.Id != Guid.Empty);
             if (assMatches != reqAssExisted)
@@ -206,18 +211,6 @@ namespace IPMS.Business.Services
             {
                 result.Message = "Please set percentage is 100%";
                 return result;
-            }
-
-            var now = DateTime.Now;
-            var curSemester = (await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.EndDate > now && x.StartDate < now)); //null .Id = 500
-            if (curSemester != null)
-            {
-                var isInCurSemester = syllabus.Semesters.Any(s => s.Id.Equals(curSemester.Id));
-                if (isInCurSemester)
-                {
-                    result.Message = "Cannot configure Assessments in current semester";
-                    return result;
-                }
             }
 
             result.Message = string.Empty;
