@@ -1,6 +1,7 @@
 ﻿using IPMS.Business.Models;
 using IPMS.Business.Requests.Admin;
 using IPMS.Business.Requests.Authentication;
+using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Admin;
 using IPMS.Business.Responses.Authentication;
 using System.Security.Claims;
@@ -18,17 +19,5 @@ namespace IPMS.Business.Interfaces.Services
         Task ForgotPasswordAsync(ForgotPasswordRequest request);
         Task ResetPasswordAsync(ResetPasswordRequest request);
         Task ChangePasswordAsync(ChangePasswordRequest request, Guid userId);
-        Task<IList<LectureAccountResponse>> GetLecturerAsync();
-        Task<IEnumerable<LectureAccountResponse>> GetLecturerList(GetLecturerListRequest request);
-        Task<GetLecturerDetailResponse> GetLecturerDetail(Guid lecturerId);
-        Task<IEnumerable<GetAllStudentResponse>> GetAllStudent(GetAllStudentRequest request);
-        Task<GetStudentDetailResponse> GetStudentDetail(Guid studentId);
-        Task<IEnumerable<GetReportListResponse>> GetReportList(GetReportListRequest request);
-        Task<GetReportDetailResponse> GetReportDetail(Guid? reportId);
-        Task ResponseReport(ResponseReportRequest request);
-        Task<GetAssessmentDetailResponse> GetAssessmentDetail(Guid? assessmentId);
-        Task<IEnumerable<GetAllSyllabusResponse>> GetAllSyllabus(GetAllSyllabusRequest request);
-        Task<GetSyllabusDetailResponse> GetSyllabusDetail(Guid? syllabusId);
-
     }
 }

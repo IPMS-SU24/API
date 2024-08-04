@@ -65,6 +65,7 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<INotificationStorageService, NotificationStorageService>();
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IFavoriteTopicListService, FavoriteTopicListService>();
+            services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<ApiExceptionFilterAttribute>();
         }
     }
