@@ -261,7 +261,7 @@ namespace IPMS.Business.Services
 
             var committee = await _unitOfWork.CommitteeRepository.Get().Where(c => c.ClassId.Equals(@class.Id)).ToListAsync();
             var curCommittee = committee.FirstOrDefault(c => c.LecturerId.Equals(lecturerId))!.Id;
-            
+
             var grade = await _unitOfWork.LecturerGradeRepository.Get().FirstOrDefaultAsync(lg => lg.CommitteeId.Equals(curCommittee) && lg.SubmissionId.Equals(request.SubmissionId));
             if (grade == null)
             {
@@ -396,51 +396,73 @@ namespace IPMS.Business.Services
 
         public async Task<GetGradeResponse> GetGradeAsync(Guid studentId, Guid projectId)
         {
-            if(!await _unitOfWork.StudentRepository.Get().AnyAsync(x=>x.InformationId == studentId && x.ProjectId == projectId))
+            var targetStudent = await _unitOfWork.StudentRepository.Get().FirstOrDefaultAsync(x => x.InformationId == studentId && x.ProjectId == projectId);
+            if (targetStudent == null)
             {
                 throw new DataNotFoundException("Not Found Project");
             }
-            var assessmentGrades = await _unitOfWork.ProjectSubmissionRepository.Get()
-                                                                                  .Include(x => x.SubmissionModule)
-                                                                                  .ThenInclude(x => x.Assessment)
-                                                                                  .Where(x => x.ProjectId == projectId)
-                                                                                  .OrderBy(x=>x.SubmissionModule.Assessment.Order)
-                                                                                  .GroupBy(x => x.SubmissionModule.AssessmentId)
-                                                                                  .Select(x => new AssessmentGrade
-                                                                                  {
-                                                                                      Name = x.First().SubmissionModule.Assessment.Name,
-                                                                                      Percentage = x.First().SubmissionModule.Assessment.Percentage,
-                                                                                      SubmissionGrades = x.Select(sg => new SubmissionGrade
-                                                                                      {
-                                                                                          Grade = sg.FinalGrade,
-                                                                                          Percentage = sg.SubmissionModule.Percentage,
-                                                                                          Name = sg.SubmissionModule.Name
-                                                                                      }).ToList(),
-                                                                                      AssessmentAvg = x.Select(ps=> ps.FinalGrade == null ? null : ps.FinalGrade * (ps.SubmissionModule.Percentage / 100)).Sum(),
-                                                                                  }).ToListAsync();
-            if(assessmentGrades == null || !assessmentGrades.Any())
+            var semesterId = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id == targetStudent.ClassId).Select(x => x.SemesterId).FirstOrDefaultAsync();
+            var response = new GetGradeResponse
             {
-                throw new DataNotFoundException();
-            }
+                AssessmentGrades = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.Assessment)
+                                                                                            .Where(x => x.SemesterId == semesterId)
+                                                                                            .GroupBy(x => x.AssessmentId)
+                                                                                            .Select(x => new AssessmentGrade
+                                                                                            {
+                                                                                                Id = x.Key,
+                                                                                                Order = x.First().Assessment.Order,
+                                                                                                Name = x.First().Assessment.Name,
+                                                                                                Percentage = x.First().Assessment.Percentage,
+                                                                                                SubmissionGrades = x.Select(sm => new SubmissionGrade
+                                                                                                {
+                                                                                                    Id = sm.Id,
+                                                                                                    Percentage = sm.Percentage,
+                                                                                                    Name = sm.Name,
+                                                                                                    Grade = sm.ProjectSubmissions.FirstOrDefault(ps => ps.ProjectId == projectId) != null ?
+                                                                                                            sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).FinalGrade : null
+                                                                                                }).ToList(),
+                                                                                            }).ToListAsync()
+            };
+            //var modules = response.AssessmentGrades.SelectMany(x=>x.SubmissionGrades).ToList();
+            //var assessmentGrades = await _unitOfWork.ProjectSubmissionRepository.Get()
+            //                                                                      .Include(x => x.SubmissionModule)
+            //                                                                      .ThenInclude(x => x.Assessment)
+            //                                                                      .Where(x => x.ProjectId == projectId && modules.Select(m => m.Id).Contains(x.SubmissionModuleId))
+            //                                                                      .OrderBy(x => x.SubmissionModule.Assessment.Order)
+            //                                                                      .GroupBy(x => x.SubmissionModule.AssessmentId)
+            //                                                                      .Select(x => new AssessmentGrade
+            //                                                                      {
+            //                                                                          Id = x.Key,
+            //                                                                          Name = x.First().SubmissionModule.Assessment.Name,
+            //                                                                          Percentage = x.First().SubmissionModule.Assessment.Percentage,
+            //                                                                          SubmissionGrades = x.Select(sg => new SubmissionGrade
+            //                                                                          {
+            //                                                                              Grade = sg.FinalGrade,
+            //                                                                              Percentage = sg.SubmissionModule.Percentage,
+            //                                                                              Name = sg.SubmissionModule.Name
+            //                                                                          }).ToList(),
+            //                                                                      }).ToListAsync();
+            //if (assessmentGrades == null || !assessmentGrades.Any())
+            //{
+            //    throw new DataNotFoundException();
+            //}
 
-            decimal? total = 0;
-            foreach(var assGrade in assessmentGrades)
+            //Calc Total
+            response.Total = 0;
+            foreach (var assGrade in response.AssessmentGrades)
             {
-                if(assGrade.AssessmentAvg == null)
+                if (assGrade.AssessmentAvg == null)
                 {
-                    total = null;
+                    response.Total = null;
                     break;
                 }
                 else
                 {
-                    total += assGrade.AssessmentAvg * (assGrade.Percentage / 100);
+                    response.Total += assGrade.AssessmentAvg * (assGrade.Percentage / 100);
                 }
             }
-            return new GetGradeResponse
-            {
-                AssessmentGrades = assessmentGrades,
-                Total = total
-            };
+            response.AssessmentGrades = response.AssessmentGrades.OrderBy(x => x.Order).ToList();
+            return response;
         }
     }
 }

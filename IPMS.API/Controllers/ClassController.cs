@@ -72,7 +72,7 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> ImportStudentStatus(Guid classId)
         {
             var states = await _classService.GetImportStudentStatusAsync(classId);
-            dynamic dataResponse = states != null ? states : "Processing";
+            dynamic dataResponse = states != null ? states : "Not Yet";
             var response = new IPMSResponse<dynamic>()
             {
                 Data = dataResponse
@@ -130,7 +130,7 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> ImportClassStatus(Guid semesterId)
         {
             var states = await _classService.GetImportClassStatusAsync(semesterId);
-            dynamic dataResponse = states != null ? states : "Processing";
+            dynamic dataResponse = states != null ? states : "Not Yet";
             var response = new IPMSResponse<dynamic>()
             {
                 Data = dataResponse
