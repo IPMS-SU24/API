@@ -5,6 +5,7 @@ using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.ProjectSubmission;
+using IPMS.Business.Responses.ProjectSubmission;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -31,6 +32,19 @@ namespace IPMS.API.Controllers
             {
                 response.Status = ResponseStatus.BadRequest;
             }
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Student)]
+        [HttpGet("grades/{projectId}")]
+        public async Task<IActionResult> GetGrade(Guid projectId)
+        {
+            Guid studentId = HttpContext.User.Claims.GetUserId();
+            var response = new IPMSResponse<GetGradeResponse>
+            {
+                Data = await _projectSubmissionService.GetGradeAsync(studentId, projectId)
+
+            };
             return GetActionResponse(response);
         }
         /***

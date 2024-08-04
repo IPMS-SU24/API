@@ -393,5 +393,54 @@ namespace IPMS.Business.Services
             }
             return final;
         }
+
+        public async Task<GetGradeResponse> GetGradeAsync(Guid studentId, Guid projectId)
+        {
+            if(!await _unitOfWork.StudentRepository.Get().AnyAsync(x=>x.InformationId == studentId && x.ProjectId == projectId))
+            {
+                throw new DataNotFoundException("Not Found Project");
+            }
+            var assessmentGrades = await _unitOfWork.ProjectSubmissionRepository.Get()
+                                                                                  .Include(x => x.SubmissionModule)
+                                                                                  .ThenInclude(x => x.Assessment)
+                                                                                  .Where(x => x.ProjectId == projectId)
+                                                                                  .OrderBy(x=>x.SubmissionModule.Assessment.Order)
+                                                                                  .GroupBy(x => x.SubmissionModule.AssessmentId)
+                                                                                  .Select(x => new AssessmentGrade
+                                                                                  {
+                                                                                      Name = x.First().SubmissionModule.Assessment.Name,
+                                                                                      Percentage = x.First().SubmissionModule.Assessment.Percentage,
+                                                                                      SubmissionGrades = x.Select(sg => new SubmissionGrade
+                                                                                      {
+                                                                                          Grade = sg.FinalGrade,
+                                                                                          Percentage = sg.SubmissionModule.Percentage,
+                                                                                          Name = sg.SubmissionModule.Name
+                                                                                      }).ToList(),
+                                                                                      AssessmentAvg = x.Select(ps=> ps.FinalGrade == null ? null : ps.FinalGrade * (ps.SubmissionModule.Percentage / 100)).Sum(),
+                                                                                  }).ToListAsync();
+            if(assessmentGrades == null || !assessmentGrades.Any())
+            {
+                throw new DataNotFoundException();
+            }
+
+            decimal? total = 0;
+            foreach(var assGrade in assessmentGrades)
+            {
+                if(assGrade.AssessmentAvg == null)
+                {
+                    total = null;
+                    break;
+                }
+                else
+                {
+                    total += assGrade.AssessmentAvg * (assGrade.Percentage / 100);
+                }
+            }
+            return new GetGradeResponse
+            {
+                AssessmentGrades = assessmentGrades,
+                Total = total
+            };
+        }
     }
 }

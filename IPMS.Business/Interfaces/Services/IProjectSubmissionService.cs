@@ -13,5 +13,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<IEnumerable<GetFinalAssessmentResponse>> GetFinalAssessment(GetFinalAssessmentRequest request, Guid lecturerId);
         Task<IQueryable<GetAllSubmissionResponse>> GetAllSubmission(GetAllSubmissionRequest request, Guid currentUserId);
         Task<ValidationResultModel> UpdateProjectSubmissionValidators(UpdateProjectSubmissionRequest request);
+        Task<GetGradeResponse> GetGradeAsync(Guid studentId, Guid projectId);
     }
 }
