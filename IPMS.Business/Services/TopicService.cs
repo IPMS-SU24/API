@@ -314,14 +314,18 @@ namespace IPMS.Business.Services
         public async Task<SuggestedTopicsResponse> GetSuggestedTopicDetailLecturer(GetSugTopicDetailLecRequest request, Guid lecturerId)
         {
             SuggestedTopicsResponse topic = new SuggestedTopicsResponse();
-            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
-            if (@class == null)
+            var groupQuery = _unitOfWork.StudentRepository.Get();
+            if (request.ClassId.HasValue)
             {
-                return topic;
+                var isExistClass = await _unitOfWork.IPMSClassRepository.Get().AnyAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+                if (!isExistClass)
+                {
+                    return topic;
+                }
+                groupQuery = groupQuery.Where(x => x.ClassId.Equals(request.ClassId));
             }
-
             // Find distinct project in class
-            List<GroupInformation> groups = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
+            List<GroupInformation> groups = await groupQuery.Where(x => x.ProjectId != null)
                                                                         .Include(x => x.Project)
                                                                         .GroupBy(x => new { x.Project!.Id, x.Project!.GroupNum })
                                                                             .Select(x => new GroupInformation
