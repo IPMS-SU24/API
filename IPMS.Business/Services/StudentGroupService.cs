@@ -665,6 +665,12 @@ namespace IPMS.Business.Services
                 result.Message = "Member Information is not correct";
                 return result;
             }
+            //Check at least mem is 100
+            if(!membersInRequest.Any(x => x.Percentage == 100))
+            {
+                result.Message = "Must have at least 1 student contribute 100%";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;
