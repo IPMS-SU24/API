@@ -146,8 +146,9 @@ namespace IPMS.Business.Services
 
         public (DateTime startDate, DateTime endDate) GetAssessmentTime(Guid assessmentId, Guid classId)
         {
-            var modules = _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(x => x.ClassId == classId))
-                                                                .Where(x => x.AssessmentId == assessmentId).SelectMany(x => x.ClassModuleDeadlines);
+            var modules = _unitOfWork.ClassModuleDeadlineRepository.Get()
+                                                                .Where(x => x.SubmissionModule.AssessmentId == assessmentId && x.ClassId == classId);
+
             //Check Assessment Deadline, Start Date
             if (!modules.Any()) throw new DataNotFoundException("Not Found Module for Assessment");
             var deadline = modules.Max(x => x.EndDate);

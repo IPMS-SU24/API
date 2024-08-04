@@ -132,12 +132,12 @@ namespace IPMS.Business.Services
         {
             List<GetListTopicResponse> favTopics = new List<GetListTopicResponse>();
             favTopics = await _unitOfWork.FavoriteRepository.Get().Where(f => f.LecturerId.Equals(lecturerId))
-                            .Include(f => f.Topics.Where(t => t.Topic.Status == RequestStatus.Approved))
+                            .Include(f => f.Topics)
                             .ThenInclude(t => t.Topic).Select(f => new GetListTopicResponse
                             {
                                 Id = f.Id,
                                 Name = f.Name,
-                                favTopicInfos = f.Topics.Select(t => new FavTopicInfo
+                                favTopicInfos = f.Topics.Where(t => t.Topic.Status == RequestStatus.Approved).Select(t => new FavTopicInfo
                                 {
                                     TopicId = t.TopicId,
                                     TopicName = t.Topic.Name
