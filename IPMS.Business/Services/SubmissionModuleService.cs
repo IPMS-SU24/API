@@ -53,7 +53,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            bool isEndLessNow = request.SubmissionModules.Any(sm => sm.EndDate <= DateTime.Now 
+            bool isEndLessNow = request.SubmissionModules.Any(sm => sm.EndDate <= DateTime.Now
                     || (sm.EndDate.Date == DateTime.Now.Date && sm.EndDate.Hour <= DateTime.Now.Hour)); // compare for hour
 
             if (isEndLessNow) // end date hour <= now hour
@@ -69,15 +69,16 @@ namespace IPMS.Business.Services
                 return result;
             }
             var isCurrentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.ShortName == request.SemesterCode;
-            if(isCurrentSemester)
+            if (isCurrentSemester)
             {
                 result.Message = "Cannot update module in current semester";
                 return result;
             }
-            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.Semester).Where(sm => sm.AssessmentId.Equals(request.AssessmentId) 
-                                            && sm.Semester.ShortName.Equals(request.SemesterCode) 
+            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.Semester).Where(sm => sm.AssessmentId.Equals(request.AssessmentId)
+                                            && sm.Semester.ShortName.Equals(request.SemesterCode)
                                             && sm.LectureId.Equals(currentUserId)).ToListAsync();
-            foreach (var submissionModule in request.SubmissionModules) { 
+            foreach (var submissionModule in request.SubmissionModules)
+            {
                 if (submissionModule.Description == null)
                 {
                     submissionModule.Description = "";
@@ -124,7 +125,7 @@ namespace IPMS.Business.Services
                         SemesterId = semesterId,
                         AssessmentId = request.AssessmentId,
                         LectureId = currentUserId,
-                        ClassModuleDeadlines = classes.Select(classId=> new ClassModuleDeadline
+                        ClassModuleDeadlines = classes.Select(classId => new ClassModuleDeadline
                         {
                             ClassId = classId,
                             SubmissionModuleId = id,
@@ -157,7 +158,7 @@ namespace IPMS.Business.Services
             {
                 Message = "Operation did not successfully"
             };
-        
+
             Semester semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(_currentSemesterId));
             if (semester == null)
             {
@@ -188,7 +189,7 @@ namespace IPMS.Business.Services
         {
             List<GetAssessmentSubmissionModuleByClassResponse> assessments = new List<GetAssessmentSubmissionModuleByClassResponse>();
             var semesterId = (await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == request.classId)).SemesterId;
-            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x=>x.ClassModuleDeadlines.Where(y=>y.ClassId == request.classId)).Where(sm => sm.SemesterId.Equals(semesterId)
+            _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(y => y.ClassId == request.classId)).Where(sm => sm.SemesterId.Equals(semesterId)
                                             && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
             List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.CommitteeId.Equals(currentUserId)).ToListAsync();
 
@@ -242,7 +243,7 @@ namespace IPMS.Business.Services
                       .ToListAsync();
   */
             submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(p => p.SubmissionModuleId.Equals(request.ModuleId) && p.SubmissionDate <= deadline.EndDate)
-                .OrderByDescending(p => p.SubmissionDate).GroupBy(p => p.ProjectId).Select(group =>  new GetSubmissionsResponse
+                .OrderByDescending(p => p.SubmissionDate).GroupBy(p => p.ProjectId).Select(group => new GetSubmissionsResponse
                 {
                     SubmitDate = group.First().SubmissionDate,
                     DownloadUrl = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, group.First().Id, group.First().Name)) ?? String.Empty,
@@ -268,7 +269,7 @@ namespace IPMS.Business.Services
                 result.Message = "Percentage must be between 0 and 100";
                 return result;
             }
-            
+
             _currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
             var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.SemesterId.Equals(_currentSemesterId) && c.LecturerId.Equals(lecturerId));
             if (@class == null)
@@ -277,9 +278,9 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var prjStudents = await _unitOfWork.StudentRepository.Get().Where(s =>s.ProjectId.Equals(request.GroupId) && s.ClassId.Equals(request.ClassId))
+            var prjStudents = await _unitOfWork.StudentRepository.Get().Where(s => s.ProjectId.Equals(request.GroupId) && s.ClassId.Equals(request.ClassId))
                                     .ToListAsync();
-            
+
             if (prjStudents.Count() != request.Members.Count())
             {
                 result.Message = "Please evaluate all members in group";
@@ -315,8 +316,8 @@ namespace IPMS.Business.Services
                 decimal assessmentAvg = 0;
                 foreach (var sub in ass.Modules)
                 {
-                    var prjSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => 
-                        ps.SubmissionDate <= sub.ClassModuleDeadlines.First().EndDate 
+                    var prjSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps =>
+                        ps.SubmissionDate <= sub.ClassModuleDeadlines.First().EndDate
                         && ps.ProjectId.Equals(request.GroupId)
                         && ps.SubmissionModuleId.Equals(sub.Id)).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
 
@@ -357,10 +358,10 @@ namespace IPMS.Business.Services
             {
                 Message = "Operation did not successfully"
             };
-            var subModules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => 
-                                sm.SemesterId.Equals(semesterId) 
+            var subModules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm =>
+                                sm.SemesterId.Equals(semesterId)
                                 && sm.LectureId.Equals(lecturerId))
-                                .Include(sm => 
+                                .Include(sm =>
                                     sm.ClassModuleDeadlines.Where(cd => cd.ClassId.Equals(classId)))
                                 .ToListAsync();
 
@@ -390,6 +391,74 @@ namespace IPMS.Business.Services
         public Task CalcFinalGrade(CalcFinalGradeRequest request, Guid lecturerId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<ValidationResultModel> ConfigureClassModuleDeadlineValidators(ConfigureClassModuleDeadlineRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId)).Include(c => c.Semester).FirstOrDefaultAsync();
+            if (@class == null)
+            {
+                result.Message = "Class not found";
+                return result;
+            }
+
+            if (@class.Semester == null)
+            {
+                result.Message = "Semester not found";
+                return result;
+            }
+
+            if (@class.Semester.EndDate < DateTime.Now)
+            {
+                result.Message = "Cannot set for class in previous semester";
+                return result;
+            }
+
+            if (request.StartDate >= request.EndDate)
+            {
+                result.Message = "Cannot set Start Date greater than End Date";
+                return result;
+            }
+
+            var submissionModule = await _unitOfWork.SubmissionModuleRepository.Get().FirstOrDefaultAsync(sm => sm.Id.Equals(request.SubmissionModuleId));
+            if (submissionModule == null)
+            {
+                result.Message = "Submission Module not found";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public async Task ConfigureClassModuleDeadline(ConfigureClassModuleDeadlineRequest request, Guid lecturerId)
+        {
+            var classModuleDl = await _unitOfWork.ClassModuleDeadlineRepository.Get().FirstOrDefaultAsync(cmd => cmd.SubmissionModuleId.Equals(request.SubmissionModuleId) && cmd.ClassId.Equals(request.ClassId));
+            if (classModuleDl == null)
+            {
+                await _unitOfWork.ClassModuleDeadlineRepository.InsertAsync(new ClassModuleDeadline
+                {
+                    StartDate = request.StartDate,
+                    EndDate = request.EndDate,
+                    SubmissionModuleId = request.SubmissionModuleId,
+                    ClassId = request.ClassId
+                });
+            }
+            else
+            {
+                classModuleDl.StartDate = request.StartDate;
+                classModuleDl.EndDate = request.EndDate;
+                classModuleDl.SubmissionModuleId = request.SubmissionModuleId;
+                classModuleDl.ClassId = request.ClassId;
+                _unitOfWork.ClassModuleDeadlineRepository.Update(classModuleDl);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

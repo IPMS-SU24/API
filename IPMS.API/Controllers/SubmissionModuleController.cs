@@ -54,5 +54,14 @@ namespace IPMS.API.Controllers
             await _submissionModuleService.LecturerEvaluate(request, currentUserId);
             return GetActionResponse(new IPMSResponse<object>());
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPut("class-module-configure")]
+        public async Task<IActionResult> ConfigureClassModuleDeadline([FromBody] ConfigureClassModuleDeadlineRequest request)
+        {
+            Guid currentUserId = HttpContext.User.Claims.GetUserId();
+            await _submissionModuleService.ConfigureClassModuleDeadline(request, currentUserId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
     }
 }
