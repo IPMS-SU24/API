@@ -8,7 +8,6 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Common.Attributes;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Responses.Admin;
-using IPMS.DataAccess.Models;
 
 namespace IPMS.API.Controllers
 {
@@ -154,10 +153,8 @@ namespace IPMS.API.Controllers
         [HttpGet("syllabus-list")]
         public async Task<IActionResult> GetAllSyllabus([FromQuery] GetAllSyllabusRequest request)
         {
-
             var assessments = await _adminService.GetAllSyllabus(request);
             var response = await assessments.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
-
             return GetActionResponse(response);
         }
 
@@ -187,6 +184,52 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> CloneSyllabus([FromBody] Guid syllabusId)
         {
             await _adminService.CloneSyllabus(syllabusId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("semester-list")]
+        public async Task<IActionResult> GetAllSemesterAdmin([FromQuery] GetAllSemesterAdminRequest request)
+        {
+            var semesters = await _adminService.GetAllSemesterAdmin(request);
+            var response = await semesters.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("semester-detail")]
+        public async Task<IActionResult> GetSemesterDetail([FromQuery] Guid semesterId)
+        {
+
+            var semester = await _adminService.GetSemesterDetail(semesterId);
+            var response = new IPMSResponse<GetSemesterDetailResponse>()
+            {
+                Data = semester
+            };
+            return GetActionResponse(response);
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpPost("semester-create")]
+        public async Task<IActionResult> CreateSemester([FromBody] CreateSemesterRequest request)
+        {
+            await _adminService.CreateSemester(request);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpPut("semester-update")]
+        public async Task<IActionResult> UpdateSemester([FromBody] UpdateSemesterRequest request)
+        {
+            await _adminService.UpdateSemester(request);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpDelete("semester-delete")]
+        public async Task<IActionResult> DeleteSemester([FromBody] Guid semesterId)
+        {
+            await _adminService.DeleteSemester(semesterId);
             return GetActionResponse(new IPMSResponse<object>());
         }
     }

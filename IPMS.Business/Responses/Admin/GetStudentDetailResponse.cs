@@ -1,6 +1,4 @@
-﻿
-
-namespace IPMS.Business.Responses.Admin
+﻿namespace IPMS.Business.Responses.Admin
 {
     public class GetStudentDetailResponse
     {

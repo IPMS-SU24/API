@@ -7,47 +7,28 @@ using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Admin;
-using IPMS.Business.Requests.Authentication;
 using IPMS.Business.Responses.Admin;
 using IPMS.Business.Responses.Authentication;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace IPMS.Business.Services
 {
     public class AdminService : IAdminService
     {
         private readonly UserManager<IPMSUser> _userManager;
-        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly ICommonServices _commonService;
-        private readonly MailServer _mailServer;
-        private readonly ILogger<AuthenticationService> _logger;
-        private readonly JWTConfig _jwtConfig;
-        private readonly string _mailHost;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPresignedUrlService _presignedUrlService;
 
         public AdminService(UserManager<IPMSUser> userManager,
-                                   RoleManager<IdentityRole<Guid>> roleManager,
-                                   IOptions<JWTConfig> jwtConfig,
-                                   ILogger<AuthenticationService> logger,
                                    ICommonServices commonService,
-                                   MailServer mailServer,
-                                   IConfiguration configuration,
                                    IUnitOfWork unitOfWork,
                                    IPresignedUrlService presignedUrlService)
         {
             _userManager = userManager;
-            _roleManager = roleManager;
-            _jwtConfig = jwtConfig.Value;
-            _logger = logger;
             _commonService = commonService;
-            _mailServer = mailServer;
-            _mailHost = configuration["MailFrom"];
             _unitOfWork = unitOfWork;
             _presignedUrlService = presignedUrlService;
         }
@@ -106,7 +87,7 @@ namespace IPMS.Business.Services
             };
         }
 
-       
+
 
         public async Task<IEnumerable<GetAllStudentResponse>> GetAllStudent(GetAllStudentRequest request)
         {
@@ -441,6 +422,176 @@ namespace IPMS.Business.Services
             await _unitOfWork.AssessmentRepository.InsertRangeAsync(assessments);
             await _unitOfWork.SaveChangesAsync();
 
+        }
+
+        public async Task<IEnumerable<GetAllSemesterAdminResponse>> GetAllSemesterAdmin(GetAllSemesterAdminRequest request)
+        {
+            var semesterRaw = await _unitOfWork.SemesterRepository.Get().Include(s => s.Syllabus).ToListAsync();
+            return semesterRaw.Select(s => new GetAllSemesterAdminResponse
+            {
+                Id = s.Id,
+                Name = s.Name,
+                ShortName = s.ShortName,
+                Description = s.Description,
+                StartDate = s.StartDate,
+                EndDate = s.EndDate,
+                SyllabusId = s.SyllabusId,
+                SyllabusName = s.Syllabus.Name
+            });
+        }
+
+        public async Task<GetSemesterDetailResponse> GetSemesterDetail(Guid? semesterId)
+        {
+            if (semesterId == null || semesterId == Guid.Empty)
+            {
+                return new GetSemesterDetailResponse();
+            }
+            var semesterRaw = await _unitOfWork.SemesterRepository.Get().Include(s => s.Syllabus).FirstOrDefaultAsync();
+
+            if (semesterRaw == null)
+            {
+                return new GetSemesterDetailResponse();
+            }
+
+            return new GetSemesterDetailResponse
+            {
+                Id = semesterRaw.Id,
+                Name = semesterRaw.Name,
+                ShortName = semesterRaw.ShortName,
+                Description = semesterRaw.Description,
+                StartDate = semesterRaw.StartDate,
+                EndDate = semesterRaw.EndDate,
+                SyllabusId = semesterRaw.SyllabusId,
+                SyllabusName = semesterRaw.Syllabus.Name
+            };
+        }
+        public async Task<ValidationResultModel> CreateSemesterValidators(CreateSemesterRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            if (request.StartDate >= request.EndDate)
+            {
+                result.Message = "Please set End Date greater than Start Date";
+                return result;
+            }
+
+            var lastedSes = await _unitOfWork.SemesterRepository.Get().OrderByDescending(s => s.EndDate).FirstOrDefaultAsync();
+            if (lastedSes != null)
+            {
+                if (lastedSes.EndDate >= request.StartDate)
+                {
+                    result.Message = "Please set Start Date is greater than lasted Semester end date";
+                    return result;
+                }
+            }
+            var syllabus = await _unitOfWork.SyllabusRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(request.SyllabusId));
+            if (syllabus == null)
+            {
+                result.Message = "Syllabus is not existed";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+        public async Task CreateSemester(CreateSemesterRequest request)
+        {
+            await _unitOfWork.SemesterRepository.InsertAsync(new Semester
+            {
+                Name = request.Name,
+                ShortName = request.ShortName,
+                Description = request.Description,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                SyllabusId = request.SyllabusId
+            });
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<ValidationResultModel> UpdateSemesterValidators(UpdateSemesterRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Operation did not successfully"
+            };
+
+            if (request.StartDate >= request.EndDate)
+            {
+                result.Message = "Please set End Date greater than Start Date";
+                return result;
+            }
+
+            var isExisted = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(request.Id));
+            if (isExisted == null)
+            {
+                result.Message = "Semester cannot found";
+                return result;
+            }
+            if (isExisted.StartDate <= DateTime.Now)
+            {
+                result.Message = "Cannot update semester started";
+                return result;
+            }
+            var lastedSes = await _unitOfWork.SemesterRepository.Get().Where(s => s.Id.Equals(request.Id) == false).OrderByDescending(s => s.EndDate).FirstOrDefaultAsync();
+            if (lastedSes != null)
+            {
+                if (lastedSes.EndDate >= request.StartDate)
+                {
+                    result.Message = "Please set Start Date is greater than lasted Semester end date";
+                    return result;
+                }
+            }
+
+
+
+            var syllabus = await _unitOfWork.SyllabusRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(request.SyllabusId));
+            if (syllabus == null)
+            {
+                result.Message = "Syllabus is not existed";
+                return result;
+            }
+
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
+
+        public async Task UpdateSemester(UpdateSemesterRequest request)
+        {
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(request.Id));
+            semester.Name = request.Name;
+            semester.ShortName = request.ShortName;
+            semester.Description = request.Description;
+            semester.StartDate = request.StartDate;
+            semester.EndDate = request.EndDate;
+            semester.SyllabusId = request.SyllabusId;
+            _unitOfWork.SemesterRepository.Update(semester);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task DeleteSemester(Guid? semesterId)
+        {
+            if (semesterId == null || semesterId == Guid.Empty)
+            {
+                throw new DataNotFoundException("Semester not found");
+            }
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(semesterId));
+
+            if (semester == null)
+            {
+                throw new DataNotFoundException("Semester not found");
+            }
+
+            if (semester.StartDate <= DateTime.Now)
+            {
+                throw new BaseBadRequestException("Cannot update semester started");
+            }
+
+            _unitOfWork.SemesterRepository.Delete(semester);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

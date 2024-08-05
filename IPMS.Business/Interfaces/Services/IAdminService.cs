@@ -1,5 +1,6 @@
 ﻿using IPMS.Business.Models;
 using IPMS.Business.Requests.Admin;
+using IPMS.Business.Requests.Assessment;
 using IPMS.Business.Responses.Admin;
 using IPMS.Business.Responses.Authentication;
 
@@ -21,5 +22,15 @@ namespace IPMS.Business.Interfaces.Services
         Task<ValidationResultModel> UpdateSyllabusValidators(UpdateSyllabusRequest request);
         Task UpdateSyllabus(UpdateSyllabusRequest request);
         Task CloneSyllabus(Guid? syllabusId);
+        Task<IEnumerable<GetAllSemesterAdminResponse>> GetAllSemesterAdmin(GetAllSemesterAdminRequest request);
+        Task<GetSemesterDetailResponse> GetSemesterDetail(Guid? semesterId);
+        Task<ValidationResultModel> CreateSemesterValidators(CreateSemesterRequest request);
+        Task CreateSemester(CreateSemesterRequest request);
+        Task<ValidationResultModel> UpdateSemesterValidators(UpdateSemesterRequest request);
+        Task UpdateSemester(UpdateSemesterRequest request);
+        Task DeleteSemester(Guid? semesterId);
+
+
+
     }
 }
