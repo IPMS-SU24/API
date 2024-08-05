@@ -15,6 +15,8 @@ namespace IPMS.Business.Interfaces.Services
         public Task CalcFinalGrade(CalcFinalGradeRequest request, Guid lecturerId);
         public Task<IEnumerable<GetAssessmentSubmissionModuleByClassResponse>> GetAssessmentSubmissionModuleByClass(GetSubmissionModuleByClassRequest request, Guid currentUserId);
         public Task<IEnumerable<GetSubmissionsResponse>> GetSubmissions(GetSubmissionsRequest request, Guid lecturerId);
+        public Task<ValidationResultModel> ConfigureClassModuleDeadlineValidators(ConfigureClassModuleDeadlineRequest request, Guid lecturerId);
+        public Task ConfigureClassModuleDeadline(ConfigureClassModuleDeadlineRequest request, Guid lecturerId);
 
     }
 }
