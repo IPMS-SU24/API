@@ -5,6 +5,6 @@ namespace IPMS.Business.Models
     {
         [MaxLength(50)]
         public string ClassCode { get; set; } = null!;
-        public Guid LecturerId { get; set; }
+        public string LecturerAccount { get; set; }
     }
 }
