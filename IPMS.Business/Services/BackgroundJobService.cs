@@ -62,10 +62,11 @@ namespace IPMS.Business.Services
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
+                var lecturer = await _userManager.FindByNameAsync(@class.LecturerAccount);
                 //save class
                 var newClass = new IPMSClass()
                 {
-                    LecturerId = @class.LecturerId,
+                    LecturerId = lecturer.Id,
                     ShortName = @class.ClassCode,
                     SemesterId = semesterId,
                     Name = string.Empty,
@@ -75,7 +76,7 @@ namespace IPMS.Business.Services
                 var committee = new Committee()
                 {
                     ClassId = newClass.Id,
-                    LecturerId = @class.LecturerId,
+                    LecturerId = lecturer.Id,
                     Percentage = 100
                 };
                 await _unitOfWork.CommitteeRepository.InsertAsync(committee);
@@ -83,7 +84,7 @@ namespace IPMS.Business.Services
                 //Send noti to lecturer
                 await _messageService.SendMessage(new NotificationMessage()
                 {
-                    AccountId = @class.LecturerId,
+                    AccountId = lecturer.Id,
                     Message = $"You are added into Class {@class.ClassCode}",
                     Title = "New Class Assigned"
                 });
