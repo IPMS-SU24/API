@@ -252,15 +252,19 @@ namespace IPMS.Business.Services
         public async Task<IEnumerable<SuggestedTopicsResponse>> GetSuggestedTopicsLecturer(GetSuggestedTopicsLecturerRequest request, Guid lecturerId)
         {
             List<SuggestedTopicsResponse> topics = new List<SuggestedTopicsResponse>();
-
-            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
-            if (@class == null)
+            var groupQuery = _unitOfWork.StudentRepository.Get();
+            IPMSClass? @class = null;
+            if (request.ClassId.HasValue)
             {
-                return topics;
+                @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
+                if (@class == null)
+                {
+                    return topics;
+                }
+                groupQuery = groupQuery.Where(x => x.ClassId.Equals(request.ClassId));
             }
-
             // Find distinct project in class
-            List<GroupInformation> groups = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
+            List<GroupInformation> groups = await groupQuery.Where(x => x.ProjectId != null)
                                                                         .Include(x => x.Project)
                                                                         .GroupBy(x => new { x.Project!.Id, x.Project!.GroupNum })
                                                                             .Select(x => new GroupInformation
@@ -274,15 +278,15 @@ namespace IPMS.Business.Services
                 return topics;
             }
             List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
-          
+
             List<Topic> preTopics = new List<Topic>();
 
-            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groupsIds.Contains((Guid)t.SuggesterId)).ToListAsync();
+            preTopics = await _unitOfWork.TopicRepository.Get().Where(t => groupsIds.Contains(t.SuggesterId.Value)).ToListAsync();
             if (request.Statuses.Count > 0) // filter status
             {
                 preTopics = preTopics.Where(pT => request.Statuses.Contains(pT.Status)).ToList();
             }
-            if (@class.ChangeTopicDeadline < DateTime.Now)
+            if (@class != null && @class.ChangeTopicDeadline < DateTime.Now)
             {
                 await UpdateStatusTopicExpired(preTopics);
             }

@@ -10,7 +10,7 @@ namespace IPMS.Business.Requests.Topic
 {
     public class GetSuggestedTopicsLecturerRequest : BasePaginationRequest
     {
-        public Guid ClassId { get; set; }
+        public Guid? ClassId { get; set; }
         public List<RequestStatus> Statuses { get; set; } = new();
        
     }
