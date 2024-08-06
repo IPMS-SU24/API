@@ -200,7 +200,7 @@ namespace IPMS.Business.Services
             }
             var assMatches = syllabus.Assessments.Count(a => request.Assessments.Select(ra => ra.Id).Contains(a.Id));
             var reqAssExisted = request.Assessments.Count(a => a.Id != Guid.Empty);
-            if (assMatches != reqAssExisted)
+            if (assMatches != reqAssExisted || assMatches != syllabus.Assessments.Count())
             {
                 result.Message = "Please send all assessments existed";
                 return result;
