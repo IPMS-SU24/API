@@ -480,7 +480,7 @@ namespace IPMS.Business.Services
                     {
                         throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
                     }
-                    var lecturer = await _userManager.FindByIdAsync(@class.LecturerId.ToString());
+                    var lecturer = await _userManager.FindByNameAsync(@class.LecturerAccount.ToString());
                     if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
                     {
                         throw new BaseBadRequestException("Lecturer is not found");
