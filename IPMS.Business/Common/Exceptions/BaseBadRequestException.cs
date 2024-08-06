@@ -2,7 +2,14 @@
 {
     public class BaseBadRequestException : Exception
     {
-        public string[] Errors { get; }
+        private string[] _errors;
+        public string[] Errors
+        {
+            get
+            {
+                return _errors ?? Array.Empty<string>();
+            }
+        }
         public BaseBadRequestException(string message)
             : base(message)
         {
@@ -14,7 +21,7 @@
         public BaseBadRequestException(string[] errors)
             : base()
         {
-            Errors = errors;
+            _errors = errors;
         }
 
     }
