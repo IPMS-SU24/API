@@ -3,8 +3,11 @@ namespace IPMS.Business.Models
 {
     public class ClassDataRow
     {
+        [Required]
         [MaxLength(50)]
         public string ClassCode { get; set; } = null!;
-        public string LecturerAccount { get; set; }
+        [Required]
+        [EmailAddress]
+        public string LecturerEmail { get; set; } = null!;
     }
 }

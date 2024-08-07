@@ -199,7 +199,7 @@ namespace IPMS.Business.Services
 
             var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(request.classId) && ct.ProjectId != null).ToListAsync(); //get class topics have picked == project in class
 
-            foreach (var assessment in _assessments)
+            foreach (var assessment in _assessments.OrderBy(x=>x.Order))
             {
                 List<ProjectSubmissionModule> modules = _submissionModules.Where(sm => sm.AssessmentId.Equals(assessment.Id)).Select(sm => new ProjectSubmissionModule
                 {

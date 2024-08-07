@@ -172,13 +172,20 @@ namespace IPMS.Business.Services
 
         public async Task<IList<LecturerTopicIotComponentReponse>> GetClassTopicsByLecturer(Guid currentUserId, LecturerClassTopicRequest request)
         {
-            var availableClassTopics = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopics are available and include Topic
+            IQueryable<ClassTopic> availableClassTopics = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopics are available and include Topic
                                                                       .Where(ct => ct.ClassId.Equals(request.ClassId) &&
-                                                                                    ct.Class.LecturerId == currentUserId &&
                                                                                    ct.Topic!.Status == RequestStatus.Approved // Only Topic Approved can choose
                                                                                                                                  )
                                                                       .Include(ct => ct.Topic);
 
+            if (request.IsCommittee.HasValue && request.IsCommittee.Value)
+            {
+                availableClassTopics = availableClassTopics.Include(x=>x.Class).ThenInclude(x=>x.Committees).Where(ct => ct.Class.LecturerId != currentUserId && ct.Class.Committees.Any(x=>x.LecturerId == currentUserId));
+            }
+            else
+            {
+                availableClassTopics = availableClassTopics.Where(ct => ct.Class.LecturerId == currentUserId);
+            }
             /*
                 In TopicIotComponentResponse have ComponentsMaster can query base on MasterType = Topic && MasterId == currentTopicId but we not need to specific these 
                 -> Just see that any ComponentMaster Exist 

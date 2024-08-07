@@ -64,12 +64,16 @@ namespace IPMS.Business.Services
             }
             //Check iot in iot list of Topic
             var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id && x.Topic.Status == RequestStatus.Approved).Select(x => x.TopicId).FirstOrDefaultAsync(); //checked project get topic
-            var isInTopicComponent = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents()
-                                                                                    .Where(x => x.MasterId == topicId && x.ComponentId == request.ComponentId).AnyAsync();
-            if (!isInTopicComponent)
+            var topicComponents = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents()
+                                                                                    .Where(x => x.MasterId == topicId && x.ComponentId == request.ComponentId).FirstOrDefaultAsync();
+            if (topicComponents == null)
             {
                 result.Message = "Component is not allowed to borrow";
                 return result;
+            }
+            if(topicComponents.Quantity < request.Quantity)
+            {
+                result.Message = $"Cannot borrow more than {topicComponents.Quantity}";
             }
             //Check remain Quantity
             var remainQuantity = await _commonServices.GetRemainComponentQuantityOfLecturer(@class.LecturerId, request.ComponentId);
@@ -279,12 +283,6 @@ namespace IPMS.Business.Services
             if (reqBorrow.IotComponents.Count() != request.IotComponents.Count())
             {
                 result.Message = "Please send full request";
-                return result;
-            }
-
-            if (topicCompontns.Count() != request.IotComponents.Count())
-            {
-                result.Message = "Request not match with current topic";
                 return result;
             }
 

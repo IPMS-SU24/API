@@ -35,7 +35,7 @@ namespace IPMS.API.Controllers
         }
 
         [EnumAuthorize(UserRole.Lecturer)]
-        [HttpGet("[action]/{classId}")]
+        [HttpGet("[action]/{classId}/{isCommittee}")]
         public async Task<IActionResult> ClassTopicsByLecturer([FromRoute] LecturerClassTopicRequest request)
         {
             Guid currentUserId = HttpContext.User.Claims.GetUserId();

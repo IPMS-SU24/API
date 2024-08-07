@@ -182,8 +182,18 @@ namespace IPMS.Business.Services
             {
                 return projectsOverview;
             }
-            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
+            IPMSClass? @class = null;
+            if (request.IsCommittee.HasValue && request.IsCommittee.Value)
+            {
+                @class = await _unitOfWork.CommitteeRepository.Get().Include(x=>x.Class)
+                    .Where(x => x.LecturerId == currentUserId && x.Class.LecturerId != currentUserId).Select(x => x.Class).FirstOrDefaultAsync();
+            }
+            else
+            {
+                @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
+            }
 
+            
             if (@class == null) // check class is existed
             {
                 return projectsOverview;
@@ -224,7 +234,7 @@ namespace IPMS.Business.Services
                 projectsOverview.Add(prjOverview);
             }
 
-            return projectsOverview;
+            return projectsOverview.OrderBy(x=>x.GroupName);
         }
         private async Task<IEnumerable<Project>> GetProjectNotPickedTopic(Guid classId)
         {
@@ -424,7 +434,9 @@ namespace IPMS.Business.Services
             var projects = await prjQueryable.ToListAsync();
 
             List<IPMSUser> users = _userManager.Users.ToList();
-
+            var lastAssessmentId = await _unitOfWork.AssessmentRepository.Get().Where(x=>x.Modules.Any(m=>m.LectureId == currentUserId && m.Semester.ShortName.ToLower().Contains(request.SemesterCode)))
+                .OrderByDescending(x=>x.Order).Select(x=>x.Id).FirstOrDefaultAsync();
+            var lastSubmissionModuleIds = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == lastAssessmentId).Select(x=>x.Id).ToListAsync();
             prjPref = projects.Select(p => new ProjectPreferenceResponse
             {
                 ProjectId = p.Id,
@@ -434,7 +446,7 @@ namespace IPMS.Business.Services
                 Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
                 SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
                 Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
-                ProjectSubmissions = p.Submissions.Select(ps => new ProjectSubmissionResponse
+                ProjectSubmissions = p.Submissions.Where(x=>lastSubmissionModuleIds.Contains(x.SubmissionModuleId)).Select(ps => new ProjectSubmissionResponse
                 {
                     Id = ps.Id,
                     Name = ps.Name,

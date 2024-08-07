@@ -187,7 +187,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var lastAss = await _unitOfWork.AssessmentRepository.Get().OrderByDescending(a => a.Order).FirstOrDefaultAsync();
+            var lastAss = await _unitOfWork.AssessmentRepository.Get().Where(x=>x.Modules.Any(m=>m.Id == submission.SubmissionModuleId)).OrderByDescending(a => a.Order).FirstOrDefaultAsync();
 
             if (lastAss!.Id != submission.SubmissionModule.AssessmentId && lecturerId != @class.LecturerId) // check committee grade final assessment
             {
@@ -228,7 +228,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var lastSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.SubmissionDate <= moduleDeadline.EndDate && ps.SubmissionModuleId.Equals(submission.SubmissionModuleId)).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
+            var lastSubmission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.SubmissionDate <= moduleDeadline.EndDate && ps.SubmissionModuleId.Equals(submission.SubmissionModuleId) && submission.ProjectId == ps.ProjectId).OrderByDescending(ps => ps.SubmissionDate).FirstOrDefaultAsync();
 
             if (lastSubmission.Id.Equals(submission.Id) == false)
             {
@@ -319,15 +319,16 @@ namespace IPMS.Business.Services
             {
                 return classes;
             }
-            classes = _unitOfWork.IPMSClassRepository.Get().Where(c => c.SemesterId.Equals(semester.Id) && c.LecturerId.Equals(lecturerId))
-                .Include(c => c.Students)
+            classes = _unitOfWork.CommitteeRepository.Get().Where(c => c.Class.SemesterId.Equals(semester.Id) && !c.Class.LecturerId.Equals(lecturerId) && c.LecturerId.Equals(lecturerId))
+                .Include(c => c.Class)
+                .ThenInclude(c => c.Students)
                 .Select(c => new GetClassesCommitteeResponse
                 {
                     ClassId = c.Id,
-                    GroupNum = c.Students.Where(s => s.ProjectId != null).GroupBy(s => s.ProjectId).Count(),
-                    ClassCode = c.ShortName,
-                    ClassName = c.Name,
-                    StudentNum = c.Students.Count()
+                    GroupNum = c.Class.Students.Where(s => s.ProjectId != null).GroupBy(s => s.ProjectId).Count(),
+                    ClassCode = c.Class.ShortName,
+                    ClassName = c.Class.Name,
+                    StudentNum = c.Class.Students.Count()
                 }).ToList();
 
             return classes;

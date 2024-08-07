@@ -10,7 +10,6 @@ namespace IPMS.API.Validators.Class
     {
         public UpdateClassDetailValidator(IClassService classService, IHttpContextAccessor context)
         {
-            RuleFor(x => x.Name).NotEmpty();
             RuleFor(x => x.ShortName).NotEmpty();
             RuleFor(x => x.Committees.Select(c => c.Percentage)).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
