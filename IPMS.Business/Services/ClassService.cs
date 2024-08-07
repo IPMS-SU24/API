@@ -662,6 +662,12 @@ namespace IPMS.Business.Services
                 return result;
             }
 
+            var startSemester = @class.Semester.StartDate;
+            if (request.CreateGroup < startSemester  || request.ChangeGroup < startSemester || request.ChangeTopic < startSemester || request.BorrowIot < startSemester) // semester is continuous
+            {
+                result.Message = "Deadline must after start of semester";
+                return result;
+            }
             // create group -> change topic -> change group , borrow 2 cái này cùng cấp, không cần so sánh
             if (request.CreateGroup > request.ChangeTopic)
             {
