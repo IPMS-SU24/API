@@ -186,7 +186,7 @@ namespace IPMS.Business.Services
             if (request.IsCommittee.HasValue && request.IsCommittee.Value)
             {
                 @class = await _unitOfWork.CommitteeRepository.Get().Include(x=>x.Class)
-                    .Where(x => x.LecturerId == currentUserId && x.Class.LecturerId != currentUserId).Select(x => x.Class).FirstOrDefaultAsync();
+                    .Where(x => x.LecturerId == currentUserId && x.Class.LecturerId != currentUserId && x.ClassId == request.ClassId).Select(x => x.Class).FirstOrDefaultAsync();
             }
             else
             {

@@ -247,7 +247,7 @@ namespace IPMS.Business.Services
                       .ToListAsync();
   */
             submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(p => p.SubmissionModuleId.Equals(request.ModuleId) && p.SubmissionDate <= deadline.EndDate)
-                .OrderByDescending(p => p.SubmissionDate).GroupBy(p => p.ProjectId).Select(group => new GetSubmissionsResponse
+                .OrderByDescending(p => p.SubmissionDate.Date).GroupBy(p => p.ProjectId).Select(group => new GetSubmissionsResponse
                 {
                     SubmitDate = group.First().SubmissionDate,
                     DownloadUrl = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, group.First().Id, group.First().Name)) ?? String.Empty,
