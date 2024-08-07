@@ -62,7 +62,7 @@ namespace IPMS.Business.Services
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
-                var lecturer = await _userManager.FindByNameAsync(@class.LecturerAccount);
+                var lecturer = await _userManager.FindByEmailAsync(@class.LecturerEmail);
                 //save class
                 var newClass = new IPMSClass()
                 {

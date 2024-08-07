@@ -201,6 +201,7 @@ namespace IPMS.Business.Services
                 throw new DataNotFoundException();
             }
             await ProcessImportStudentAsync(importFileUrl, request.ClassId);
+            Thread.Sleep(1000);
         }
 
         public async Task<JobImportStatusResponse<JobImportStudentStatusRecord>?> GetImportStudentStatusAsync(Guid classId)
@@ -480,7 +481,7 @@ namespace IPMS.Business.Services
                     {
                         throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
                     }
-                    var lecturer = await _userManager.FindByNameAsync(@class.LecturerAccount.ToString());
+                    var lecturer = await _userManager.FindByEmailAsync(@class.LecturerEmail);
                     if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
                     {
                         throw new BaseBadRequestException("Lecturer is not found");
@@ -503,7 +504,6 @@ namespace IPMS.Business.Services
             var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.Id.Equals(request.Id)).Include(c => c.Committees).FirstOrDefaultAsync();
 
             @class.LecturerId = request.LecturerId;
-            @class.Name = request.Name;
             @class.ShortName = request.ShortName;
             @class.SemesterId = request.SemesterId;
 

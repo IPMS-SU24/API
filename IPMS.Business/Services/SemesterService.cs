@@ -46,20 +46,27 @@ namespace IPMS.Business.Services
         public async Task<GetClassInfoInSemesterResponse> GetClassesInSemester(Guid lecturerId, GetClassInfoInSemesterRequest request)
         {
             //All Class Query
-            var classesQuery = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
-                                                         .Where(x => x.Semester.ShortName == request.SemesterCode && x.LecturerId == lecturerId)
-                                                         .Select(x => new
-                                                         {
-                                                             ClassCode = x.ShortName,
-                                                             ClassId = x.Id,
-                                                             ClassName = x.Name,
-                                                             MaxMembers = x.MaxMember,
-                                                             IsSetDeadline = x.ChangeGroupDeadline != null &&
-                                                                             x.CreateGroupDeadline != null && 
-                                                                             x.BorrowIoTComponentDeadline != null && 
+            var classesQuery = _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
+                                                         .Where(x => x.Semester.ShortName == request.SemesterCode);
+            if(request.IsCommittee.HasValue && request.IsCommittee.Value)
+            {
+                classesQuery = classesQuery.Where(x => x.LecturerId != lecturerId && x.Committees.Any(c => c.LecturerId == lecturerId));
+            }
+            else
+            {
+                classesQuery = classesQuery.Where(x => x.LecturerId == lecturerId);
+            }
+            var classesResult = await classesQuery.Select(x => new
+            {
+                ClassCode = x.ShortName,
+                ClassId = x.Id,
+                ClassName = x.Name,
+                MaxMembers = x.MaxMember,
+                IsSetDeadline = x.ChangeGroupDeadline != null &&
+                                                                             x.CreateGroupDeadline != null &&
+                                                                             x.BorrowIoTComponentDeadline != null &&
                                                                              x.ChangeTopicDeadline != null
-                                                         }).ToListAsync();
-
+            }).ToListAsync();
             //Calculate enrolled Student (EmailConfirmed == true), total student, number of groups
             var studentQuery = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
                                                                     .GroupBy(x => x.ClassId).Select(x => new
@@ -75,7 +82,7 @@ namespace IPMS.Business.Services
                 x.TopicId
             } ).ToListAsync();
             var result = new List<ClassInSemesterInfo>();
-            foreach (var @class in classesQuery)
+            foreach (var @class in classesResult)
             {
                 var studentInClass = studentQuery.Where(x => x.ClassId == @class.ClassId).ToList();
                 if (!studentInClass.Any()) studentInClass.Add(new

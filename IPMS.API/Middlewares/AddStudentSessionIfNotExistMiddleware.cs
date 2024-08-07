@@ -18,6 +18,7 @@ namespace IPMS.API.Middlewares
 
         public async Task Invoke(HttpContext context, ICommonServices commonServices)
         {
+            context.Session.Clear();
             if (context.User != null && context.User.IsInRole(UserRole.Student.ToString()) && commonServices.GetProject() == null && commonServices.GetClass() == null)
             {
                 commonServices.SetCommonSessionUserEntity(context.User.Claims.GetUserId()).GetAwaiter().GetResult();

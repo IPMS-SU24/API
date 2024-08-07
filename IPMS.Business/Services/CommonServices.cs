@@ -181,8 +181,15 @@ namespace IPMS.Business.Services
 
         public async Task SetCommonSessionUserEntity(Guid currentUserId)
         {
-            Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
-
+            Guid currentSemesterId = Guid.Empty;
+            try
+            {
+                currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            }
+            catch (NoCurrentSemesterException)
+            {
+                return;
+            }
             var studiesIn = await _unitOfWork.StudentRepository.Get() // Find Student from current User 
                                                        .Where(s => s.InformationId.Equals(currentUserId)).ToListAsync();
 

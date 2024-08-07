@@ -64,7 +64,7 @@ namespace IPMS.Business.Services
                 result.Message = "Cannot create at this time";
                 return result;
             }
-            var projectInClassCount = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == currentClass.Id).Select(x => x.ProjectId).Distinct().CountAsync();
+            var projectInClassCount = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == currentClass.Id && x.ProjectId != null).Select(x => x.ProjectId).Distinct().CountAsync();
             var topicOfClassCount = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ClassId == currentClass.Id && x.Topic.Status == RequestStatus.Approved).CountAsync();
             if (projectInClassCount == topicOfClassCount)
             {
@@ -161,7 +161,7 @@ namespace IPMS.Business.Services
                     Name = lecturer.FullName,
                     Phone = lecturer.PhoneNumber
                 },
-                Groups = groupsInClass,
+                Groups = groupsInClass.OrderBy(x=>x.GroupName).ToList(),
                 GroupJoinRequest = requestGroupModel?.GroupId,
                 MemberSwapRequest = requestGroupModel?.MemberForSwapId,
                 GroupDeadline = new()
