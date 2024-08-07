@@ -2,7 +2,7 @@
 {
     public class BaseBadRequestException : Exception
     {
-        private string[] _errors;
+        private string[]? _errors;
         public string[] Errors
         {
             get
