@@ -166,7 +166,6 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var x = _unitOfWork.ProjectSubmissionRepository.Get().OrderByDescending(ps => ps.SubmissionDate).Select(ps => ps.Id).ToList();
             var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId)).Include(s => s.SubmissionModule).FirstOrDefaultAsync();
 
             if (submission == null)

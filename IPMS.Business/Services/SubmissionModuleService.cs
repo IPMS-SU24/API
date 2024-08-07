@@ -246,16 +246,18 @@ namespace IPMS.Business.Services
                       .Include(s => s.ProjectSubmissions).ThenInclude(p => p.Grades.Where(g => g.CommitteeId.Equals(lecturerId)))
                       .ToListAsync();
   */
-            submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(p => p.SubmissionModuleId.Equals(request.ModuleId) && p.SubmissionDate <= deadline.EndDate)
-                .OrderByDescending(p => p.SubmissionDate).GroupBy(p => p.ProjectId).Select(group => new GetSubmissionsResponse
+            var submissionRaw = await _unitOfWork.ProjectSubmissionRepository.Get().Where(p => p.SubmissionModuleId.Equals(request.ModuleId) && p.SubmissionDate <= deadline.EndDate)
+                .OrderByDescending(p => p.SubmissionDate).Include(ps => ps.Project).Include(ps => ps.Grades).ToListAsync();
+            submissions = submissionRaw.GroupBy(p => p.ProjectId).Select(group => new GetSubmissionsResponse
                 {
                     SubmitDate = group.First().SubmissionDate,
                     DownloadUrl = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, group.First().Id, group.First().Name)) ?? String.Empty,
                     GroupNum = group.First().Project.GroupNum,
-                    Grade = group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)).Grade ?? 0,
+                    Grade = group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)) == null ? 0 
+                        : group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)).Grade,
                     SubmissionId = group.First().Id,
                     GroupId = group.First().ProjectId,
-                }).ToListAsync();
+                }).ToList();
 
             return submissions;
         }
