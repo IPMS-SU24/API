@@ -61,6 +61,8 @@ namespace IPMS.DataAccess
         {
 
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.HasPostgresExtension("uuid-ossp");
             //Rename IdentityTables
             modelBuilder.Entity<IPMSUser>(entity =>
             {
@@ -360,6 +362,7 @@ namespace IPMS.DataAccess
                     .ToTable("Syllabus")
                     .HasKey(e => e.Id);
                 entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.ShortName).IsUnique();
                 entity.Property(e => e.Description);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
