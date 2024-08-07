@@ -323,7 +323,7 @@ namespace IPMS.Business.Services
                 .ThenInclude(c => c.Students)
                 .Select(c => new GetClassesCommitteeResponse
                 {
-                    ClassId = c.Id,
+                    ClassId = c.ClassId,
                     GroupNum = c.Class.Students.Where(s => s.ProjectId != null).GroupBy(s => s.ProjectId).Count(),
                     ClassCode = c.Class.ShortName,
                     ClassName = c.Class.Name,
