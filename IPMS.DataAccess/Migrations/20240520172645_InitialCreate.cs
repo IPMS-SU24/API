@@ -10,6 +10,8 @@ namespace IPMS.DataAccess.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:PostgresExtension:uuid-ossp", ",,");
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -875,6 +877,9 @@ namespace IPMS.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "Syllabus");
+
+            migrationBuilder.AlterDatabase()
+                .OldAnnotation("Npgsql:PostgresExtension:uuid-ossp", ",,");
         }
     }
 }
