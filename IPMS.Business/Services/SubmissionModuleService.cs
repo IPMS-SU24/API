@@ -53,27 +53,31 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            bool isEndLessNow = request.SubmissionModules.Any(sm => sm.EndDate <= DateTime.Now
-                    || (sm.EndDate.Date == DateTime.Now.Date && sm.EndDate.Hour <= DateTime.Now.Hour)); // compare for hour
-
-            if (isEndLessNow) // end date hour <= now hour
-            {
-                result.Message = "End Date must greater than now";
-                return result;
-            }
-
             bool isNameNull = request.SubmissionModules.Any(sm => sm.ModuleName == null || sm.ModuleName.Trim() == "");
             if (isNameNull) // module name null
             {
                 result.Message = "Module Name cannot be null";
                 return result;
             }
-            var isCurrentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester.ShortName == request.SemesterCode;
-            if (isCurrentSemester)
+            
+            var semester = await _unitOfWork.SemesterRepository.Get().Where(s => s.ShortName.Equals(request.SemesterCode)).FirstOrDefaultAsync();
+            if (semester == null)
             {
-                result.Message = "Cannot update module in current semester";
+                result.Message = "Semester not found";
                 return result;
             }
+            if (semester.StartDate  <= DateTime.Now)
+            {
+                result.Message = "Cannot configure for semester started";
+                return result;
+            }
+            bool isInterval = request.SubmissionModules.Any(sm => sm.StartDate < semester.StartDate || sm.EndDate > semester.EndDate);
+            if (isInterval)
+            {
+                result.Message = "Please set a deadline during the semester.";
+                return result;
+            }
+
             _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.Semester).Where(sm => sm.AssessmentId.Equals(request.AssessmentId)
                                             && sm.Semester.ShortName.Equals(request.SemesterCode)
                                             && sm.LectureId.Equals(currentUserId)).ToListAsync();
@@ -421,6 +425,18 @@ namespace IPMS.Business.Services
             if (request.StartDate >= request.EndDate)
             {
                 result.Message = "Cannot set Start Date greater than End Date";
+                return result;
+            }
+
+            if (request.StartDate < @class.Semester.StartDate)
+            {
+                result.Message = "Cannot set Start Date Module lower than Start Date Semester";
+                return result;
+            }
+
+            if (request.EndDate > @class.Semester.EndDate)
+            {
+                result.Message = "Cannot set End Date Module greater than End Date Semester";
                 return result;
             }
 
