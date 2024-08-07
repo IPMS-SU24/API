@@ -21,7 +21,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<GetSyllabusDetailResponse> GetSyllabusDetail(Guid? syllabusId);
         Task<ValidationResultModel> UpdateSyllabusValidators(UpdateSyllabusRequest request);
         Task UpdateSyllabus(UpdateSyllabusRequest request);
-        Task CloneSyllabus(Guid? syllabusId);
+        Task CloneSyllabus(CloneSyllabusRequest request);
         Task<IEnumerable<GetAllSemesterAdminResponse>> GetAllSemesterAdmin(GetAllSemesterAdminRequest request);
         Task<GetSemesterDetailResponse> GetSemesterDetail(Guid? semesterId);
         Task<ValidationResultModel> CreateSemesterValidators(CreateSemesterRequest request);
