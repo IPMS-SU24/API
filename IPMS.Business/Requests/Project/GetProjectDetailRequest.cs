@@ -5,5 +5,6 @@ namespace IPMS.Business.Requests.Project
     {
         public Guid ClassId { get; set; }
         public Guid GroupId { get; set; }
+        public bool? IsCommittee { get; set; }
     }
 }

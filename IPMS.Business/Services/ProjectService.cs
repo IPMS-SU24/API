@@ -71,7 +71,10 @@ namespace IPMS.Business.Services
             var projects = await prjQueryable.ToListAsync();
 
             List<IPMSUser> users = _userManager.Users.ToList();
-
+            var lastAssessmentId = await _unitOfWork.AssessmentRepository.Get().GroupBy(x => x.SyllabusId)
+                .Select(x => x.OrderByDescending(a => a.Order).Select(a=>a.Id).First()
+                ).ToListAsync();
+            var lastSubmissionModuleIds = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => lastAssessmentId.Contains(x.AssessmentId)).Select(x => x.Id).ToListAsync();
             prjPref = projects.Select(p => new ProjectPreferenceResponse
             {
                 TopicTitle = p.Topic.Topic.Name != null ? p.Topic.Topic.Name : "",
@@ -80,7 +83,7 @@ namespace IPMS.Business.Services
                 Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
                 SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
                 Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
-                ProjectSubmissions = p.Submissions.Select(ps => new ProjectSubmissionResponse
+                ProjectSubmissions = p.Submissions.Where(x=>lastSubmissionModuleIds.Contains(x.SubmissionModuleId)).Select(ps => new ProjectSubmissionResponse
                 {
                     Id = ps.Id,
                     Name = ps.Name,
@@ -259,8 +262,15 @@ namespace IPMS.Business.Services
             {
                 return prjDetail;
             }
-
-            IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
+            IPMSClass? @class = null;
+            if(request.IsCommittee.HasValue && request.IsCommittee.Value)
+            {
+                @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.Committees.Any(x=>x.LecturerId == currentUserId) && c.LecturerId != currentUserId);
+            }
+            else
+            {
+                @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
+            }
             if (@class == null) // check class is existed
             {
                 return prjDetail;
