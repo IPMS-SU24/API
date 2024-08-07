@@ -181,9 +181,9 @@ namespace IPMS.API.Controllers
 
         [EnumAuthorize(UserRole.Admin)]
         [HttpPost("syllabus-clone")]
-        public async Task<IActionResult> CloneSyllabus([FromBody] Guid syllabusId)
+        public async Task<IActionResult> CloneSyllabus([FromBody] CloneSyllabusRequest request)
         {
-            await _adminService.CloneSyllabus(syllabusId);
+            await _adminService.CloneSyllabus(request);
             return GetActionResponse(new IPMSResponse<object>());
         }
 
