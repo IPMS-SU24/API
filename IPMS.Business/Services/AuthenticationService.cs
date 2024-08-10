@@ -100,7 +100,7 @@ namespace IPMS.Business.Services
             });
 
         }
-        
+
         public static List<T> SortByField<T>(List<T> list, string sortBy)
         {
             var param = Expression.Parameter(typeof(T), "item");
@@ -165,17 +165,7 @@ namespace IPMS.Business.Services
             var user = await _userManager.FindByEmailAsync(loginModel.Email);
             if (user != null && !user.IsDeleted.Value && await _userManager.CheckPasswordAsync(user, loginModel.Password) && await _userManager.IsEmailConfirmedAsync(user))
             {
-                var userRoles = await _userManager.GetRolesAsync(user);
                 var authClaims = await GetUserClaims(user);
-                if (userRoles.Contains(UserRole.Student.ToString()))
-                {
-                    //If student => Add ProjectId to Claim
-                    var project = await _commonService.GetProject(user.Id);
-                    if (project != null)
-                    {
-                        authClaims.Add(new("ProjectId", project.Id.ToString()));
-                    }
-                }
                 var accessToken = GenerateAccessToken(authClaims);
 
                 var refreshToken = string.Empty;
@@ -202,8 +192,6 @@ namespace IPMS.Business.Services
                     AccessToken = accessToken,
                     RefreshToken = refreshToken,
                 };
-
-
             }
             return null;
         }
@@ -283,7 +271,7 @@ namespace IPMS.Business.Services
         {
             var userRoles = await _userManager.GetRolesAsync(user);
             var isFirstLogin = !user.RefreshTokens.Any();
-            return new List<Claim>
+            var authClaims = new List<Claim>
                     {
                         new (ClaimTypes.Email, user.Email),
                         new (ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -293,6 +281,17 @@ namespace IPMS.Business.Services
                         new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                         new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
                     };
+
+            if (userRoles.Contains(UserRole.Student.ToString()))
+            {
+                //If student => Add ProjectId to Claim
+                var project = await _commonService.GetProject(user.Id);
+                if (project != null)
+                {
+                    authClaims.Add(new("ProjectId", project.Id.ToString()));
+                }
+            }
+            return authClaims;
         }
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
