@@ -610,7 +610,7 @@ namespace IPMS.Business.Services
             var isDifferentClass = studentExist.Any(x => x.ClassId != request.ClassId);
             if (isDifferentClass)
             {
-                result.Message = "Student is in a differenct class";
+                result.Message = "Student is in a different class";
                 return result;
             }
             var existedMembers = await _unitOfWork.StudentRepository.Get().Where(x => x.ProjectId == request.GroupId).CountAsync();

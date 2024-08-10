@@ -7,6 +7,7 @@ namespace IPMS.Business.Responses.SubmissionModule
         public string DownloadUrl { get; set; }
         public int GroupNum { get; set; }
         public decimal? Grade { get; set; }
+        public string? Response { get; set; }
         public Guid SubmissionId { get; set; }
         public Guid? GroupId { get; set; }
     }

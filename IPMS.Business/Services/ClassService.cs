@@ -302,7 +302,7 @@ namespace IPMS.Business.Services
                 x.Class.LecturerId == lecturerId);
             if (student == null)
             {
-                result.Message = "Student doest not exist or in different class";
+                result.Message = "Student does not exist or in different class";
                 return result;
             }
             var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester).FirstAsync(x => x.Id == request.ClassId);

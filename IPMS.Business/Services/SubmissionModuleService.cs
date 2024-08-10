@@ -258,7 +258,9 @@ namespace IPMS.Business.Services
                         : group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)).Grade,
                     SubmissionId = group.First().Id,
                     GroupId = group.First().ProjectId,
-                }).ToList();
+                    Response = group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)) == null ? string.Empty
+                        : group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)).Response,
+            }).ToList();
 
             return submissions;
         }
