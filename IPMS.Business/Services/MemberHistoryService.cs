@@ -49,7 +49,7 @@ namespace IPMS.Business.Services
 
             // Find current class
             IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
-            if (@class == null)
+             if (@class == null)
                 throw new DataNotFoundException("Current user isn't in any class");
 
             Guid? leaderId = null; // default current user is freedom
@@ -115,7 +115,7 @@ namespace IPMS.Business.Services
             var response = histories.Select(h => new LoggedInUserHistoryResponse
             {
                 Id = h.Id,
-                LeaderId = leaderId.Value, 
+                LeaderId = leaderId == null ? null : leaderId.Value, 
                 RequestType = (h.ProjectFromId == null) ? "join" : "swap",
                 Requester = GetUser(users, h.ReporterId, null), // cannot use async await in here, cannot query
                 MemberSwap = GetUser(users, h.MemberSwapId, h.MemberSwapStatus),

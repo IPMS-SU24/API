@@ -10,7 +10,7 @@ namespace IPMS.Business.Responses.MemberHistory
     public class LoggedInUserHistoryResponse
     {
         public Guid Id { get; set; }
-        public Guid LeaderId { get; set; }
+        public Guid? LeaderId { get; set; }
         public string RequestType { get; set; }
         public GeneralObjectInformation Requester { get; set; }
         public GeneralObjectInformation? MemberSwap { get; set; }
