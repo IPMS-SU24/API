@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver.Linq;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace IPMS.Business.Services
 {
@@ -208,25 +209,57 @@ namespace IPMS.Business.Services
 
         {
             var importJobIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == classId && x.JobImportId != null).Select(x => new { x.JobImportId, x.Information.FullName, x.Information.Email }).ToListAsync();
-            if (importJobIds == null || !importJobIds.Any())
+            var jobConnection = JobStorage.Current.GetConnection();
+            var jobMonitoringApi = JobStorage.Current.GetMonitoringApi();
+            var queueName = "import_student";
+            var enqueuedJobs = jobMonitoringApi.EnqueuedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == classId).ToList();
+            var fetchedJobs = jobMonitoringApi.FetchedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == classId).ToList();
+            var succeededJobs = jobMonitoringApi.SucceededJobs(0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == classId).ToList();
+            if ((enqueuedJobs == null || !enqueuedJobs.Any()) && (fetchedJobs == null || !fetchedJobs.Any()) && (succeededJobs == null || !succeededJobs.Any()))
             {
                 return null;
             }
-            var jobConnection = JobStorage.Current.GetConnection();
             var states = new List<JobImportStudentStatusRecord>();
-            var processingStatus = "Processing";
-            foreach (var job in importJobIds)
+            //var processingStatus = "Processing";
+            if (enqueuedJobs != null)
             {
-                states.Add(new JobImportStudentStatusRecord()
+                foreach (var job in enqueuedJobs)
                 {
-                    JobStatus = jobConnection.GetStateData(job.JobImportId.ToString())?.Name ?? processingStatus,
-                    StudentName = job.FullName,
-                    StudentEmail = job.Email
-                });
+                    states.Add(new JobImportStudentStatusRecord()
+                    {
+                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
+                        StudentEmail = (job.Value.Job.Args[0] as StudentDataRow).Email,
+                        StudentName = (job.Value.Job.Args[0] as StudentDataRow).StudentName
+                    });
+                }
+            }
+            if (fetchedJobs != null)
+            {
+                foreach (var job in fetchedJobs)
+                {
+                    states.Add(new JobImportStudentStatusRecord()
+                    {
+                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
+                        StudentEmail = (job.Value.Job.Args[0] as StudentDataRow).Email,
+                        StudentName = (job.Value.Job.Args[0] as StudentDataRow).StudentName
+                    });
+                }
+            }
+            if (succeededJobs != null)
+            {
+                foreach (var job in succeededJobs)
+                {
+                    states.Add(new JobImportStudentStatusRecord()
+                    {
+                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
+                        StudentEmail = (job.Value.Job.Args[0] as StudentDataRow).Email,
+                        StudentName = (job.Value.Job.Args[0] as StudentDataRow).StudentName
+                    });
+                }
             }
             return states.Any() ? new JobImportStatusResponse<JobImportStudentStatusRecord>
             {
-                IsDone = !states.Any(x => x.JobStatus == processingStatus),
+                IsDone = !states.Any(x => x.JobStatus != "Succeeded"),
                 States = states
             } : null;
         }
@@ -593,24 +626,58 @@ namespace IPMS.Business.Services
         public async Task<JobImportStatusResponse<JobImportClassStatusRecord>?> GetImportClassStatusAsync(Guid semesterId)
         {
             var importJobIds = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId == semesterId && x.JobImportId != null).Select(x => new { x.JobImportId, x.ShortName }).ToListAsync();
-            if (importJobIds == null || !importJobIds.Any())
+            //if (importJobIds == null || !importJobIds.Any())
+            //{
+            //    return null;
+            //}
+            var jobConnection = JobStorage.Current.GetConnection();
+            var jobMonitoringApi = JobStorage.Current.GetMonitoringApi();
+            var queueName = "import_class";
+            var enqueuedJobs = jobMonitoringApi.EnqueuedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == semesterId).ToList();
+            var fetchedJobs = jobMonitoringApi.FetchedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == semesterId).ToList();
+            var succeededJobs = jobMonitoringApi.SucceededJobs(0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == semesterId).ToList();
+            if ((enqueuedJobs == null || !enqueuedJobs.Any()) && (fetchedJobs == null || !fetchedJobs.Any()) && (succeededJobs == null || !succeededJobs.Any()))
             {
                 return null;
             }
-            var jobConnection = JobStorage.Current.GetConnection();
             var states = new List<JobImportClassStatusRecord>();
-            var processingStatus = "Processing";
-            foreach (var job in importJobIds)
+            //var processingStatus = "Processing";
+            if(enqueuedJobs != null)
             {
-                states.Add(new JobImportClassStatusRecord()
+                foreach (var job in enqueuedJobs)
                 {
-                    JobStatus = jobConnection.GetStateData(job.JobImportId.ToString())?.Name ?? processingStatus,
-                    ClassCode = job.ShortName
-                });
+                    states.Add(new JobImportClassStatusRecord()
+                    {
+                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
+                        ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
+                    });
+                }
+            }
+            if(fetchedJobs != null)
+            {
+                foreach (var job in fetchedJobs)
+                {
+                    states.Add(new JobImportClassStatusRecord()
+                    {
+                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
+                        ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
+                    });
+                }
+            }
+            if(succeededJobs != null)
+            {
+                foreach (var job in succeededJobs)
+                {
+                    states.Add(new JobImportClassStatusRecord()
+                    {
+                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
+                        ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
+                    });
+                }
             }
             return states.Any() ? new JobImportStatusResponse<JobImportClassStatusRecord>
             {
-                IsDone = !states.Any(x => x.JobStatus == processingStatus),
+                IsDone = !states.Any(x => x.JobStatus != "Succeeded"),
                 States = states
             } : null;
         }
@@ -717,5 +784,6 @@ namespace IPMS.Business.Services
             classDeadline.BorrowIot = @class.BorrowIoTComponentDeadline;
             return classDeadline;
         }
+
     }
 }

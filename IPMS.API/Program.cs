@@ -102,7 +102,10 @@ builder.Services.AddHangfire(configuration => configuration
         {
             opts.UseNpgsqlConnection(builder.Configuration.GetConnectionString("IPMS"));
         }));
-builder.Services.AddHangfireServer();
+builder.Services.AddHangfireServer(opts =>
+{
+    opts.Queues = new[] { "import_class","import_student" };
+});
 builder.Services.AddSwaggerGen(options =>
 {
     options.DescribeAllParametersInCamelCase();
