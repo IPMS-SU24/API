@@ -334,9 +334,9 @@ namespace IPMS.Business.Services
             @class.SemesterId = classRaw.SemesterId;
             @class.Semester = classRaw.Semester.Name;
             @class.ShortName = classRaw.ShortName;
-            @class.Name = classRaw.Name;
             @class.LecturerId = classRaw.LecturerId;
             @class.Lecturer = lecturer.FullName;
+            @class.Email = lecturer.Email;
             @class.NumOfStudents = classRaw.Students.Count();
             @class.Committees = classRaw.Committees.Select(c => new CommitteeResponse
             {
@@ -578,8 +578,8 @@ namespace IPMS.Business.Services
             classes = classRaw.Select(c => new GetClassDetailResponse
             {
                 Id = c.Id,
-                Name = c.Name,
                 ShortName = c.ShortName,
+                Email = allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId)) == null ? "None" : allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId))!.Email,
                 LecturerId = c.LecturerId,
                 Lecturer = allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId)) == null ? "None" : allLecturers.FirstOrDefault(l => l.Id.Equals(c.LecturerId))!.FullName,
                 SemesterId = c.SemesterId,
