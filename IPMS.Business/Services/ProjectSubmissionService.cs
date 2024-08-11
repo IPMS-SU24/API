@@ -354,19 +354,19 @@ namespace IPMS.Business.Services
                 return final;
             }
 
-            var lastAss = await _unitOfWork.AssessmentRepository.Get().OrderByDescending(a => a.Order).FirstOrDefaultAsync();
-
-            if (lastAss == null) // cannot find assessment
-            {
-                return final;
-            }
-
             var semester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             if (semester == null)
             {
                 return final;
             }
 
+
+            var lastAss = semester.Syllabus.Assessments.OrderByDescending(x => x.Order).FirstOrDefault();
+
+            if (lastAss == null) // cannot find assessment
+            {
+                return final;
+            }
             var submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(pm => pm.ProjectId.Equals(request.GroupId))
                                     .Include(pm => pm.Grades.Where(g => g.CommitteeId.Equals(validCommittee.Committees.First().Id)))
                                     .OrderByDescending(pm => pm.SubmissionDate) // to get first or default below
