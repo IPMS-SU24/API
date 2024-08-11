@@ -608,7 +608,7 @@ namespace IPMS.Business.Services
 
             }
 
-            classes = classRaw.Select(c => new GetClassDetailResponse
+            classes = classRaw.OrderBy(x=>x.ShortName).Select(c => new GetClassDetailResponse
             {
                 Id = c.Id,
                 ShortName = c.ShortName,

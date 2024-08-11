@@ -16,6 +16,7 @@ namespace IPMS.Business.Responses.Admin
         public string Name { get; set; }
         public int Order { get; set; }
         public decimal Percentage { get; set; }
+        public string Description { get; set; }
     }
 
     public class SysSemesterInfo
