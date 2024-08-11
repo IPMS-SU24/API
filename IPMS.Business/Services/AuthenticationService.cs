@@ -227,7 +227,7 @@ namespace IPMS.Business.Services
 
             user.RefreshTokens.Add(new UserRefreshToken
             {
-                Token = refreshToken,
+                Token = newRefreshToken,
                 Expires = DateTime.Now.AddDays(_jwtConfig.RefreshTokenValidityInDays)
             });
             await _userManager.UpdateAsync(user);

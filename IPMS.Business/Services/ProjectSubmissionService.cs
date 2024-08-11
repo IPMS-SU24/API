@@ -407,11 +407,11 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException("Not Found Project");
             }
-            var semesterId = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id == targetStudent.ClassId).Select(x => x.SemesterId).FirstOrDefaultAsync();
+            var classInfo = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id == targetStudent.ClassId).Select(x => new { x.SemesterId , x.LecturerId}).FirstOrDefaultAsync();
             var response = new GetGradeResponse
             {
                 AssessmentGrades = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.Assessment)
-                                                                                            .Where(x => x.SemesterId == semesterId)
+                                                                                            .Where(x => x.SemesterId == classInfo.SemesterId && x.LectureId == classInfo.LecturerId)
                                                                                             .GroupBy(x => x.AssessmentId)
                                                                                             .Select(x => new AssessmentGrade
                                                                                             {
