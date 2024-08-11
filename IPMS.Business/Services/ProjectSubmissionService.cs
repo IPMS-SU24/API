@@ -371,7 +371,7 @@ namespace IPMS.Business.Services
                                     .Include(pm => pm.Grades.Where(g => g.CommitteeId.Equals(validCommittee.Committees.First().Id)))
                                     .OrderByDescending(pm => pm.SubmissionDate) // to get first or default below
                                     .ToListAsync();
-            var modules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.AssessmentId.Equals(lastAss.Id) && sm.SemesterId.Equals(semester.Id)).Include(sm => sm.ClassModuleDeadlines.Where(cm => cm.ClassId.Equals(request.ClassId))).ToListAsync();
+            var modules = await _unitOfWork.SubmissionModuleRepository.Get().Where(sm => sm.AssessmentId.Equals(lastAss.Id) && sm.SemesterId.Equals(semester.Id) && sm.LectureId == validCommittee.LecturerId).Include(sm => sm.ClassModuleDeadlines.Where(cm => cm.ClassId.Equals(request.ClassId))).ToListAsync();
             foreach (var m in modules)
             {
                 if (m.ClassModuleDeadlines.Count() != 1) // 1 submission - 1 class - not found --> config wrong

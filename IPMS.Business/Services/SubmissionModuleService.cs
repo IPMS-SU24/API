@@ -195,7 +195,7 @@ namespace IPMS.Business.Services
             var semesterId = (await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == request.classId)).SemesterId;
             _submissionModules = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.ClassModuleDeadlines.Where(y => y.ClassId == request.classId)).Where(sm => sm.SemesterId.Equals(semesterId)
                                             && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
-            List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.CommitteeId.Equals(currentUserId)).ToListAsync();
+            List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.Committee.LecturerId.Equals(currentUserId)).ToListAsync();
 
             var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(request.classId) && ct.ProjectId != null).ToListAsync(); //get class topics have picked == project in class
 
