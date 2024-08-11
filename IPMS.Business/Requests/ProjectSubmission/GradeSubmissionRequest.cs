@@ -4,5 +4,6 @@
     {
         public Guid SubmissionId { get; set; }
         public decimal Grade { get; set; }
+        public string? Response { get; set; }
     }
 }

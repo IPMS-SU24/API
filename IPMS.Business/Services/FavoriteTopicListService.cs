@@ -153,7 +153,7 @@ namespace IPMS.Business.Services
             {
                 Message = "Operation did not successfully"
             };
-          /*  var comingSemester = await _unitOfWork.SemesterRepository.Get().Where(s => s.StartDate > DateTime.Now).OrderBy(s => s.StartDate).FirstOrDefaultAsync();
+            var comingSemester = await _unitOfWork.SemesterRepository.Get().Where(s => s.StartDate > DateTime.Now).OrderBy(s => s.StartDate).FirstOrDefaultAsync();
             if (comingSemester == null)
             {
                 result.Message = "Does not have any incoming semester";
@@ -177,7 +177,7 @@ namespace IPMS.Business.Services
             {
                 result.Message = "Does not have any topic in list";
                 return result;
-            }*/
+            }
 
             result.Message = string.Empty;
             result.Result = true;

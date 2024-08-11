@@ -7,7 +7,7 @@ namespace IPMS.Business.Responses.Class
     {
         public Guid Id { get; set; }
         public string ShortName { get; set; }
-        public string Name { get; set; }
+        public string Email { get; set; }
         public Guid LecturerId { get; set; }
         public string Lecturer { get; set; }
         public Guid SemesterId { get; set; }

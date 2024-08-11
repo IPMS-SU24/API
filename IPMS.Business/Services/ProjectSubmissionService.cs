@@ -249,6 +249,10 @@ namespace IPMS.Business.Services
 
         public async Task GradeSubmission(GradeSubmissionRequest request, Guid lecturerId)
         {
+            if (request.Response == null)
+            {
+                request.Response = string.Empty;
+            }
             var submission = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => ps.Id.Equals(request.SubmissionId))
                                     .Include(s => s.SubmissionModule)
                                     .FirstOrDefaultAsync();
@@ -268,7 +272,8 @@ namespace IPMS.Business.Services
                 {
                     CommitteeId = curCommittee,
                     SubmissionId = request.SubmissionId,
-                    Grade = request.Grade
+                    Grade = request.Grade,
+                    Response = request.Response.Trim()
 
                 };
                 await _unitOfWork.LecturerGradeRepository.InsertAsync(grade);
@@ -276,6 +281,7 @@ namespace IPMS.Business.Services
             else
             {
                 grade.Grade = request.Grade;
+                grade.Response = request.Response.Trim();
                 _unitOfWork.LecturerGradeRepository.Update(grade);
             }
             await _unitOfWork.SaveChangesAsync(); // save to cal average below
