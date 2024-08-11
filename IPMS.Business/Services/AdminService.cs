@@ -340,15 +340,16 @@ namespace IPMS.Business.Services
                 Name = syllabusRaw.Name,
                 ShortName = syllabusRaw.ShortName,
                 Description = syllabusRaw.Description,
-                AssessmentInfos = syllabusRaw.Assessments.Select(a => new SysAssessmentInfo
+                AssessmentInfos = syllabusRaw.Assessments.OrderBy(x=>x.Order).Select(a => new SysAssessmentInfo
                 {
                     AssessmentId = a.Id,
                     Name = a.Name,
                     Order = a.Order,
-                    Percentage = a.Percentage
+                    Percentage = a.Percentage,
+                    Description = a.Description
 
                 }).ToList(),
-                SemesterInfos = syllabusRaw.Semesters.Select(s => new SysSemesterInfo
+                SemesterInfos = syllabusRaw.Semesters.OrderByDescending(x=>x.StartDate).Select(s => new SysSemesterInfo
                 {
                     SemesterId = s.Id,
                     Name = s.Name

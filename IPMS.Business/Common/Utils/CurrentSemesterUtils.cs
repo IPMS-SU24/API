@@ -9,7 +9,7 @@ namespace IPMS.Business.Common.Utils
     {
         public static async Task<CurrentSemesterInfo> GetCurrentSemester(IUnitOfWork unitOfWork)
         {
-            //if(CurrentSemesterInfo.Instance.IsCurrent) return CurrentSemesterInfo.Instance;
+            if(CurrentSemesterInfo.Instance.IsCurrent) return CurrentSemesterInfo.Instance;
             var now = DateTime.Now;
             CurrentSemesterInfo.Instance.CurrentSemester = await unitOfWork.SemesterRepository
                                                             .Get().Where(x=>x.EndDate > now && x.StartDate < now).Include(x=>x.Modules).Include(x=>x.Syllabus).ThenInclude(x=>x.Assessments).FirstOrDefaultAsync();
