@@ -12,5 +12,6 @@
         public string GroupName { get; set; }
         public string StudentId { get; set; }
         public string StudentName { get; set; }
+        public string Email { get; set; }
     }
 }
