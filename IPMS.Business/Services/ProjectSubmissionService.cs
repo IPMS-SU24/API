@@ -186,7 +186,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var lastAss = await _unitOfWork.AssessmentRepository.Get().Where(x=>x.Modules.Any(m=>m.Id == submission.SubmissionModuleId)).OrderByDescending(a => a.Order).FirstOrDefaultAsync();
+            var lastAss = await _unitOfWork.AssessmentRepository.Get().Where(x => x.Modules.Any(m => m.Id == submission.SubmissionModuleId)).OrderByDescending(a => a.Order).FirstOrDefaultAsync();
 
             if (lastAss!.Id != submission.SubmissionModule.AssessmentId && lecturerId != @class.LecturerId) // check committee grade final assessment
             {
@@ -410,7 +410,7 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException("Not Found Project");
             }
-            var classInfo = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id == targetStudent.ClassId).Select(x => new { x.SemesterId , x.LecturerId}).FirstOrDefaultAsync();
+            var classInfo = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id == targetStudent.ClassId).Select(x => new { x.SemesterId, x.LecturerId }).FirstOrDefaultAsync();
             var response = new GetGradeResponse
             {
                 AssessmentGrades = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.Assessment)
@@ -428,7 +428,9 @@ namespace IPMS.Business.Services
                                                                                                     Percentage = sm.Percentage,
                                                                                                     Name = sm.Name,
                                                                                                     Grade = sm.ProjectSubmissions.FirstOrDefault(ps => ps.ProjectId == projectId) != null ?
-                                                                                                            sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).FinalGrade : null
+                                                                                                            sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).FinalGrade : null,
+                                                                                                    Response = sm.ProjectSubmissions.FirstOrDefault(ps => ps.ProjectId == projectId) != null && sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).FinalGrade != null ?
+                                                                                                            sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).Grades.Select(g => new CommitteeResponse {Name = g.Committee.Lecturer.FullName, Response = g.Response }).ToList() : null,
                                                                                                 }).ToList(),
                                                                                             }).ToListAsync()
             };

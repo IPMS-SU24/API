@@ -38,5 +38,12 @@ namespace IPMS.Business.Responses.ProjectSubmission
         public decimal Percentage { get; set; }
         public string Name { get; set; } = null!;
         public decimal? Grade { get; set; }
+        public List<CommitteeResponse> Response { get; set; } = new();
+    }
+
+    public class CommitteeResponse
+    {
+        public string Name { get; set; }
+        public string? Response { get; set; }
     }
 }
