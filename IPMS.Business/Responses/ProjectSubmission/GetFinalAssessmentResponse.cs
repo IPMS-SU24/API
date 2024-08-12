@@ -10,5 +10,6 @@ namespace IPMS.Business.Responses.ProjectSubmission
         public string Description { get; set; }
         public string FileLink { get; set; }
         public decimal Grade { get; set; }
+        public string? Response { get; set; }
     }
 }

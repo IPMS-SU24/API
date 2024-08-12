@@ -197,7 +197,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var lastAss = await _unitOfWork.AssessmentRepository.Get().Where(x=>x.Modules.Any(m=>m.Id == submission.SubmissionModuleId)).OrderByDescending(a => a.Order).FirstOrDefaultAsync();
+            var lastAss = await _unitOfWork.AssessmentRepository.Get().Where(x => x.Modules.Any(m => m.Id == submission.SubmissionModuleId)).OrderByDescending(a => a.Order).FirstOrDefaultAsync();
 
             if (lastAss!.Id != submission.SubmissionModule.AssessmentId && lecturerId != @class.LecturerId) // check committee grade final assessment
             {
@@ -390,10 +390,13 @@ namespace IPMS.Business.Services
                     return final;
                 }
                 var submitted = submissions.FirstOrDefault(s => s.SubmissionModuleId.Equals(m.Id) && s.SubmissionDate <= m.ClassModuleDeadlines.First().EndDate);
-                decimal grade = 0;
+                LecturerGrade grade = new LecturerGrade();
                 if (submitted != null)
                 {
-                    grade = submitted.Grades.Count() == 1 ? submitted.Grades.First().Grade!.Value : 0;
+                    if (submitted.Grades.Count() == 1)
+                    {
+                        grade = submitted.Grades.First();
+                    }
                 }
                 final.Add(new GetFinalAssessmentResponse
                 {
@@ -403,9 +406,9 @@ namespace IPMS.Business.Services
                     ModuleName = m.Name,
                     Percentage = m.Percentage,
                     FileLink = submitted == null ? "" : _presignedUrl.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, submitted.Id, submitted.Name)) ?? string.Empty,
-                    Grade = grade,
+                    Grade = grade.Grade != null ? grade.Grade.Value : 0,
+                    Response = grade.Response
                 });
-
 
             }
             return final;
@@ -418,7 +421,7 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException("Not Found Project");
             }
-            var classInfo = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id == targetStudent.ClassId).Select(x => new { x.SemesterId , x.LecturerId}).FirstOrDefaultAsync();
+            var classInfo = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id == targetStudent.ClassId).Select(x => new { x.SemesterId, x.LecturerId }).FirstOrDefaultAsync();
             var response = new GetGradeResponse
             {
                 AssessmentGrades = await _unitOfWork.SubmissionModuleRepository.Get().Include(x => x.Assessment)
@@ -436,7 +439,9 @@ namespace IPMS.Business.Services
                                                                                                     Percentage = sm.Percentage,
                                                                                                     Name = sm.Name,
                                                                                                     Grade = sm.ProjectSubmissions.FirstOrDefault(ps => ps.ProjectId == projectId) != null ?
-                                                                                                            sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).FinalGrade : null
+                                                                                                            sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).FinalGrade : null,
+                                                                                                    Response = sm.ProjectSubmissions.FirstOrDefault(ps => ps.ProjectId == projectId) != null && sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).FinalGrade != null ?
+                                                                                                            sm.ProjectSubmissions.First(ps => ps.ProjectId == projectId).Grades.Select(g => new CommitteeResponse {Name = g.Committee.Lecturer.FullName, Response = g.Response }).ToList() : null,
                                                                                                 }).ToList(),
                                                                                             }).ToListAsync()
             };
