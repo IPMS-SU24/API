@@ -103,6 +103,7 @@ namespace IPMS.Business.Services
                 Description = x.Description,
                 TopicId = x.Id,
                 TopicName = x.Name,
+                Owner = x.Owner.FullName,
                 DetailLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, x.Id, x.Detail)),
                 IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId)
             }).ToListAsync();
