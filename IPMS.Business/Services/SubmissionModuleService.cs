@@ -197,8 +197,8 @@ namespace IPMS.Business.Services
                                             && sm.LectureId.Equals(currentUserId)).Include(sm => sm.ProjectSubmissions).ThenInclude(ps => ps.Grades).ToListAsync();
             List<LecturerGrade> graded = await _unitOfWork.LecturerGradeRepository.Get().Where(lg => lg.Committee.LecturerId.Equals(currentUserId)).ToListAsync();
 
-            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(request.classId) && ct.ProjectId != null).ToListAsync(); //get class topics have picked == project in class
-
+            //var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(request.classId) && ct.ProjectId != null).ToListAsync(); //get class topics have picked == project in class
+            var projectCount = await _unitOfWork.StudentRepository.Get().Where(stu => stu.ClassId == request.classId && stu.ProjectId != null).Select(x => x.ProjectId).Distinct().CountAsync();
             foreach (var assessment in _assessments.OrderBy(x=>x.Order))
             {
                 List<ProjectSubmissionModule> modules = _submissionModules.Where(sm => sm.AssessmentId.Equals(assessment.Id)).Select(sm => new ProjectSubmissionModule
@@ -207,7 +207,7 @@ namespace IPMS.Business.Services
                     Title = sm.Name,
                     Graded = graded.Count(g => sm.ProjectSubmissions.Any(ps => g.SubmissionId.Equals(ps.Id))),
                     Submissions = sm.ProjectSubmissions.GroupBy(ps => ps.ProjectId).Count(),
-                    Total = classTopics.Count(),
+                    Total = projectCount,
                     StartDate = sm.ClassModuleDeadlines.First().StartDate,
                     EndDate = sm.ClassModuleDeadlines.First().EndDate,
                     Percentage = sm.Percentage,
