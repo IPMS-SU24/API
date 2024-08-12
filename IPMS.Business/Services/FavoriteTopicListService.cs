@@ -162,7 +162,7 @@ namespace IPMS.Business.Services
             var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => request.ClassesId.Contains(c.Id) && c.LecturerId.Equals(lecturerId) && c.SemesterId.Equals(comingSemester.Id)).ToListAsync();
             if (@class.Count() != request.ClassesId.Count())
             {
-                result.Message = "Class cannot found";
+                result.Message = "Class cannot found in semester";
                 return result;
             }
 
