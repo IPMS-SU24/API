@@ -46,7 +46,8 @@ namespace IPMS.Business.Services
             {
                 Id = x.Id,
                 Name = x.FullName,
-                Email = x.Email
+                Email = x.Email,
+                Phone = x.PhoneNumber
             }).ToList();
             if (request.Name != null && request.Email != null)
             {
@@ -83,6 +84,7 @@ namespace IPMS.Business.Services
                 Id = lecturerRaw.Id,
                 Name = lecturerRaw.FullName,
                 Email = lecturerRaw.Email,
+                Phone = lecturerRaw.PhoneNumber,
                 Classes = classes
             };
         }
@@ -394,10 +396,6 @@ namespace IPMS.Business.Services
 
         public async Task CloneSyllabus(CloneSyllabusRequest request)
         {
-            if (request.Id == Guid.Empty)
-            {
-                throw new DataNotFoundException("Syllabus not found");
-            }
             if (request.ShortName.Trim() == "")
             {
                 throw new BaseBadRequestException("Short Name cannot be empty");
@@ -408,12 +406,7 @@ namespace IPMS.Business.Services
                 throw new BaseBadRequestException("Name cannot be empty");
 
             }
-            var syllabus = await _unitOfWork.SyllabusRepository.Get().Where(s => s.Id.Equals(request.Id)).Include(s => s.Assessments).FirstOrDefaultAsync();
-
-            if (syllabus == null)
-            {
-                throw new DataNotFoundException("Syllabus not found");
-            }
+         
             var isShortNameExisted = await _unitOfWork.SyllabusRepository.Get().FirstOrDefaultAsync(s => s.ShortName.Equals(request.ShortName));
             if (isShortNameExisted != null)
             {
@@ -424,21 +417,10 @@ namespace IPMS.Business.Services
             {
                 Name = request.Name,
                 ShortName = request.ShortName,
-                Description = syllabus.Description,
+                Description = "",
             };
-
-            var assessments = syllabus.Assessments.Select(a => new Assessment
-            {
-                Name = a.Name,
-                Description = a.Description,
-                Order = a.Order,
-                Percentage = a.Percentage,
-                SyllabusId = newSyllabus.Id
-            });
             await _unitOfWork.SyllabusRepository.InsertAsync(newSyllabus);
-            await _unitOfWork.AssessmentRepository.InsertRangeAsync(assessments);
             await _unitOfWork.SaveChangesAsync();
-
         }
 
         public async Task<IEnumerable<GetAllSemesterAdminResponse>> GetAllSemesterAdmin(GetAllSemesterAdminRequest request)

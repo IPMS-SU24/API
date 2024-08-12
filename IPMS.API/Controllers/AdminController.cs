@@ -49,7 +49,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-        [EnumAuthorize(UserRole.Admin)]
+       // [EnumAuthorize(UserRole.Admin)]
         [HttpGet("lecturer-list")]
         public async Task<IActionResult> GetLecturerList([FromQuery] GetLecturerListRequest request)
         {
@@ -60,7 +60,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-        [EnumAuthorize(UserRole.Admin)]
+       // [EnumAuthorize(UserRole.Admin)]
         [HttpGet("lecturer-detail")]
         public async Task<IActionResult> GetLecturerDetail([FromQuery] Guid lecturerId)
         {
@@ -179,7 +179,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(new IPMSResponse<object>());
         }
 
-        [EnumAuthorize(UserRole.Admin)]
+       // [EnumAuthorize(UserRole.Admin)]
         [HttpPost("syllabus-clone")]
         public async Task<IActionResult> CloneSyllabus([FromBody] CloneSyllabusRequest request)
         {
