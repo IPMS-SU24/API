@@ -49,7 +49,7 @@ namespace IPMS.Business.Services
 
             // Find current class
             IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
-             if (@class == null)
+            if (@class == null)
                 throw new DataNotFoundException("Current user isn't in any class");
 
             Guid? leaderId = null; // default current user is freedom
@@ -115,7 +115,7 @@ namespace IPMS.Business.Services
             var response = histories.Select(h => new LoggedInUserHistoryResponse
             {
                 Id = h.Id,
-                LeaderId = leaderId == null ? null : leaderId.Value, 
+                LeaderId = leaderId == null ? null : leaderId.Value,
                 RequestType = (h.ProjectFromId == null) ? "join" : "swap",
                 Requester = GetUser(users, h.ReporterId, null), // cannot use async await in here, cannot query
                 MemberSwap = GetUser(users, h.MemberSwapId, h.MemberSwapStatus),
@@ -199,6 +199,24 @@ namespace IPMS.Business.Services
             }
             return histories;
         }
+        private async Task SetStatusReject(MemberHistory history, string type)
+        {
+            if (type == "join")
+            {
+                history.ProjectToStatus = RequestStatus.Rejected;
+            }
+            else if (type == "swap")
+            {
+                history.ProjectFromStatus = RequestStatus.Rejected;
+                history.ProjectToStatus = RequestStatus.Rejected;
+                history.MemberSwapStatus = RequestStatus.Rejected;
+
+            }
+            _unitOfWork.MemberHistoryRepository.Update(history);
+            await _unitOfWork.SaveChangesAsync();
+
+        }
+
         public async Task<ValidationResultModel> UpdateRequestStatusValidators(UpdateRequestStatusRequest request, Guid studentId)
         {
 
@@ -220,10 +238,10 @@ namespace IPMS.Business.Services
                 return result;
             }
             Project reqUserProject = await _commonServices.GetProject(reqUser.Id);
-            
+
             IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
             // need not to check current Class because checked when get project
-            if (@class.ChangeGroupDeadline < DateTime.Now)
+            if (@class.ChangeGroupDeadline < DateTime.Now) // Need to set status reject
             {
                 result.Message = "Cannot review at this time";
                 return result;
@@ -238,19 +256,20 @@ namespace IPMS.Business.Services
                     result.Message = "Request is not correct";
                     return result;
                 }
-                
+
                 if (reqUserProject != null)
                 {
+                    await SetStatusReject(history, request.Type);  // Need to set status reject
                     result.Message = "Student currently in project";
                     return result;
                 }
 
-               /* await _unitOfWork.ProjectRepository.LoadExplicitProperty(reqUserProject, nameof(Project.Students));
-                if (currentClass.MaxMember <= reqUserProject.Students.Count)
-                {
-                    result.Message = "Group is full";
-                    return result;
-                }*/
+                /* await _unitOfWork.ProjectRepository.LoadExplicitProperty(reqUserProject, nameof(Project.Students));
+                 if (currentClass.MaxMember <= reqUserProject.Students.Count)
+                 {
+                     result.Message = "Group is full";
+                     return result;
+                 }*/
 
 
             }
@@ -266,31 +285,35 @@ namespace IPMS.Business.Services
                 // requester case
                 if (history.ReporterId == history.MemberSwapId)
                 {
+                    await SetStatusReject(history, request.Type);  // Need to set status reject
                     result.Message = "Can not swap itself";
                     return result;
                 }
-                
+
                 if (reqUserProject == null)
                 {
+                    await SetStatusReject(history, request.Type);  // Need to set status reject
                     result.Message = "Requester is not in project";
                     return result;
                 }
                 if (reqUserProject.Id != history.ProjectFromId)
                 {
+                    await SetStatusReject(history, request.Type);  // Need to set status reject
                     result.Message = "Requester is not in project";
                     return result;
                 }
                 var leaderReqUserProjectId = await GetLeaderId(reqUserProject.Id);
                 if (leaderReqUserProjectId == reqUser.Id)
                 {
+                    await SetStatusReject(history, request.Type);  // Need to set status reject
                     result.Message = "Requester currently is a leader";
                     return result;
                 }
 
-
                 // Case for project from || project to || member swap
                 if (project == null) // current reviewing is not in project -> No access
                 {
+                    await SetStatusReject(history, request.Type);  // Need to set status reject
                     result.Message = "Reviewer is not in project";
                     return result;
                 }
@@ -313,24 +336,26 @@ namespace IPMS.Business.Services
                     return result;
                 }
 
-
                 if (request.ReviewId == studentId) // case member swap - can ignore case project from || project to because GUID is global unique!
                 {
-                    if (project.Id != history.ProjectToId)   // case member changed to another group
+                    if (project.Id != history.ProjectToId)   // case member changed to another group // Need to set status reject
                     {
+                        await SetStatusReject(history, request.Type);
                         result.Message = "Member swap is not in project";
                         return result;
                     }
 
                     if (project.Id == history.ProjectFromId)
                     {
+                        await SetStatusReject(history, request.Type);  // Need to set status reject
                         result.Message = "Cannot swap member in same project";
                         return result;
                     }
 
                     // ** if not leader of project from || project to --> Out at line 283 --> Scope is leader project from, project to
-                    if (leaderId == request.ReviewId) // case memberSwap = leader  
+                    if (leaderId == request.ReviewId) // case memberSwap = leader
                     {
+                        await SetStatusReject(history, request.Type);  // Need to set status reject
                         result.Message = "Member swap currently is a leader";
                         return result;
                     }
@@ -384,18 +409,19 @@ namespace IPMS.Business.Services
         {
             if (request.Type == "join")
             {
-               await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
-            } else if (request.Type == "swap")
+                await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
+            }
+            else if (request.Type == "swap")
             {
                 if (history.ProjectFromStatus == RequestStatus.Approved && history.ProjectToStatus == RequestStatus.Approved && history.MemberSwapStatus == RequestStatus.Approved)
                 {
-                 //   await _studentGroupService.RemoveMember(history.ReporterId);
-                 //   await _studentGroupService.RemoveMember((Guid)history.MemberSwapId!);
+                    //   await _studentGroupService.RemoveMember(history.ReporterId);
+                    //   await _studentGroupService.RemoveMember((Guid)history.MemberSwapId!);
 
                     await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
                     await _studentGroupService.AddMember((Guid)history.MemberSwapId!, (Guid)history.ProjectFromId!);
                 }
-            } 
+            }
         }
     }
 }
