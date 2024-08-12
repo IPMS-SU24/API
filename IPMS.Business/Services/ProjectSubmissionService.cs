@@ -379,10 +379,13 @@ namespace IPMS.Business.Services
                     return final;
                 }
                 var submitted = submissions.FirstOrDefault(s => s.SubmissionModuleId.Equals(m.Id) && s.SubmissionDate <= m.ClassModuleDeadlines.First().EndDate);
-                decimal grade = 0;
+                LecturerGrade grade = new LecturerGrade();
                 if (submitted != null)
                 {
-                    grade = submitted.Grades.Count() == 1 ? submitted.Grades.First().Grade!.Value : 0;
+                    if (submitted.Grades.Count() == 1)
+                    {
+                        grade = submitted.Grades.First();
+                    }
                 }
                 final.Add(new GetFinalAssessmentResponse
                 {
@@ -392,9 +395,9 @@ namespace IPMS.Business.Services
                     ModuleName = m.Name,
                     Percentage = m.Percentage,
                     FileLink = submitted == null ? "" : _presignedUrl.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, submitted.Id, submitted.Name)) ?? string.Empty,
-                    Grade = grade,
+                    Grade = grade.Grade != null ? grade.Grade.Value : 0,
+                    Response = grade.Response
                 });
-
 
             }
             return final;
