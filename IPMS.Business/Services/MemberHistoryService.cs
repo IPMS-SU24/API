@@ -264,12 +264,15 @@ namespace IPMS.Business.Services
                     return result;
                 }
 
-                /* await _unitOfWork.ProjectRepository.LoadExplicitProperty(reqUserProject, nameof(Project.Students));
-                 if (currentClass.MaxMember <= reqUserProject.Students.Count)
-                 {
-                     result.Message = "Group is full";
-                     return result;
-                 }*/
+                var joinPrj = await _commonServices.GetProject(history.ProjectToId);
+                await _unitOfWork.ProjectRepository.LoadExplicitProperty(joinPrj, nameof(Project.Students));
+
+                if (@class.MaxMember == joinPrj.Students.Count)
+                {
+                    await SetStatusReject(history, request.Type);  // Need to set status reject
+                    result.Message = "Group is full";
+                    return result;
+                }
 
 
             }
