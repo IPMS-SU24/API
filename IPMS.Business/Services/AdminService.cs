@@ -244,7 +244,7 @@ namespace IPMS.Business.Services
                 Status = reportRaw.Status,
                 Content = reportRaw.Content,
                 ResponseContent = reportRaw.ResponseContent == null ? "" : reportRaw.ResponseContent,
-                ReportFile = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Report, reportRaw.Id, reportRaw.Title)) ?? string.Empty,
+                ReportFile = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Report, reportRaw.Id, reportRaw.FileName)) ?? string.Empty,
             };
 
         }

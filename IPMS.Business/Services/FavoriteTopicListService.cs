@@ -174,12 +174,19 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            if (topicList.Topics.Count() == 0)
+            var topicCount = topicList.Topics.Count();
+            if (topicCount == 0)
             {
                 result.Message = "Does not have any topic in list";
                 return result;
             }
-
+            var minGroups = await _unitOfWork.StudentRepository.Get().Include(x=>x.Class)
+                .Where(x => request.ClassesId.Contains(x.ClassId)).GroupBy(x => x.ClassId).ToDictionaryAsync(x => x.Key, x => (int)Math.Ceiling((decimal)x.Count()/ x.First().Class.MaxMember));
+            if (minGroups.Any(x=> topicCount < x.Value))
+            {
+                result.Message = "Topic list does have enough topics to add";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;

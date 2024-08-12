@@ -136,7 +136,7 @@ namespace IPMS.Business.Services
                     Id = pre.Id,
                     Title = pre.Name,
                     Description = pre.Description,
-                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, pre.Id, pre.Name)),
+                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, pre.Id, pre.Detail)),
                     Status = pre.Status,
                     Iots = components.Where(c => c.MasterId.Equals(pre.Id)).Select(c => new TopicIoT
                     {
@@ -271,6 +271,7 @@ namespace IPMS.Business.Services
                                                                             {
                                                                                 Id = x.Key.Id,
                                                                                 Num = x.Key.GroupNum,
+                                                                                ClassId = x.First().ClassId
                                                                             }).ToListAsync();
 
             if (groups.Count == 0)
@@ -299,7 +300,7 @@ namespace IPMS.Business.Services
                     Title = pre.Name,
                     Description = pre.Description,
                     GroupNum = groups.FirstOrDefault(g => g.Id.Equals(pre.SuggesterId)).Num,
-                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, pre.Id, pre.Name)),
+                    Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, pre.Id, pre.Detail)),
                     Status = pre.Status,
                     Iots = components.Where(c => c.MasterId.Equals(pre.Id)).Select(c => new TopicIoT
                     {
@@ -307,7 +308,8 @@ namespace IPMS.Business.Services
                         Quantity = c.Quantity
 
                     }).ToList(),
-                    CreateAt = pre.CreatedAt
+                    CreateAt = pre.CreatedAt,
+                    ClassId = groups.FirstOrDefault(g => g.Id.Equals(pre.SuggesterId)).ClassId
 
                 };
                 topics.Add(topic);
@@ -363,7 +365,7 @@ namespace IPMS.Business.Services
                 Title = preTopic.Name,
                 Description = preTopic.Description,
                 GroupNum = groups.FirstOrDefault(g => g.Id.Equals(preTopic.SuggesterId)).Num,
-                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, preTopic.Id, preTopic.Name)),
+                Detail = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, preTopic.Id, preTopic.Detail)),
                 Status = preTopic.Status,
                 Iots = components.Where(c => c.MasterId.Equals(preTopic.Id)).Select(c => new TopicIoT
                 {
