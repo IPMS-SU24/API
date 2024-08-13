@@ -181,8 +181,8 @@ namespace IPMS.Business.Services
                 return result;
             }
             var minGroups = await _unitOfWork.StudentRepository.Get().Include(x=>x.Class)
-                .Where(x => request.ClassesId.Contains(x.ClassId)).GroupBy(x => x.ClassId).ToDictionaryAsync(x => x.Key, x => (int)Math.Ceiling((decimal)x.Count()/ x.First().Class.MaxMember));
-            if (minGroups.Any(x=> topicCount < x.Value))
+                .Where(x => request.ClassesId.Contains(x.ClassId)).GroupBy(x => x.ClassId).ToListAsync();
+            if (minGroups.Any(x=> topicCount < (int)Math.Ceiling((decimal)x.Count() / x.First().Class.MaxMember)))
             {
                 result.Message = "Topic list does have enough topics to add";
                 return result;
