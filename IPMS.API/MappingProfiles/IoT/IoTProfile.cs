@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using IPMS.Business.Requests.IoTComponent;
+using IPMS.Business.Requests.Topic;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 
@@ -14,6 +15,12 @@ namespace IPMS.API.MappingProfiles.IoT
                 {
                     dest.MasterType = (ComponentsMasterType) context.Items[nameof(ComponentsMaster.MasterType)];
                     dest.Status = BorrowedStatus.Pending;
+                    dest.MasterId = Guid.Parse(context.Items[nameof(ComponentsMaster.MasterId)]!.ToString());
+                });
+            CreateMap<IoTRegisterTopicModel, ComponentsMaster>()
+                .AfterMap((src, dest, context) =>
+                {
+                    dest.MasterType = (ComponentsMasterType) context.Items[nameof(ComponentsMaster.MasterType)];
                     dest.MasterId = Guid.Parse(context.Items[nameof(ComponentsMaster.MasterId)]!.ToString());
                 });
         }

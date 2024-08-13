@@ -14,6 +14,7 @@ using NPOI.Util;
 using Org.BouncyCastle.Bcpg;
 using System.Collections.Immutable;
 using System.Reflection;
+using IPMS.DataAccess.Common.Enums;
 
 namespace IPMS.Business.Services
 {
@@ -122,6 +123,12 @@ namespace IPMS.Business.Services
             if(project.Topic == null)
             {
                 result.Message = "Your group haven't had topic yet";
+                return result;
+            }
+            await _unitOfWork.ClassTopicRepository.LoadExplicitProperty(project.Topic, nameof(ClassTopic.Topic));
+            if (project.Topic.Topic.Status != RequestStatus.Approved)
+            {
+                result.Message = "Topic hasn't been approved";
                 return result;
             }
             result.Message = string.Empty;

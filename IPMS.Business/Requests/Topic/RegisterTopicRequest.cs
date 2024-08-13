@@ -9,6 +9,11 @@ namespace IPMS.Business.Requests.Topic
         public string ShortName { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string? FileName { get; set; }
-        public ICollection<IoTModelRequest> IoTComponents { get; set; } = null!;
+        public ICollection<IoTRegisterTopicModel> IoTComponents { get; set; } = null!;
+    }
+
+    public class IoTRegisterTopicModel : IoTModelRequest
+    {
+
     }
 }
