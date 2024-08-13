@@ -264,7 +264,7 @@ namespace IPMS.Business.Services
                     return result;
                 }
 
-                var joinPrj = await _commonServices.GetProject(history.ProjectToId);
+                var joinPrj = await _unitOfWork.ProjectRepository.Get().FirstOrDefaultAsync(x => x.Id == history.ProjectToId);
                 await _unitOfWork.ProjectRepository.LoadExplicitProperty(joinPrj, nameof(Project.Students));
 
                 if (@class.MaxMember == joinPrj.Students.Count)
