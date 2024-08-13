@@ -1,4 +1,5 @@
-﻿using IPMS.Business.Common.Enums;
+﻿using Amazon.SQS.Model;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Extensions;
 using IPMS.Business.Common.Utils;
@@ -12,6 +13,7 @@ using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Utilities.Collections;
 using System.Runtime.CompilerServices;
 
 namespace IPMS.Business.Services
@@ -24,13 +26,16 @@ namespace IPMS.Business.Services
         private readonly IStudentGroupService _studentGroupService;
         private readonly IHttpContextAccessor _context;
         private MemberHistory history { get; set; }
-        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, IStudentGroupService studentGroupService, IHttpContextAccessor context)
+        private readonly IMessageService _messageService;
+
+        public MemberHistoryService(IUnitOfWork unitOfWork, ICommonServices commonServices, UserManager<IPMSUser> userManager, IStudentGroupService studentGroupService, IHttpContextAccessor context, IMessageService messageService)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
             _userManager = userManager;
             _studentGroupService = studentGroupService;
             _context = context;
+            _messageService = messageService;
         }
         private async Task<Guid?> GetLeaderId(Guid projectId)
         {
@@ -201,20 +206,30 @@ namespace IPMS.Business.Services
         }
         private async Task SetStatusReject(MemberHistory history, string type)
         {
+            string typeRequest = "";
+            var project = await _unitOfWork.ProjectRepository.Get().Where(p => p.Id.Equals(history.ProjectToId)).FirstOrDefaultAsync();
             if (type == "join")
             {
                 history.ProjectToStatus = RequestStatus.Rejected;
+                typeRequest = "Join";
             }
             else if (type == "swap")
             {
                 history.ProjectFromStatus = RequestStatus.Rejected;
                 history.ProjectToStatus = RequestStatus.Rejected;
                 history.MemberSwapStatus = RequestStatus.Rejected;
-
+                typeRequest = "Swap";
             }
-            _unitOfWork.MemberHistoryRepository.Update(history);
             await _unitOfWork.SaveChangesAsync();
+            _unitOfWork.MemberHistoryRepository.Update(history);
 
+            var notificationMessageToLecturer = new NotificationMessage
+            {
+                AccountId = history.ReporterId,
+                Title = $"{typeRequest} Request",
+                Message = $"Your {type} request to {project.GroupNum} has been rejected"
+            };
+            await _messageService.SendMessage(notificationMessageToLecturer);
         }
 
         public async Task<ValidationResultModel> UpdateRequestStatusValidators(UpdateRequestStatusRequest request, Guid studentId)
@@ -264,7 +279,7 @@ namespace IPMS.Business.Services
                     return result;
                 }
 
-                var joinPrj = await _commonServices.GetProject(history.ProjectToId);
+                Project? joinPrj = _context.HttpContext.Session.GetObject<Project?>("Project");
                 await _unitOfWork.ProjectRepository.LoadExplicitProperty(joinPrj, nameof(Project.Students));
 
                 if (@class.MaxMember == joinPrj.Students.Count)
@@ -406,6 +421,10 @@ namespace IPMS.Business.Services
             {
                 await ChangeGroupMember(request);
             }
+            else
+            {
+                await SetStatusReject(history, request.Type);
+            }
         }
 
         private async Task ChangeGroupMember(UpdateRequestStatusRequest request)
@@ -413,6 +432,16 @@ namespace IPMS.Business.Services
             if (request.Type == "join")
             {
                 await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
+
+                var project = await _unitOfWork.ProjectRepository.Get().Where(p => p.Id.Equals(history.ProjectToId)).FirstOrDefaultAsync();
+                var notificationMessageToLecturer = new NotificationMessage
+                {
+                    AccountId = history.ReporterId,
+                    Title = $"Join Request",
+                    Message = $"Your join request to {project.GroupNum} has been accepted"
+                };
+                await _messageService.SendMessage(notificationMessageToLecturer);
+
             }
             else if (request.Type == "swap")
             {
@@ -423,6 +452,15 @@ namespace IPMS.Business.Services
 
                     await _studentGroupService.AddMember(history.ReporterId, (Guid)history.ProjectToId!);
                     await _studentGroupService.AddMember((Guid)history.MemberSwapId!, (Guid)history.ProjectFromId!);
+
+                    var project = await _unitOfWork.ProjectRepository.Get().Where(p => p.Id.Equals(history.ProjectToId)).FirstOrDefaultAsync();
+                    var notificationMessageToLecturer = new NotificationMessage
+                    {
+                        AccountId = history.ReporterId,
+                        Title = $"Swap Request",
+                        Message = $"Your join request to {project.GroupNum} has been accepted"
+                    };
+                    await _messageService.SendMessage(notificationMessageToLecturer);
                 }
             }
         }

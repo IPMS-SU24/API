@@ -248,7 +248,7 @@ namespace IPMS.Business.Services
   */
 
             var submissionRaw = await _unitOfWork.ProjectSubmissionRepository.Get().Where(p => p.SubmissionModuleId.Equals(request.ModuleId) && p.SubmissionDate <= deadline.EndDate)
-                .OrderByDescending(p => p.SubmissionDate).Include(ps => ps.Project).Include(ps => ps.Grades).ToListAsync();
+                .OrderByDescending(p => p.SubmissionDate).Include(ps => ps.Project).Include(ps => ps.Grades.Where(g => g.CommitteeId.Equals(lecturerId))).ToListAsync();
             submissions = submissionRaw.GroupBy(p => p.ProjectId).Select(group => new GetSubmissionsResponse
                 {
                     SubmitDate = group.First().SubmissionDate,
