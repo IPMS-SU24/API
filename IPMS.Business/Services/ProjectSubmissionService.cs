@@ -118,7 +118,8 @@ namespace IPMS.Business.Services
                 result.Message = "You are not in any project";
                 return result;
             }
-            if(project.ClassTopicId == null)
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Topic));
+            if(project.Topic == null)
             {
                 result.Message = "Your group haven't had topic yet";
                 return result;
