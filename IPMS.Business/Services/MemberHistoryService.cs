@@ -204,25 +204,10 @@ namespace IPMS.Business.Services
             }
             return histories;
         }
-        private async Task SetStatusReject(MemberHistory history, string type)
+        private async Task SendMailReject(MemberHistory history, string type)
         {
-            string typeRequest = "";
             var project = await _unitOfWork.ProjectRepository.Get().Where(p => p.Id.Equals(history.ProjectToId)).FirstOrDefaultAsync();
-            if (type == "join")
-            {
-                history.ProjectToStatus = RequestStatus.Rejected;
-                typeRequest = "Join";
-            }
-            else if (type == "swap")
-            {
-                history.ProjectFromStatus = RequestStatus.Rejected;
-                history.ProjectToStatus = RequestStatus.Rejected;
-                history.MemberSwapStatus = RequestStatus.Rejected;
-                typeRequest = "Swap";
-            }
-            await _unitOfWork.SaveChangesAsync();
-            _unitOfWork.MemberHistoryRepository.Update(history);
-
+            string typeRequest = type == "join" ? "Join" : "Swap";
             var notificationMessageToLecturer = new NotificationMessage
             {
                 AccountId = history.ReporterId,
@@ -230,6 +215,23 @@ namespace IPMS.Business.Services
                 Message = $"Your {type} request to {project.GroupNum} has been rejected"
             };
             await _messageService.SendMessage(notificationMessageToLecturer);
+        }
+        private async Task SetStatusReject(MemberHistory history, string type)
+        {
+            if (type == "join")
+            {
+                history.ProjectToStatus = RequestStatus.Rejected;
+            }
+            else if (type == "swap")
+            {
+                history.ProjectFromStatus = RequestStatus.Rejected;
+                history.ProjectToStatus = RequestStatus.Rejected;
+                history.MemberSwapStatus = RequestStatus.Rejected;
+            }
+            await _unitOfWork.SaveChangesAsync();
+            _unitOfWork.MemberHistoryRepository.Update(history);
+            await SendMailReject(history, type);
+
         }
 
         public async Task<ValidationResultModel> UpdateRequestStatusValidators(UpdateRequestStatusRequest request, Guid studentId)
@@ -423,7 +425,7 @@ namespace IPMS.Business.Services
             }
             else
             {
-                await SetStatusReject(history, request.Type);
+                await SendMailReject(history, request.Type);
             }
         }
 
