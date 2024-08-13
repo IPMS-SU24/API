@@ -75,6 +75,13 @@ namespace IPMS.Business.Services
                 result.Message = "Project already has topic";
                 return result;
             }
+            //Check Short Name exist
+            var isShortNameExist = await _unitOfWork.TopicRepository.Get().AnyAsync(x => x.ShortName == request.ShortName);
+            if (isShortNameExist)
+            {
+                result.Message = "Short Name is already exist";
+                return result;
+            }
             //Check must have IoT
             if (!request.IoTComponents.Any())
             {
@@ -455,6 +462,12 @@ namespace IPMS.Business.Services
             } else if (request.IsApproved == false)
             {
                 preTopic.Status = RequestStatus.Rejected;
+                //Reset topic of project
+                var classTopicOfProject = await _unitOfWork.ClassTopicRepository.Get().FirstOrDefaultAsync(x => x.ProjectId == preTopic.SuggesterId);
+                if (classTopicOfProject != null)
+                {
+                    _unitOfWork.ClassTopicRepository.Delete(classTopicOfProject);
+                }
             }
             _unitOfWork.TopicRepository.Update(preTopic);
             await _unitOfWork.SaveChangesAsync();
