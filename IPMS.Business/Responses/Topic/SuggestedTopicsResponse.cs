@@ -13,6 +13,7 @@ namespace IPMS.Business.Responses.Topic
         public DateTime CreateAt { get; set; }
         public RequestStatus Status { get; set; }
         public List<TopicIoT> Iots { get; set; } = new();
+        public Guid? ClassId { get; set; }
     }
 
     public class TopicIoT 
@@ -25,5 +26,6 @@ namespace IPMS.Business.Responses.Topic
     {
         public Guid Id { get; set; }
         public int Num { get; set; }
+        public Guid? ClassId { get; set; }
     }
 }

@@ -112,6 +112,18 @@ namespace IPMS.Business.Services
                 result.Message = "Cannot submit at this time";
                 return result;
             }
+            var project = _commonServices.GetProject();
+            if(project == null)
+            {
+                result.Message = "You are not in any project";
+                return result;
+            }
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Topic));
+            if(project.Topic == null)
+            {
+                result.Message = "Your group haven't had topic yet";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;

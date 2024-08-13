@@ -103,6 +103,7 @@ namespace IPMS.Business.Services
                 Description = x.Description,
                 TopicId = x.Id,
                 TopicName = x.Name,
+                Owner = x.Owner.FullName,
                 DetailLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, x.Id, x.Detail)),
                 IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId)
             }).ToListAsync();
@@ -162,7 +163,7 @@ namespace IPMS.Business.Services
             var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => request.ClassesId.Contains(c.Id) && c.LecturerId.Equals(lecturerId) && c.SemesterId.Equals(comingSemester.Id)).ToListAsync();
             if (@class.Count() != request.ClassesId.Count())
             {
-                result.Message = "Class cannot found";
+                result.Message = "Class cannot found in semester";
                 return result;
             }
 
@@ -173,12 +174,19 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            if (topicList.Topics.Count() == 0)
+            var topicCount = topicList.Topics.Count();
+            if (topicCount == 0)
             {
                 result.Message = "Does not have any topic in list";
                 return result;
             }
-
+            var minGroups = await _unitOfWork.StudentRepository.Get().Include(x=>x.Class)
+                .Where(x => request.ClassesId.Contains(x.ClassId)).GroupBy(x => x.ClassId).ToDictionaryAsync(x => x.Key, x => (int)Math.Ceiling((decimal)x.Count()/ x.First().Class.MaxMember));
+            if (minGroups.Any(x=> topicCount < x.Value))
+            {
+                result.Message = "Topic list does have enough topics to add";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;
