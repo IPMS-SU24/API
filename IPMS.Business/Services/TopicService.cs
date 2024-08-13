@@ -69,7 +69,8 @@ namespace IPMS.Business.Services
                 return result;
             }
             //Check Project have topic
-            if(project.ClassTopicId != null)
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Topic));
+            if(project.Topic != null)
             {
                 result.Message = "Project already has topic";
                 return result;
