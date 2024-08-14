@@ -445,7 +445,7 @@ namespace IPMS.Business.Services
             {
                 return new GetSemesterDetailResponse();
             }
-            var semesterRaw = await _unitOfWork.SemesterRepository.Get().Include(s => s.Syllabus).FirstOrDefaultAsync();
+            var semesterRaw = await _unitOfWork.SemesterRepository.Get().Where(s => s.Id.Equals(semesterId)).Include(s => s.Syllabus).FirstOrDefaultAsync();
 
             if (semesterRaw == null)
             {
