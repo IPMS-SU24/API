@@ -212,7 +212,7 @@ namespace IPMS.Business.Services
             {
                 AccountId = history.ReporterId,
                 Title = $"{typeRequest} Request",
-                Message = $"Your {type} request to {project.GroupNum} has been rejected"
+                Message = $"Your {type} request to Group {project.GroupNum} has been rejected"
             };
             await _messageService.SendMessage(notificationMessageToLecturer);
         }
@@ -440,7 +440,7 @@ namespace IPMS.Business.Services
                 {
                     AccountId = history.ReporterId,
                     Title = $"Join Request",
-                    Message = $"Your join request to {project.GroupNum} has been accepted"
+                    Message = $"Your join request to Group {project.GroupNum} has been accepted"
                 };
                 await _messageService.SendMessage(notificationMessageToLecturer);
 
@@ -460,7 +460,7 @@ namespace IPMS.Business.Services
                     {
                         AccountId = history.ReporterId,
                         Title = $"Swap Request",
-                        Message = $"Your join request to {project.GroupNum} has been accepted"
+                        Message = $"Your swap request to Group {project.GroupNum} has been accepted"
                     };
                     await _messageService.SendMessage(notificationMessageToLecturer);
                 }
