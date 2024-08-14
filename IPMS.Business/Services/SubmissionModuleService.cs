@@ -303,7 +303,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            return await CheckFinalGradeSubmission(_currentSemesterId, lecturerId, @class.Id);
+            return await CheckFinalGradeSubmission(_currentSemesterId, lecturerId, @class.Id, request.GroupId);
 
         }
 
@@ -332,7 +332,7 @@ namespace IPMS.Business.Services
 
                     if (prjSubmission != null)
                     {
-                        assessmentAvg += sub.Percentage / 100 * prjSubmission.FinalGrade == null ? 0 : prjSubmission.FinalGrade!.Value;
+                        assessmentAvg += sub.Percentage / 100 * (prjSubmission.FinalGrade == null ? 0 : prjSubmission.FinalGrade!.Value);
                     }
                 }
                 totalAvg += ass.Percentage / 100 * assessmentAvg;
@@ -361,7 +361,7 @@ namespace IPMS.Business.Services
 
         }
 
-        public async Task<ValidationResultModel> CheckFinalGradeSubmission(Guid semesterId, Guid lecturerId, Guid classId)
+        public async Task<ValidationResultModel> CheckFinalGradeSubmission(Guid semesterId, Guid lecturerId, Guid classId, Guid projectId)
         {
             var result = new ValidationResultModel
             {
@@ -374,7 +374,7 @@ namespace IPMS.Business.Services
                                     sm.ClassModuleDeadlines.Where(cd => cd.ClassId.Equals(classId)))
                                 .ToListAsync();
 
-            var submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => subModules.Select(sm => sm.Id).Contains(ps.SubmissionModuleId)).OrderByDescending(ps => ps.SubmissionDate).ToListAsync();
+            var submissions = await _unitOfWork.ProjectSubmissionRepository.Get().Where(ps => subModules.Select(sm => sm.Id).Contains(ps.SubmissionModuleId) && ps.ProjectId.Equals(projectId)).OrderByDescending(ps => ps.SubmissionDate).ToListAsync();
             foreach (var module in subModules)
             {
                 var sub = submissions.FirstOrDefault(s => s.SubmissionDate <= module.ClassModuleDeadlines.First().EndDate && s.SubmissionModuleId.Equals(module.Id));
