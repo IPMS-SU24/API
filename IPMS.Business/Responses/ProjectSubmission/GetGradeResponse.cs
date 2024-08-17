@@ -6,6 +6,8 @@ namespace IPMS.Business.Responses.ProjectSubmission
     {
         public List<AssessmentGrade> AssessmentGrades { get; set; } = new();
         public decimal? Total { get; set; }
+        public decimal? Contribute { get; set; }
+        public decimal? Final { get; set; }
     }
     public interface IGradeInfo
     {

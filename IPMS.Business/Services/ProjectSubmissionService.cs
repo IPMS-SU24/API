@@ -476,8 +476,9 @@ namespace IPMS.Business.Services
             //{
             //    throw new DataNotFoundException();
             //}
-
             //Calc Total
+            response.Contribute = targetStudent.FinalPercentage;
+            response.Final = targetStudent.FinalGrade;
             response.Total = 0;
             foreach (var assGrade in response.AssessmentGrades)
             {
@@ -491,6 +492,7 @@ namespace IPMS.Business.Services
                     response.Total += assGrade.AssessmentAvg * (assGrade.Percentage / 100);
                 }
             }
+
             response.AssessmentGrades = response.AssessmentGrades.OrderBy(x => x.Order).ToList();
             return response;
         }
