@@ -114,6 +114,16 @@ namespace IPMS.API.Controllers
         }
 
         [EnumAuthorize(UserRole.Lecturer)]
+        [HttpPost("returned-iots")]
+        public async Task<IActionResult> ReturnIoTComponents([FromBody] ReturnIoTComponentsRequest request)
+        {
+            var currentUserId = HttpContext.User.Claims.GetUserId();
+            await _borrowIoTService.ReturnIoTComponents(request, currentUserId);
+            return GetActionResponse(new IPMSResponse<object>());
+
+        }
+
+        [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet("repository")]
         public async Task<IActionResult> GetIoTRepositoryAsync([FromQuery] GetIoTRepositoryRequest request)
         {

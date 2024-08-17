@@ -14,5 +14,8 @@ namespace IPMS.Business.Interfaces.Services
         Task<IEnumerable<GetBorrowIoTComponentsResponse>> GetBorrowIoTComponents(GetBorrowIoTComponentsRequest request, Guid lecturerId);
         Task<ValidationResultModel> ReviewBorrowIoTComponentsValidators(ReviewBorrowIoTComponentsRequest request, Guid lecturerId);
         Task ReviewBorrowIoTComponents(ReviewBorrowIoTComponentsRequest request, Guid lecturerId);
+
+        Task<ValidationResultModel> ReturnIoTComponentsValidators(ReturnIoTComponentsRequest request, Guid lecturerId);
+        Task ReturnIoTComponents(ReturnIoTComponentsRequest request, Guid lecturerId);
     }
 }
