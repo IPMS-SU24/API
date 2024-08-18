@@ -105,7 +105,8 @@ namespace IPMS.Business.Services
                 Id = lec.Id,
                 Name = lec.Name,
                 TotalQuantity = lec.TotalQuantity,
-                Components = groupBorrowQuery.Where(x => x.Id == lec.Id).Select(x => new BorrowInGroup
+                Components = groupBorrowQuery.Where(x => x.Id == lec.Id)
+                .DistinctBy(x => new { x.ClassCode, x.GroupNumber }).Select(x => new BorrowInGroup
                 {
                     ClassCode = x.ClassCode,
                     BorrowNumber = x.BorrowNumber,
