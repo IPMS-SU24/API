@@ -141,7 +141,7 @@ namespace IPMS.API.Controllers
                 TotalPage = paginationResponse.TotalPage,
                 TotalComponents = response.TotalComponents
             };
-            return GetActionResponse(paginationResponse);
+            return GetActionResponse(iotResponse);
         }
 
         [EnumAuthorize(UserRole.Lecturer)]
