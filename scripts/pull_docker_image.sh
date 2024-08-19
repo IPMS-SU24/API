@@ -3,15 +3,16 @@ AWS_REGION="ap-southeast-1"
 AWS_ACCOUNT_ID="905418022082"
 REPOSITORY_NAME="ipmg_api"
 
-# Thực hiện pull Docker image từ một registry cụ thể
+# Pull docker images from ECR
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME
-# Đường dẫn của Docker image cần pull
+
+# Docker images 
 DOCKER_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:latest"
 
-# Thực hiện pull Docker image
+# Pull Docker image
 docker pull $DOCKER_IMAGE
 
-# Kiểm tra xem quá trình pull có thành công không
+# Check pull docker images status
 if [ $? -eq 0 ]; then
   echo "Pull Docker image thành công: $DOCKER_IMAGE"
 else
@@ -19,6 +20,6 @@ else
   exit 1
 fi
 
-# Kết thúc script
+# End script
 exit 0
 
