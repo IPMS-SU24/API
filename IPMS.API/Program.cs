@@ -17,6 +17,7 @@ using IPMS.DataAccess.Common;
 using IPMS.DataAccess.Models;
 using IPMS.NotificationStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -71,6 +72,9 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = SameSiteMode.None; // Allows the cookie to be sent with cross-site requests
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
+builder.Services.AddDataProtection()
+  .SetApplicationName("IPMS")
+  .PersistKeysToFileSystem(new DirectoryInfo(Directory.GetCurrentDirectory()));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
