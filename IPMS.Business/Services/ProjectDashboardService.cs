@@ -30,9 +30,9 @@ namespace IPMS.Business.Services
             var projectSubmissions = await _unitOfWork.ProjectSubmissionRepository.Get()
                                                       .Where(x => x.ProjectId == currentStudent.ProjectId && x.Name != null)
                                                       .Select(x => x.SubmissionModuleId).ToListAsync();
-            var nearDeadlineSubmissions = _unitOfWork.SubmissionModuleRepository.Get().Where(x=>x.SemesterId == currentSemester.CurrentSemester!.Id).SelectMany(x => x.ClassModuleDeadlines)
+            var nearDeadlineSubmissions = _unitOfWork.SubmissionModuleRepository.Get().Where(x => x.SemesterId == currentSemester.CurrentSemester!.Id).SelectMany(x => x.ClassModuleDeadlines)
                                                            .Where(x => x.EndDate > DateTime.Now && x.ClassId == _commonService.GetClass()!.Id && !projectSubmissions.Contains(x.SubmissionModuleId))
-                                                           .OrderBy(x=>x.EndDate)
+                                                           .OrderBy(x => x.EndDate)
                                                            .Select(x => new NearDealineSubmission
                                                            {
                                                                AssessmentId = x.SubmissionModule.AssessmentId.ToString()!,
@@ -73,8 +73,8 @@ namespace IPMS.Business.Services
                                                                     .CountAsync();
 
             var submissions = projectSubmissions.GroupBy(x => x.SubmissionModule.AssessmentId).ToDictionary(x => x.Key);
-            var mapAssessmentDetailTasks = new List<Task<AssessmentDetail>>();
-            foreach (var assessment in currentSemesterInfo.CurrentSemester!.Syllabus!.Assessments.OrderBy(x=>x.Order))
+            //var mapAssessmentDetailTasks = new List<Task<AssessmentDetail>>();
+            foreach (var assessment in currentSemesterInfo.CurrentSemester!.Syllabus!.Assessments.OrderBy(x => x.Order))
             {
                 var submissionsOfAssessment = new List<ProjectSubmission>();
                 var isHaveSubmission = submissions.TryGetValue(assessment.Id, out var assessmentSubmissions);
@@ -82,18 +82,19 @@ namespace IPMS.Business.Services
                 {
                     submissionsOfAssessment = assessmentSubmissions!.ToList();
                 }
-                mapAssessmentDetailTasks.Add(MapAssessmentDetail(submissionsOfAssessment, assessment));
+                response.Assessments.Add(await MapAssessmentDetail(submissionsOfAssessment, assessment, currentSemesterInfo.CurrentSemester));
+                //mapAssessmentDetailTasks.Add(MapAssessmentDetail(submissionsOfAssessment, assessment, ));
             }
-            response.Assessments.AddRange(await Task.WhenAll(mapAssessmentDetailTasks));
+            //response.Assessments.AddRange(await Task.WhenAll(mapAssessmentDetailTasks));
             return response;
         }
-        private async Task<AssessmentDetail> MapAssessmentDetail(List<ProjectSubmission> submissionsOfAssessment, Assessment assessment)
+        private async Task<AssessmentDetail> MapAssessmentDetail(List<ProjectSubmission> submissionsOfAssessment, Assessment assessment, Semester semester)
         {
             return new AssessmentDetail
             {
                 AssessmentId = assessment.Id,
                 AssessmentName = assessment.Name,
-                AssessmentStatus = await _commonService.GetAssessmentStatus(assessment.Id, submissionsOfAssessment)
+                AssessmentStatus = await _commonService.GetAssessmentStatus(assessment.Id, submissionsOfAssessment, semester)
             };
         }
     }

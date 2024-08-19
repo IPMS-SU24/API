@@ -72,7 +72,7 @@ namespace IPMS.Business.Services
 
             List<IPMSUser> users = _userManager.Users.ToList();
             var lastAssessmentId = await _unitOfWork.AssessmentRepository.Get().GroupBy(x => x.SyllabusId)
-                .Select(x => x.OrderByDescending(a => a.Order).Select(a=>a.Id).First()
+                .Select(x => x.OrderByDescending(a => a.Order).Select(a => a.Id).First()
                 ).ToListAsync();
             var lastSubmissionModuleIds = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => lastAssessmentId.Contains(x.AssessmentId)).Select(x => x.Id).ToListAsync();
             prjPref = projects.Select(p => new ProjectPreferenceResponse
@@ -83,7 +83,7 @@ namespace IPMS.Business.Services
                 Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
                 SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
                 Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
-                ProjectSubmissions = p.Submissions.Where(x=>lastSubmissionModuleIds.Contains(x.SubmissionModuleId)).Select(ps => new ProjectSubmissionResponse
+                ProjectSubmissions = p.Submissions.Where(x => lastSubmissionModuleIds.Contains(x.SubmissionModuleId)).Select(ps => new ProjectSubmissionResponse
                 {
                     Id = ps.Id,
                     Name = ps.Name,
@@ -126,7 +126,7 @@ namespace IPMS.Business.Services
                     Description = topic?.Description ?? string.Empty,
                     EndDate = @class!.ChangeTopicDeadline,
                     AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline!.Value, @class.ChangeGroupDeadline!.Value),
-                    
+
                 },
                 BorrowInfo = new()
                 {
@@ -135,7 +135,7 @@ namespace IPMS.Business.Services
                     IoTComponents = _mapper.Map<List<BorrowIoTComponentInformation>>(componentBorrowed)
                 }
             };
-            if(topic != null)
+            if (topic != null)
             {
                 response.TopicInfo.FileLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, topic.Id, topic.Detail)) ?? string.Empty;
                 response.TopicInfo.Iots = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x => x.Component).Where(x => x.MasterId == topic.Id).Select(x => new TopicIoTInfo
@@ -157,14 +157,14 @@ namespace IPMS.Business.Services
                 {
                     submissionsOfAssessment = assessmentSubmissions!.ToList();
                 }
-                mapAssessmentInformationTasks.Add(MapAssessmentInformation(assessment, submissionsOfAssessment));
+                response.Assessments.Add(await MapAssessmentInformation(assessment, submissionsOfAssessment, currentSemester));
             }
-            response.Assessments.AddRange(await Task.WhenAll(mapAssessmentInformationTasks));
+            //response.Assessments.AddRange(await Task.WhenAll(mapAssessmentInformationTasks));
             return response;
         }
-        private async Task<AssessmentInformation> MapAssessmentInformation(Assessment assessment, List<ProjectSubmission> submissionsOfAssessment)
+        private async Task<AssessmentInformation> MapAssessmentInformation(Assessment assessment, List<ProjectSubmission> submissionsOfAssessment, Semester semester)
         {
-            var assessmentDeadline = _commonServices.GetAssessmentTime(assessment.Id, _commonServices.GetClass()!.Id);
+            var assessmentDeadline = await _commonServices.GetAssessmentTime(assessment.Id, _commonServices.GetClass()!.Id);
             return new AssessmentInformation
             {
                 Name = assessment.Name ?? string.Empty,
@@ -174,7 +174,7 @@ namespace IPMS.Business.Services
                 EndDate = assessmentDeadline.endDate,
                 StartDate = assessmentDeadline.startDate,
                 Id = assessment.Id,
-                AssessmentStatus = await _commonServices.GetAssessmentStatus(assessment.Id, submissionsOfAssessment)
+                AssessmentStatus = await _commonServices.GetAssessmentStatus(assessment.Id, submissionsOfAssessment, semester)
             };
         }
 
@@ -188,7 +188,7 @@ namespace IPMS.Business.Services
             IPMSClass? @class = null;
             if (request.IsCommittee.HasValue && request.IsCommittee.Value)
             {
-                @class = await _unitOfWork.CommitteeRepository.Get().Include(x=>x.Class)
+                @class = await _unitOfWork.CommitteeRepository.Get().Include(x => x.Class)
                     .Where(x => x.LecturerId == currentUserId && x.Class.LecturerId != currentUserId && x.ClassId == request.ClassId).Select(x => x.Class).FirstOrDefaultAsync();
             }
             else
@@ -196,7 +196,7 @@ namespace IPMS.Business.Services
                 @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(currentUserId));
             }
 
-            
+
             if (@class == null) // check class is existed
             {
                 return projectsOverview;
@@ -237,7 +237,7 @@ namespace IPMS.Business.Services
                 projectsOverview.Add(prjOverview);
             }
 
-            return projectsOverview.OrderBy(x=>x.GroupName);
+            return projectsOverview.OrderBy(x => x.GroupName);
         }
         private async Task<IEnumerable<Project>> GetProjectNotPickedTopic(Guid classId)
         {
@@ -263,9 +263,9 @@ namespace IPMS.Business.Services
                 return prjDetail;
             }
             IPMSClass? @class = null;
-            if(request.IsCommittee.HasValue && request.IsCommittee.Value)
+            if (request.IsCommittee.HasValue && request.IsCommittee.Value)
             {
-                @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.Committees.Any(x=>x.LecturerId == currentUserId) && c.LecturerId != currentUserId);
+                @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.Committees.Any(x => x.LecturerId == currentUserId) && c.LecturerId != currentUserId);
             }
             else
             {
@@ -323,7 +323,7 @@ namespace IPMS.Business.Services
                     StudentId = s.Information.UserName,
                     Name = s.Information.FullName,
                     isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
-                }).OrderByDescending(x=>x.isLeader).ToList();
+                }).OrderByDescending(x => x.isLeader).ToList();
                 prjDetail = new GetProjectDetailResponse
                 {
                     GroupName = $"Group {project.GroupNum}",
@@ -380,7 +380,8 @@ namespace IPMS.Business.Services
             var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
             var isInSemester = projects.Any(p => p.Topic.Class.SemesterId.Equals(currentSemesterId)); // if have project so that semester was worked or is working -- just check difference with current Semester
-            if (isInSemester == true) {
+            if (isInSemester == true)
+            {
                 result.Message = "Cannot publish project in current semester";
                 return result;
             }
@@ -444,9 +445,9 @@ namespace IPMS.Business.Services
             var projects = await prjQueryable.ToListAsync();
 
             List<IPMSUser> users = _userManager.Users.ToList();
-            var lastAssessmentId = await _unitOfWork.AssessmentRepository.Get().Where(x=>x.Modules.Any(m=>m.LectureId == currentUserId && m.Semester.ShortName.ToLower().Contains(request.SemesterCode)))
-                .OrderByDescending(x=>x.Order).Select(x=>x.Id).FirstOrDefaultAsync();
-            var lastSubmissionModuleIds = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == lastAssessmentId).Select(x=>x.Id).ToListAsync();
+            var lastAssessmentId = await _unitOfWork.AssessmentRepository.Get().Where(x => x.Modules.Any(m => m.LectureId == currentUserId && m.Semester.ShortName.ToLower().Contains(request.SemesterCode)))
+                .OrderByDescending(x => x.Order).Select(x => x.Id).FirstOrDefaultAsync();
+            var lastSubmissionModuleIds = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == lastAssessmentId).Select(x => x.Id).ToListAsync();
             prjPref = projects.Select(p => new ProjectPreferenceResponse
             {
                 ProjectId = p.Id,
@@ -456,7 +457,7 @@ namespace IPMS.Business.Services
                 Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
                 SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
                 Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
-                ProjectSubmissions = p.Submissions.Where(x=>lastSubmissionModuleIds.Contains(x.SubmissionModuleId)).Select(ps => new ProjectSubmissionResponse
+                ProjectSubmissions = p.Submissions.Where(x => lastSubmissionModuleIds.Contains(x.SubmissionModuleId)).Select(ps => new ProjectSubmissionResponse
                 {
                     Id = ps.Id,
                     Name = ps.Name,
