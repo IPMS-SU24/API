@@ -1,5 +1,6 @@
 ﻿using IPMS.API.Common.Extensions;
 using IPMS.Business.Common.Enums;
+using IPMS.Business.Common.Singleton;
 using IPMS.Business.Interfaces.Services;
 
 namespace IPMS.API.Middlewares
@@ -19,6 +20,7 @@ namespace IPMS.API.Middlewares
         public async Task Invoke(HttpContext context, ICommonServices commonServices)
         {
             context.Session.Clear();
+            CurrentSemesterInfo.Instance.CurrentSemester = null;
             if (context.User != null && context.User.IsInRole(UserRole.Student.ToString()) && commonServices.GetProject() == null && commonServices.GetClass() == null)
             {
                 commonServices.SetCommonSessionUserEntity(context.User.Claims.GetUserId()).GetAwaiter().GetResult();

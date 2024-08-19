@@ -84,7 +84,8 @@ namespace IPMS.Business.Services
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
         {
             var now = DateTime.Now;
-            var time = GetAssessmentTime(assessmentId, GetClass()!.Id);
+            var @class = GetClass();
+            var time = GetAssessmentTime(assessmentId, @class!.Id);
             //Case 1: Start Time in the future => status NotYet
             if (time.startDate > now)
             {
@@ -98,8 +99,10 @@ namespace IPMS.Business.Services
             //Case 3: Deadline in the past
             //Case 3.1: All module is submitted
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
-            var assessment = currentSemester.Syllabus!.Assessments.FirstOrDefault(x => x.Id == assessmentId);
-            if (submissionList.Count() == assessment.Modules.Count)
+            var submissionModuleCount = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == assessmentId
+                                                                                    && x.SemesterId == currentSemester.Id
+                                                                                    && x.LectureId == @class.LecturerId).CountAsync();
+            if (submissionList.Count() == submissionModuleCount)
             {
                 return AssessmentStatus.Done;
             }

@@ -323,7 +323,7 @@ namespace IPMS.Business.Services
                     StudentId = s.Information.UserName,
                     Name = s.Information.FullName,
                     isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
-                }).ToList();
+                }).OrderByDescending(x=>x.isLeader).ToList();
                 prjDetail = new GetProjectDetailResponse
                 {
                     GroupName = $"Group {project.GroupNum}",
@@ -343,7 +343,7 @@ namespace IPMS.Business.Services
                 Name = s.Information.FullName,
                 isLeader = allLeaders.Any(l => l.Equals(s.InformationId))
 
-            }).ToList();
+            }).OrderByDescending(x => x.isLeader).ToList();
 
             prjDetail = new GetProjectDetailResponse
             {
