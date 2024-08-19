@@ -83,9 +83,14 @@ namespace IPMS.Business.Services
 
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
         {
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+            return await GetAssessmentStatus(assessmentId, submissionList, currentSemester!);
+        }
+        public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList, Semester semester)
+        {
             var now = DateTime.Now;
             var @class = GetClass();
-            var time = GetAssessmentTime(assessmentId, @class!.Id);
+            var time = await GetAssessmentTime(assessmentId, @class!.Id);
             //Case 1: Start Time in the future => status NotYet
             if (time.startDate > now)
             {
@@ -98,9 +103,8 @@ namespace IPMS.Business.Services
             }
             //Case 3: Deadline in the past
             //Case 3.1: All module is submitted
-            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var submissionModuleCount = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == assessmentId
-                                                                                    && x.SemesterId == currentSemester.Id
+                                                                                    && x.SemesterId == semester.Id
                                                                                     && x.LectureId == @class.LecturerId).CountAsync();
             if (submissionList.Count() == submissionModuleCount)
             {
@@ -147,15 +151,15 @@ namespace IPMS.Business.Services
                                                                                       (@class, stu) => stu.ProjectId.Value).Distinct().ToListAsync();
         }
 
-        public (DateTime startDate, DateTime endDate) GetAssessmentTime(Guid assessmentId, Guid classId)
+        public async Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId, Guid classId)
         {
             var modules = _unitOfWork.ClassModuleDeadlineRepository.Get()
                                                                 .Where(x => x.SubmissionModule.AssessmentId == assessmentId && x.ClassId == classId);
 
             //Check Assessment Deadline, Start Date
-            if (!modules.Any()) throw new DataNotFoundException("Not Found Module for Assessment");
-            var deadline = modules.Max(x => x.EndDate);
-            var start = modules.Min(x => x.StartDate);
+            if (!await modules.AnyAsync()) throw new DataNotFoundException("Not Found Module for Assessment");
+            var deadline = await modules.MaxAsync(x => x.EndDate);
+            var start = await modules.MinAsync(x => x.StartDate);
             return new()
             {
                 startDate = start,

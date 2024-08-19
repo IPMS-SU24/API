@@ -98,9 +98,10 @@ namespace IPMS.Business.Services
             var mapComponentTasks = new List<Task<BorrowIoTComponentInformation>>();
             foreach (var component in componentTopics)
             {
-                mapComponentTasks.Add(MapBorrowIoTComponentInformation(component, @class));
+                //mapComponentTasks.Add(MapBorrowIoTComponentInformation(component, @class));
+                result.Add(await MapBorrowIoTComponentInformation(component, @class));
             }
-            result.AddRange(await Task.WhenAll(mapComponentTasks));
+            //result.AddRange(await Task.WhenAll(mapComponentTasks));
             return result;
         }
 
