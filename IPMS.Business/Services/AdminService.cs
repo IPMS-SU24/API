@@ -426,7 +426,7 @@ namespace IPMS.Business.Services
         public async Task<IEnumerable<GetAllSemesterAdminResponse>> GetAllSemesterAdmin(GetAllSemesterAdminRequest request)
         {
             var semesterRaw = await _unitOfWork.SemesterRepository.Get().Include(s => s.Syllabus).ToListAsync();
-            return semesterRaw.Select(s => new GetAllSemesterAdminResponse
+            return semesterRaw.OrderByDescending(x => x.StartDate).Select(s => new GetAllSemesterAdminResponse
             {
                 Id = s.Id,
                 Name = s.Name,
