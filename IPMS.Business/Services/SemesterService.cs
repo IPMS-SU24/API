@@ -32,7 +32,7 @@ namespace IPMS.Business.Services
                 IsCurrent = currentSemester.Id == x.Id,
                 EndDate = x.EndDate,
                 StartDate = x.StartDate
-            }).ToListAsync();
+            }).OrderByDescending(x=>x.StartDate).ToListAsync();
             if(semesters == null || !semesters.Any())
             {
                 throw new DataNotFoundException();
