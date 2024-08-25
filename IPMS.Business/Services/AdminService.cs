@@ -204,7 +204,7 @@ namespace IPMS.Business.Services
 
         public async Task<IEnumerable<GetReportListResponse>> GetReportList(GetReportListRequest request)
         {
-            var reportRaw = await _unitOfWork.ReportRepository.Get().Include(r => r.Reporter).Include(r => r.ReportType).ToListAsync();
+            var reportRaw = await _unitOfWork.ReportRepository.Get().Include(r => r.Reporter).Include(r => r.ReportType).OrderByDescending(r => r.LastModified).ToListAsync();
 
             return reportRaw.Select(r => new GetReportListResponse
             {
@@ -544,13 +544,17 @@ namespace IPMS.Business.Services
                 }
             }
 
-            var syllabus = await _unitOfWork.SyllabusRepository.Get().FirstOrDefaultAsync(s => s.Id.Equals(request.SyllabusId));
+            var syllabus = await _unitOfWork.SyllabusRepository.Get().Where(s => s.Id.Equals(request.SyllabusId)).Include(s => s.Assessments).FirstOrDefaultAsync();
             if (syllabus == null)
             {
                 result.Message = "Syllabus is not existed";
                 return result;
             }
 
+            if (syllabus.Assessments.Count() == 0) {
+                result.Message = "Syllabus doesn't have any assessment";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;

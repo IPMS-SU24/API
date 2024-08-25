@@ -143,7 +143,7 @@ namespace IPMS.Business.Services
             {
                 var prjComponents = components.Where(c => c.MasterId.Equals(prj.ProjectId)); // get borrow component base on projects
 
-                borrowComponents.AddRange(prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour }) // add to response
+                borrowComponents.AddRange(prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second}) // add to response
                 .Select(g => new GetBorrowIoTComponentsResponse
                 {
                     ProjectId = prj.ProjectId,
@@ -187,8 +187,7 @@ namespace IPMS.Business.Services
                                     .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(project.Id))
                                     .Include(cm => cm.Component).ToListAsync();
 
-
-            report = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
+            report = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new ReportIoTComponentInformation
                 {
                     CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
@@ -241,7 +240,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
+            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new GroupIotReview
                 {
                     CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
@@ -430,7 +429,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
+            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new GroupIotReview
                 {
                     CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),

@@ -292,7 +292,7 @@ namespace IPMS.Business.Services
                                     .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.GroupId))
                                     .Include(cm => cm.Component).ToListAsync();
 
-            var iotBorrows = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour })
+            var iotBorrows = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new IotBorrow
                 {
                     CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),

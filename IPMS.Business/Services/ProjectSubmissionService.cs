@@ -42,7 +42,8 @@ namespace IPMS.Business.Services
                                                             && (x.SubmissionModule!.Name.ToLower().Contains(request.SearchValue)
                                                                 || x.SubmissionModule.Assessment!.Name.ToLower().Contains(request.SearchValue)))
                                                   .Include(x => x.SubmissionModule).ThenInclude(x => x!.Assessment)
-                                                  .Include(x => x.Submitter);
+                                                  .Include(x => x.Submitter)
+                                                  .OrderByDescending(ps => ps.SubmissionDate);
 
             if (request.SubmitterId != null) // Query with submitter
             {
