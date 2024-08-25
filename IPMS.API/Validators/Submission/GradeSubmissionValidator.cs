@@ -12,7 +12,7 @@ namespace IPMS.API.Validators.Submission
         {
             var lecturerId = context.HttpContext.User.Claims.GetUserId();
             RuleFor(x => x.SubmissionId).NotEmpty();
-            RuleFor(x => x.Grade).NotEmpty();
+           // RuleFor(x => x.Grade).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
                 var validationResult = await submissionModuleService.GradeSubmissionValidators(x, lecturerId);
