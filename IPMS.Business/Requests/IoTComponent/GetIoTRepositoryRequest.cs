@@ -11,7 +11,7 @@ namespace IPMS.Business.Requests.IoTComponent
     {
         public IoTComponentFilter Component => new IoTComponentFilter
         {
-            SearchValue = SearchValue
+            Name = SearchValue
         };
 
         public string? SearchValue { get; set; }
@@ -25,10 +25,10 @@ namespace IPMS.Business.Requests.IoTComponent
 
     public class IoTComponentFilter : FilterBase
     {
-        [CompareTo(nameof(DataAccess.Models.IoTComponent.Name), nameof(DataAccess.Models.IoTComponent.Description), CombineWith = CombineType.Or)]
+        //[CompareTo(nameof(DataAccess.Models.IoTComponent.Name), nameof(DataAccess.Models.IoTComponent.Description), CombineWith = CombineType.Or)]
         [ToLowerContainsComparison]
         [StringFilterOptions(StringFilterOption.Contains, StringComparison.InvariantCultureIgnoreCase)]
         [BindNever]
-        public string? SearchValue { get; init; }
+        public string? Name { get; init; }
     }
 }
