@@ -119,7 +119,7 @@ namespace IPMS.Business.Services
                 students.Add(stu);
             }
 
-            return students;
+            return students.OrderBy(x=>x.StudentId);
         }
 
         public async Task<GetStudentDetailResponse> GetStudentDetail(Guid studentId)

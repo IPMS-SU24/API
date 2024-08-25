@@ -63,6 +63,17 @@ namespace IPMS.Business.Services
             string url = _s3Client.GetPreSignedURL(requestS3);
             return url;
         }
+
+        public async Task UploadToS3(string filename, string preSignedUrl)
+        {
+
+            await using var fileStream = File.OpenRead(filename);
+            var fileStreamResponse = await new HttpClient().PutAsync(
+                new Uri(preSignedUrl),
+                new StreamContent(fileStream));
+            fileStreamResponse.EnsureSuccessStatusCode();
+        }
+
         private async Task<bool> DoesS3ObjectExistAsync(string bucketName, string key)
         {
             try
