@@ -406,12 +406,12 @@ namespace IPMS.Business.Services
                 final.Add(new GetFinalAssessmentResponse
                 {
                     ModuleId = m.Id,
-                    SubmissionId = submitted == null ? Guid.Empty : submitted.Id,
+                    SubmissionId = submitted == null ? null : submitted.Id,
                     Description = m.Description,
                     ModuleName = m.Name,
                     Percentage = m.Percentage,
                     FileLink = submitted == null ? "" : _presignedUrl.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, submitted.Id, submitted.Name)) ?? string.Empty,
-                    Grade = grade.Grade != null ? grade.Grade.Value : 0,
+                    Grade = grade.Grade != null ? grade.Grade.Value : null,
                     Response = grade.Response
                 });
 
