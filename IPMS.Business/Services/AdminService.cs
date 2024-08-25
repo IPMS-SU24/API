@@ -204,7 +204,7 @@ namespace IPMS.Business.Services
 
         public async Task<IEnumerable<GetReportListResponse>> GetReportList(GetReportListRequest request)
         {
-            var reportRaw = await _unitOfWork.ReportRepository.Get().Include(r => r.Reporter).Include(r => r.ReportType).ToListAsync();
+            var reportRaw = await _unitOfWork.ReportRepository.Get().Include(r => r.Reporter).Include(r => r.ReportType).OrderByDescending(r => r.LastModified).ToListAsync();
 
             return reportRaw.Select(r => new GetReportListResponse
             {
