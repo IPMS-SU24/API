@@ -254,7 +254,7 @@ namespace IPMS.Business.Services
                     SubmitDate = group.First().SubmissionDate,
                     DownloadUrl = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Submission, group.First().Id, group.First().Name)) ?? String.Empty,
                     GroupNum = group.First().Project.GroupNum,
-                    Grade = group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)) == null ? 0 
+                    Grade = group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)) == null ? null 
                         : group.First().Grades.FirstOrDefault(g => g.SubmissionId.Equals(group.First().Id)).Grade,
                     SubmissionId = group.First().Id,
                     GroupId = group.First().ProjectId,
