@@ -619,7 +619,7 @@ namespace IPMS.Business.Services
 
             }
 
-            classes = classRaw.OrderBy(x => x.ShortName).Select(c => new GetClassDetailResponse
+            classes = classRaw.OrderByDescending(x=>x.Semester.StartDate).ThenBy(x=>x.ShortName).Select(c => new GetClassDetailResponse
             {
                 Id = c.Id,
                 ShortName = c.ShortName,
@@ -886,9 +886,9 @@ namespace IPMS.Business.Services
                     startCol += colSpan;
                 }
 
-                worksheet.Range(1, startCol, 1, startCol).Merge().Value = "Group Grade";
-                worksheet.Range(1, startCol + 1, 1, startCol + 1).Merge().Value = "Contribute Percentage";
-                worksheet.Range(1, startCol + 2, 1, startCol + 2).Merge().Value = "Final Grade";
+                worksheet.Range(1, startCol, 2, startCol).Merge().Value = "Group Grade";
+                worksheet.Range(1, startCol + 1, 2, startCol + 1).Merge().Value = "Contribute Percentage";
+                worksheet.Range(1, startCol + 2, 2, startCol + 2).Merge().Value = "Final Grade";
 
                 // Apply styles
                 worksheet.Range(1, startCol, 2, startCol + 2).Style.Font.Bold = true;
