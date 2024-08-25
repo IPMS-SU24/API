@@ -149,7 +149,7 @@ namespace IPMS.Business.Services
                     ProjectId = prj.ProjectId,
                     ClassName = prj.ClassName,
                     GroupName = prj.GroupName,
-                    CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),
                     Items = g.Select(g => new IotItem
                     {
                         Id = g.Id,
@@ -190,7 +190,7 @@ namespace IPMS.Business.Services
             report = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new ReportIoTComponentInformation
                 {
-                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),
                     IoTComponents = g.Select(g => new IotItem
                     {
                         Id = g.Id,
@@ -243,7 +243,7 @@ namespace IPMS.Business.Services
             var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new GroupIotReview
                 {
-                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),
                     IotComponents = g.Select(g => new IoTReview
                     {
                         Id = g.Id,
@@ -432,7 +432,7 @@ namespace IPMS.Business.Services
             var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new GroupIotReview
                 {
-                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),
                     IotComponents = g.Select(g => new IoTReview
                     {
                         Id = g.Id,

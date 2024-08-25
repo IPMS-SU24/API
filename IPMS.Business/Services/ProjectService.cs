@@ -295,7 +295,7 @@ namespace IPMS.Business.Services
             var iotBorrows = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
                 .Select(g => new IotBorrow
                 {
-                    CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
+                    CreateAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),
                     Items = g.Select(g => new IotItem
                     {
                         Id = g.Id,
