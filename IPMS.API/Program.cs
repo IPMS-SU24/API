@@ -76,6 +76,8 @@ builder.Services.AddDataProtection()
   .SetApplicationName("IPMS")
   .PersistKeysToFileSystem(new DirectoryInfo(Directory.GetCurrentDirectory()));
 builder.Configuration.AddUserSecrets<IPMSDbContext>();
+builder.Services.Configure<DataProtectionTokenProviderOptions>(opt =>
+     opt.TokenLifespan = TimeSpan.FromHours(3));
 builder.Services.AddDbContext<IPMSDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("IPMS"), b => b.MigrationsAssembly("IPMS.DataAccess"));
