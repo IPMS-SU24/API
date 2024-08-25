@@ -11,10 +11,10 @@ namespace IPMS.Business.Requests.IoTComponent
     {
         public IoTComponentFilter Component => new IoTComponentFilter
         {
-            SearchValue = Name
+            SearchValue = SearchValue
         };
 
-        public string? Name { get; set; }
+        public string? SearchValue { get; set; }
         [IgnoreFilter]
         [FromQuery(Name = "page")]
         public int Page { get; set; } = 1;
