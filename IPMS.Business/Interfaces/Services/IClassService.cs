@@ -27,5 +27,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<ValidationResultModel> UpdateClassDeadlineValidators(UpdateClassDeadlineRequest request, Guid lecturerId);
         Task UpdateClassDeadline(UpdateClassDeadlineRequest request, Guid lecturerId);
         Task<GetClassDeadlineResponse> GetClassDeadline(Guid classId, Guid lecturerId);
+        Task<ClassGradeExportResponse> ExportGradesAsync(ClassExportGradeRequest request);
+        Task<ValidationResultModel> CheckExportGradeValid(ClassExportGradeRequest x, Guid lecturerId);
     }
 }

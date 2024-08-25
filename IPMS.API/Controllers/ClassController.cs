@@ -159,5 +159,16 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("[action]/{classId}")]
+        public async Task<IActionResult> ExportGradesAsync([FromRoute] ClassExportGradeRequest request)
+        {
+            var response = await _classService.ExportGradesAsync(request);
+            return GetActionResponse(new IPMSResponse<ClassGradeExportResponse>
+            {
+                Data = response
+            });
+        }
     }
 }

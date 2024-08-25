@@ -1,4 +1,6 @@
 ﻿using AutoFilterer.Extensions;
+using AutoMapper;
+using ClosedXML.Excel;
 using Ganss.Excel;
 using Ganss.Excel.Exceptions;
 using Hangfire;
@@ -18,7 +20,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver.Linq;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
+using System.Data;
 
 namespace IPMS.Business.Services
 {
@@ -31,6 +33,8 @@ namespace IPMS.Business.Services
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ICommonServices _commonServices;
         private readonly IStudentGroupService _studentGroupService;
+        private readonly IProjectSubmissionService _projectSubmissionService;
+        private readonly IMapper _mapper;
 
         public ClassService(IUnitOfWork unitOfWork,
             UserManager<IPMSUser> userManager,
@@ -38,7 +42,9 @@ namespace IPMS.Business.Services
             IPresignedUrlService presignedUrlService,
             IHttpContextAccessor contextAccessor,
             ICommonServices commonServices,
-            IStudentGroupService studentGroupService)
+            IStudentGroupService studentGroupService,
+            IProjectSubmissionService projectSubmissionService,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
@@ -47,6 +53,8 @@ namespace IPMS.Business.Services
             _contextAccessor = contextAccessor;
             _commonServices = commonServices;
             _studentGroupService = studentGroupService;
+            _projectSubmissionService = projectSubmissionService;
+            _mapper = mapper;
         }
         public async Task<ValidationResultModel> CheckSetMaxMemberRequestValid(Guid lecturerId, SetMaxMemberRequest request)
         {
@@ -97,7 +105,7 @@ namespace IPMS.Business.Services
                 return result;
             }
             var isGreaterThanStudentInClass = await _unitOfWork.StudentRepository.Get()
-                .Where(x => request.ClassIds.Contains(x.ClassId)).GroupBy(x=>x.ClassId).AnyAsync(x=>request.MaxMember > x.Count());
+                .Where(x => request.ClassIds.Contains(x.ClassId)).GroupBy(x => x.ClassId).AnyAsync(x => request.MaxMember > x.Count());
             if (isGreaterThanStudentInClass)
             {
                 result.Message = "Reach number of student of class";
@@ -455,7 +463,7 @@ namespace IPMS.Business.Services
 
             if (await IsClassCodeExistInSemesterAsync(@class.Id, @class.ShortName, request.SemesterId))
             {
-                result.Message = "Class Code " + @class.ShortName +  " is existed";
+                result.Message = "Class Code " + @class.ShortName + " is existed";
                 return result;
 
             }
@@ -594,8 +602,9 @@ namespace IPMS.Business.Services
             List<IPMSClass> classRaw = new List<IPMSClass>();
             if (request.SemesterId != Guid.Empty)
             {
-                classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c =>  c.SemesterId.Equals(request.SemesterId)).Include(c => c.Students).Include(c => c.Semester).ToListAsync();
-            } else
+                classRaw = await _unitOfWork.IPMSClassRepository.Get().Where(c => c.SemesterId.Equals(request.SemesterId)).Include(c => c.Students).Include(c => c.Semester).ToListAsync();
+            }
+            else
             {
                 classRaw = await _unitOfWork.IPMSClassRepository.Get().Include(c => c.Semester).Include(c => c.Students).ToListAsync();
 
@@ -603,13 +612,14 @@ namespace IPMS.Business.Services
             if (request.Id != Guid.Empty)
             {
                 classRaw = classRaw.Where(c => c.Name.ToLower().Contains(request.Name.ToLower()) || c.Id.Equals(request.Id)).ToList(); ;
-            } else
+            }
+            else
             {
                 classRaw = classRaw.Where(c => c.Name.ToLower().Contains(request.Name.ToLower())).ToList();
 
             }
 
-            classes = classRaw.OrderBy(x=>x.ShortName).Select(c => new GetClassDetailResponse
+            classes = classRaw.OrderBy(x => x.ShortName).Select(c => new GetClassDetailResponse
             {
                 Id = c.Id,
                 ShortName = c.ShortName,
@@ -643,7 +653,7 @@ namespace IPMS.Business.Services
             }
             var states = new List<JobImportClassStatusRecord>();
             //var processingStatus = "Processing";
-            if(enqueuedJobs != null)
+            if (enqueuedJobs != null)
             {
                 foreach (var job in enqueuedJobs)
                 {
@@ -654,7 +664,7 @@ namespace IPMS.Business.Services
                     });
                 }
             }
-            if(fetchedJobs != null)
+            if (fetchedJobs != null)
             {
                 foreach (var job in fetchedJobs)
                 {
@@ -665,7 +675,7 @@ namespace IPMS.Business.Services
                     });
                 }
             }
-            if(succeededJobs != null)
+            if (succeededJobs != null)
             {
                 foreach (var job in succeededJobs)
                 {
@@ -731,7 +741,7 @@ namespace IPMS.Business.Services
             }
 
             var startSemester = @class.Semester.StartDate;
-            if (request.CreateGroup < startSemester  || request.ChangeGroup < startSemester || request.ChangeTopic < startSemester || request.BorrowIot < startSemester) // semester is continuous
+            if (request.CreateGroup < startSemester || request.ChangeGroup < startSemester || request.ChangeTopic < startSemester || request.BorrowIot < startSemester) // semester is continuous
             {
                 result.Message = "Deadline must after start of semester";
                 return result;
@@ -758,7 +768,7 @@ namespace IPMS.Business.Services
             result.Result = true;
             return result;
         }
-        
+
         public async Task UpdateClassDeadline(UpdateClassDeadlineRequest request, Guid lecturerId)
         {
             var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
@@ -786,5 +796,160 @@ namespace IPMS.Business.Services
             return classDeadline;
         }
 
+        public async Task<ClassGradeExportResponse> ExportGradesAsync(ClassExportGradeRequest request)
+        {
+            var studentGrades = await _unitOfWork.StudentRepository.Get().Include(x => x.Project).Include(x => x.Information)
+                .Where(x => x.ClassId == request.ClassId)
+                .OrderBy(x => x.Project.GroupNum).ThenBy(x => x.Information.UserName)
+                .Select(x => new ClassGradeDataRow
+                {
+                    StudentId = x.Information.UserName,
+                    StudentName = x.Information.FullName,
+                    Group = x.ProjectId != null ? x.Project.GroupNum : null,
+                    ProjectTechnicalId = x.ProjectId != null ? x.ProjectId.Value : null,
+                    StudentTechnicalId = x.InformationId,
+                    Final = x.FinalGrade,
+                    Contribute = x.FinalPercentage
+                }).ToListAsync();
+            if (!studentGrades.Any())
+            {
+                throw new DataNotFoundException("Not found any student in class");
+            }
+            var groups = studentGrades.Where(x=>x.ProjectTechnicalId != null).Select(x => x.ProjectTechnicalId.Value).Distinct();
+            var groupGrades = new Dictionary<Guid, Responses.ProjectSubmission.GetGradeResponse>();
+            foreach (var group in groups)
+            {
+                groupGrades.Add(group, await _projectSubmissionService.GetGradeAsync(
+                    studentGrades.Where(x => x.ProjectTechnicalId == group).First().StudentTechnicalId, group)
+                    );
+            }
+            foreach (var student in studentGrades)
+            {
+                if(student.ProjectTechnicalId != null)
+                {
+                    _mapper.Map(groupGrades[student.ProjectTechnicalId.Value], student);
+                }
+            }
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == request.ClassId);
+            var fileName = $"{S3KeyPrefix.ExportGrade}_{@class.Id}_{@class.ShortName}_Grade.xlsx";
+            // Save to tempfile
+            var filePath = SaveFile(fileName, studentGrades);
+
+            //Get Upload presign
+
+            var uploadUrl = _presignedUrlService.GeneratePresignedUploadUrl(fileName);
+            await _presignedUrlService.UploadToS3(filePath, uploadUrl);
+            return new ClassGradeExportResponse
+            {
+                ExportFileUrl = _presignedUrlService.GeneratePresignedDownloadUrl(fileName)!
+            };
+        }
+
+        private string SaveFile(string fileName, IEnumerable<ClassGradeDataRow> studentGrades)
+        {
+            var tempPath = Path.GetTempPath();
+            var filePath = Path.Combine(tempPath, fileName);
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Class Grades");
+
+                worksheet.Range("A1:A2").Merge().Value = "StudentId";
+                worksheet.Range("B1:B2").Merge().Value = "Student Name";
+                worksheet.Range("C1:C2").Merge().Value = "Group";
+
+
+                worksheet.Range("A1:C2").Style.Font.Bold = true;
+                worksheet.Range("A1:C2").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Range("A1:C2").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+                int startCol = 4;
+
+
+                foreach (var assessment in studentGrades.First().AssessmentGrades)
+                {
+                    int colSpan = assessment.SubmissionGrades.Count;
+
+                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Merge().Value = assessment.Name;
+                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Style.Font.Bold = true;
+                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+                    for (int i = 0; i < colSpan; i++)
+                    {
+                        worksheet.Cell(2, startCol + i).Value = assessment.SubmissionGrades[i].Name;
+                        worksheet.Cell(2, startCol + i).Style.Font.Bold = true;
+                        worksheet.Cell(2, startCol + i).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        worksheet.Cell(2, startCol + i).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                    }
+
+                    startCol += colSpan;
+                }
+
+                worksheet.Range(1, startCol, 1, startCol).Merge().Value = "Group Grade";
+                worksheet.Range(1, startCol + 1, 1, startCol + 1).Merge().Value = "Contribute Percentage";
+                worksheet.Range(1, startCol + 2, 1, startCol + 2).Merge().Value = "Final Grade";
+
+                // Apply styles
+                worksheet.Range(1, startCol, 2, startCol + 2).Style.Font.Bold = true;
+                worksheet.Range(1, startCol, 2, startCol + 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Range(1, startCol, 2, startCol + 2).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+                // Fill in the data
+                int row = 3;
+                foreach (var dataRow in studentGrades)
+                {
+
+                    worksheet.Cell(row, 1).Value = dataRow.StudentId;
+                    worksheet.Cell(row, 2).Value = dataRow.StudentName;
+                    worksheet.Cell(row, 3).Value = dataRow.Group;
+
+                    int col = 4;
+
+                    foreach (var assessment in dataRow.AssessmentGrades)
+                    {
+                        foreach (var submission in assessment.SubmissionGrades)
+                        {
+                            worksheet.Cell(row, col).Value = submission.Grade?.ToString("F2");
+                            col++;
+                        }
+                    }
+
+
+                    worksheet.Cell(row, col).Value = dataRow.Total?.ToString("F2");
+                    worksheet.Cell(row, col + 1).Value = dataRow.Contribute?.ToString("F2");
+                    worksheet.Cell(row, col + 2).Value = dataRow.Final?.ToString("F2");
+
+                    row++;
+                }
+
+                // Add borders
+                var usedRange = worksheet.RangeUsed();
+                usedRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                usedRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+
+                worksheet.ColumnsUsed().AdjustToContents();
+
+                workbook.SaveAs(filePath);
+            }
+            return filePath;
+        }
+
+        public async Task<ValidationResultModel> CheckExportGradeValid(ClassExportGradeRequest request, Guid lecturerId)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Cannot Export"
+            };
+            if (!await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x => x.LecturerId == lecturerId && x.Id == request.ClassId))
+            {
+                result.Message = "Not Found Class for Export";
+                return result;
+            }
+            result.Message = string.Empty;
+            result.Result = true;
+            return result;
+        }
     }
 }

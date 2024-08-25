@@ -7,5 +7,7 @@
         public const string Report = "Report";
         public const string ImportClass = "ImportClass";
         public const string ImportStudent = "ImportStudent";
+        public const string ExportGrade = "ExportGrade";
+
     }
 }

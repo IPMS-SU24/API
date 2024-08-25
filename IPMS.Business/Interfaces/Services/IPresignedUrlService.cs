@@ -6,5 +6,7 @@ namespace IPMS.Business.Interfaces.Services
     {
         public string? GeneratePresignedDownloadUrl(string? objectKey);
         public string GeneratePresignedUploadUrl(string objectName);
+
+        Task UploadToS3(string filename, string preSignedUrl);
     }
 }
