@@ -1,5 +1,6 @@
 ﻿
 using IPMS.Business.Responses.Project;
+using System.Text.Json.Serialization;
 
 namespace IPMS.Business.Responses.IoT
 {
@@ -17,6 +18,8 @@ namespace IPMS.Business.Responses.IoT
         public Guid? ProjectId { get; set; }
         public string ClassName { get; set; }
         public string GroupName { get; set; }
+        [JsonIgnore]
+        public Guid? TopicId { get; set; }
     }
 
 

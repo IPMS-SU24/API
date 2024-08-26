@@ -71,7 +71,7 @@ namespace IPMS.Business.Services
                 result.Message = "Component is not allowed to borrow";
                 return result;
             }
-            if(topicComponents.Quantity < request.Quantity)
+            if (topicComponents.Quantity < request.Quantity)
             {
                 result.Message = $"Cannot borrow more than {topicComponents.Quantity}";
             }
@@ -133,7 +133,8 @@ namespace IPMS.Business.Services
                 {
                     ProjectId = ct.ProjectId,
                     GroupName = $"Group {ct.Project.GroupNum}",
-                    ClassName = @class.ShortName
+                    ClassName = @class.ShortName,
+                    TopicId = ct.TopicId
                 }).ToList());
             }
 
@@ -143,7 +144,7 @@ namespace IPMS.Business.Services
             {
                 var prjComponents = components.Where(c => c.MasterId.Equals(prj.ProjectId)); // get borrow component base on projects
 
-                borrowComponents.AddRange(prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second}) // add to response
+                borrowComponents.AddRange(prjComponents.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second }) // add to response
                 .Select(g => new GetBorrowIoTComponentsResponse
                 {
                     ProjectId = prj.ProjectId,
@@ -156,8 +157,10 @@ namespace IPMS.Business.Services
                         Name = g.Component!.Name,
                         Quantity = g.Quantity,
                         ComponentId = g.ComponentId,
-                        Status = g.Status
-
+                        Status = g.Status,
+                        MaxQuantityInTopic = _unitOfWork.ComponentsMasterRepository
+                        .GetTopicComponents().Where(x => x.MasterId == prj.TopicId && x.ComponentId == g.ComponentId)
+                        .Select(x => x.Quantity).FirstOrDefault()
                     }).ToList()
 
                 }).ToList());
@@ -187,7 +190,7 @@ namespace IPMS.Business.Services
                                     .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(project.Id))
                                     .Include(cm => cm.Component).ToListAsync();
 
-            report = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
+            report = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second })
                 .Select(g => new ReportIoTComponentInformation
                 {
                     CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),
@@ -240,14 +243,14 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
+            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second })
                 .Select(g => new GroupIotReview
                 {
                     CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),
                     IotComponents = g.Select(g => new IoTReview
                     {
                         Id = g.Id,
-                        ComponentId = g.ComponentId, 
+                        ComponentId = g.ComponentId,
                         Quantity = g.Quantity,
                     }).ToList()
                 }).ToList();
@@ -262,10 +265,10 @@ namespace IPMS.Business.Services
 
             // get class topic (validate) --> get class, current semester (validate) --> different lecturer Id, check deadline
             var classTopic = await _unitOfWork.ClassTopicRepository.Get()
-                                        .FirstOrDefaultAsync(ct => ct.ProjectId.Equals(request.ProjectId) 
-                                                    && ct.Class.SemesterId.Equals(currentSemester.Id) 
+                                        .FirstOrDefaultAsync(ct => ct.ProjectId.Equals(request.ProjectId)
+                                                    && ct.Class.SemesterId.Equals(currentSemester.Id)
                                                     && ct.Class.LecturerId.Equals(lecturerId));
-                                                    
+
             if (classTopic == null)
             {
                 result.Message = "Cannot found project";
@@ -347,7 +350,8 @@ namespace IPMS.Business.Services
                         result.Message = "Lecturer does not has enough quantity";
                         return result;
                     }
-                } else if (compont.Quantity > lecCompont.Quantity)
+                }
+                else if (compont.Quantity > lecCompont.Quantity)
                 {
                     result.Message = "Lecturer does not has enough quantity";
                     return result;
@@ -378,7 +382,8 @@ namespace IPMS.Business.Services
                 if (updtCompont.Quantity == 0)
                 {
                     updtCompont.Status = BorrowedStatus.Rejected;
-                } else if (updtCompont.Quantity > 0)
+                }
+                else if (updtCompont.Quantity > 0)
                 {
                     updtCompont.Status = BorrowedStatus.Approved;
 
@@ -429,7 +434,7 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second})
+            var groups = components.GroupBy(cm => new { cm.CreatedAt.Year, cm.CreatedAt.Month, cm.CreatedAt.Day, cm.CreatedAt.Hour, cm.CreatedAt.Minute, cm.CreatedAt.Second })
                 .Select(g => new GroupIotReview
                 {
                     CreatedAt = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, g.Key.Hour, g.Key.Minute, g.Key.Second),

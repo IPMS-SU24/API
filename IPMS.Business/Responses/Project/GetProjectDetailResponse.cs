@@ -30,6 +30,6 @@ namespace IPMS.Business.Responses.Project
         public int Quantity { get; set; }
         public Guid ComponentId { get; set; }
         public BorrowedStatus? Status { get; set; }
-
+        public int? MaxQuantityInTopic { get; set; }
     }
 }
