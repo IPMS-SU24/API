@@ -435,7 +435,8 @@ namespace IPMS.Business.Services
                 StartDate = s.StartDate,
                 EndDate = s.EndDate,
                 SyllabusId = s.SyllabusId,
-                SyllabusName = s.Syllabus.Name
+                SyllabusName = s.Syllabus.Name,
+                IsMultipleTopic = s.IsMultipleTopic
             });
         }
 
@@ -461,7 +462,8 @@ namespace IPMS.Business.Services
                 StartDate = semesterRaw.StartDate,
                 EndDate = semesterRaw.EndDate,
                 SyllabusId = semesterRaw.SyllabusId,
-                SyllabusName = semesterRaw.Syllabus.Name
+                SyllabusName = semesterRaw.Syllabus.Name,
+                IsMultipleTopic = semesterRaw.IsMultipleTopic
             };
         }
         public async Task<ValidationResultModel> CreateSemesterValidators(CreateSemesterRequest request)
@@ -505,7 +507,8 @@ namespace IPMS.Business.Services
                 Description = request.Description,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
-                SyllabusId = request.SyllabusId
+                SyllabusId = request.SyllabusId,
+                IsMultipleTopic = request.IsMultipleTopic
             });
             await _unitOfWork.SaveChangesAsync();
         }
@@ -569,6 +572,7 @@ namespace IPMS.Business.Services
             semester.StartDate = request.StartDate;
             semester.EndDate = request.EndDate;
             semester.SyllabusId = request.SyllabusId;
+            semester.IsMultipleTopic = request.IsMultipleTopic;
             _unitOfWork.SemesterRepository.Update(semester);
             await _unitOfWork.SaveChangesAsync();
         }
