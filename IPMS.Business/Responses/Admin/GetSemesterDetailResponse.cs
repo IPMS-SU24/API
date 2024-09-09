@@ -11,6 +11,6 @@ namespace IPMS.Business.Responses.Admin
         public DateTime EndDate { get; set; }
         public Guid SyllabusId { get; set; }
         public string SyllabusName { get; set; }
-
+        public bool IsMultipleTopic { get; set; }
     }
 }

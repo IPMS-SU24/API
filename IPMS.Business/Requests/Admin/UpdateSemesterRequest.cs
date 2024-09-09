@@ -1,5 +1,4 @@
-﻿
-namespace IPMS.Business.Requests.Admin
+﻿namespace IPMS.Business.Requests.Admin
 {
     public class UpdateSemesterRequest
     {
@@ -10,5 +9,6 @@ namespace IPMS.Business.Requests.Admin
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public Guid SyllabusId { get; set; }
+        public bool IsMultipleTopic { get; set; }
     }
 }
