@@ -10,6 +10,7 @@ namespace IPMS.Business.Common.Models
         [Required]
         public string Email { get; set; }
         [Required]
+        [Display(Name = "Student Name")]
         public string StudentName { get; set; }
     }
 }

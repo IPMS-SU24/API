@@ -111,12 +111,18 @@ namespace IPMS.Business
 
         public async Task CommitAsync()
         {
-            await _objTran.CommitAsync();
+            if(_objTran != null)
+            {
+                await _objTran.CommitAsync();
+            }
         }
 
         public async Task RollbackAsync()
         {
-            await _objTran.RollbackAsync();
+            if (_objTran != null)
+            {
+                await _objTran.RollbackAsync();
+            }
         }
         public async Task RollbackTransactionOnFailAsync(Func<Task> resultBody)
         {
