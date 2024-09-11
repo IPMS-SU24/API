@@ -69,9 +69,9 @@ namespace IPMS.API.Controllers
 
         [EnumAuthorize(UserRole.Lecturer)]
         [HttpGet("{classId}/[action]")]
-        public async Task<IActionResult> ImportStudentStatus(Guid classId)
+        public async Task<IActionResult> ImportStudentStatus(string classCode)
         {
-            var states = await _classService.GetImportStudentStatusAsync(classId);
+            var states = await _classService.GetImportStudentStatusAsync(classCode);
             dynamic dataResponse = states != null ? states : "Not Yet";
             var response = new IPMSResponse<dynamic>()
             {

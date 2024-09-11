@@ -19,9 +19,28 @@ namespace IPMS.Business.Responses.Class
         public string JobStatus { get; set; }
     }
 
-    public class JobImportClassStatusRecord : IJobImportStatusRecord
+    public class JobImportClassStatusRecord
     {
         public string ClassCode { get; set; }
-        public string JobStatus { get; set; }
+        public string JobStatus
+        {
+            get
+            {
+                if(StudentStatus == null)
+                {
+                    return "Not Yet";
+                }
+                if (StudentStatus.IsDone)
+                {
+                    return "Succeeded";
+                }
+                if(StudentStatus.States.Count() > 0)
+                {
+                    return "Processing";
+                }
+                return "Not Yet";
+            }
+        }
+        public JobImportStatusResponse<JobImportStudentStatusRecord>? StudentStatus { get; set; }
     }
 }

@@ -1,8 +1,6 @@
 ﻿using AutoFilterer.Extensions;
 using AutoMapper;
 using ClosedXML.Excel;
-using Ganss.Excel;
-using Ganss.Excel.Exceptions;
 using Hangfire;
 using IPMS.Business.Common.Constants;
 using IPMS.Business.Common.Enums;
@@ -15,10 +13,12 @@ using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
+using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver.Linq;
+using NPOI.Util;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 
@@ -210,20 +210,20 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException();
             }
-            await ProcessImportStudentAsync(importFileUrl, request.ClassId);
+            //await ProcessImportStudentsAndClassesAsync(importFileUrl, request);
             Thread.Sleep(1000);
         }
 
-        public async Task<JobImportStatusResponse<JobImportStudentStatusRecord>?> GetImportStudentStatusAsync(Guid classId)
+        public async Task<JobImportStatusResponse<JobImportStudentStatusRecord>?> GetImportStudentStatusAsync(string classCode)
 
         {
-            var importJobIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == classId && x.JobImportId != null).Select(x => new { x.JobImportId, x.Information.FullName, x.Information.Email }).ToListAsync();
+            //var importJobIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == classId && x.JobImportId != null).Select(x => new { x.JobImportId, x.Information.FullName, x.Information.Email }).ToListAsync();
             var jobConnection = JobStorage.Current.GetConnection();
             var jobMonitoringApi = JobStorage.Current.GetMonitoringApi();
             var queueName = "import_student";
-            var enqueuedJobs = jobMonitoringApi.EnqueuedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == classId).ToList();
-            var fetchedJobs = jobMonitoringApi.FetchedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == classId).ToList();
-            var succeededJobs = jobMonitoringApi.SucceededJobs(0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == classId).ToList();
+            var enqueuedJobs = jobMonitoringApi.EnqueuedJobs(queueName, 0, int.MaxValue).Where(x => x.Value.Job.Args.Count() == 3 && x.Value.Job.Args[2].ToString() == classCode).ToList();
+            var fetchedJobs = jobMonitoringApi.FetchedJobs(queueName, 0, int.MaxValue).Where(x => x.Value.Job.Args.Count() == 3 && x.Value.Job.Args[2].ToString() == classCode).ToList();
+            var succeededJobs = jobMonitoringApi.SucceededJobs(0, int.MaxValue).Where(x => x.Value.Job.Args.Count() == 3 && x.Value.Job.Args[2].ToString() == classCode).ToList();
             if ((enqueuedJobs == null || !enqueuedJobs.Any()) && (fetchedJobs == null || !fetchedJobs.Any()) && (succeededJobs == null || !succeededJobs.Any()))
             {
                 return null;
@@ -272,63 +272,18 @@ namespace IPMS.Business.Services
                 States = states
             } : null;
         }
-        private async Task ProcessImportStudentAsync(string importFileUrl, Guid classId)
+        private async Task ProcessImportStudentsAndClassesAsync(string importFileUrl, ImportClassRequest request)
         {
             var httpClient = new HttpClient();
 
             var httpResult = await httpClient.GetAsync(importFileUrl);
-            var tempFile = Path.GetTempFileName();
-            using (var fileStream = File.Create(tempFile))
+            var tempFileFullName = Path.Combine(Path.GetTempPath(), request.FileName);
+            using (var fileStream = File.Create(tempFileFullName))
             {
                 using var resultStream = await httpResult.Content.ReadAsStreamAsync();
                 await resultStream.CopyToAsync(fileStream);
             }
-            try
-            {
-                var excelMapper = new ExcelMapper(tempFile);
-                var students = excelMapper.Fetch<StudentDataRow>().ToList();
-                var validationResults = new List<ValidationResult>();
-                var classForImport = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == classId);
-                var existStudentInAnotherClass = await _unitOfWork.StudentRepository.Get()
-                                                                                .Include(x => x.Information)
-                                                                                .Include(x => x.Class)
-                                                                                .AnyAsync
-                                                                                (
-                                                                                    x => students.Select(y => y.StudentId)
-                                                                                    .Contains(x.Information.UserName)
-                                                                                    && x.Class.SemesterId != classForImport!.SemesterId
-                                                                                );
-                if (existStudentInAnotherClass) throw new BaseBadRequestException($"Exist student in another class");
-                var existStudentInClass = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
-                                                                             .Where(x => x.ClassId == classId)
-                                                                             .ToListAsync();
-                if (existStudentInClass != null)
-                {
-                    _unitOfWork.StudentRepository.DeleteRange(existStudentInClass);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-                foreach (var student in students)
-                {
-                    validationResults.Clear();
-                    var validationContext = new ValidationContext(student);
-                    bool isValid = Validator.TryValidateObject(student, validationContext, validationResults, true);
-
-                    if (!isValid)
-                    {
-                        throw new ExcelMapperConvertException("File format is not valid!");
-                    }
-                    //Create student account
-                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classId));
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is ExcelMapperConvertException || ex is NPOI.OpenXml4Net.Exceptions.InvalidFormatException)
-                {
-                    throw new CannotImportStudentException(ex);
-                }
-                else throw;
-            }
+            BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddAllClassInfoToSemester(request.SemesterId, tempFileFullName));
         }
 
         public async Task<ValidationResultModel> CheckValidRemoveOutOfClass(RemoveOutOfClassRequest request, Guid lecturerId)
@@ -488,7 +443,7 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException();
             }
-            await ProcessImportClassesAsync(importFileUrl, request.SemesterId);
+            await ProcessImportStudentsAndClassesAsync(importFileUrl, request);
         }
 
         private async Task ProcessImportClassesAsync(string importFileUrl, Guid semesterId)
@@ -504,41 +459,41 @@ namespace IPMS.Business.Services
             }
             try
             {
-                var excelMapper = new ExcelMapper(tempFile);
-                var classes = excelMapper.Fetch<ClassDataRow>().ToList();
-                var validationResults = new List<ValidationResult>();
-                foreach (var @class in classes)
-                {
-                    validationResults.Clear();
-                    var validationContext = new ValidationContext(@class);
-                    bool isValid = Validator.TryValidateObject(@class, validationContext, validationResults, true);
+                //var excelMapper = new ExcelMapper(tempFile);
+                //var classes = excelMapper.Fetch<ClassDataRow>().ToList();
+                //var validationResults = new List<ValidationResult>();
+                //foreach (var @class in classes)
+                //{
+                //    validationResults.Clear();
+                //    var validationContext = new ValidationContext(@class);
+                //    bool isValid = Validator.TryValidateObject(@class, validationContext, validationResults, true);
 
-                    if (!isValid)
-                    {
-                        throw new ExcelMapperConvertException("File format is not valid!");
-                    }
+                //    if (!isValid)
+                //    {
+                //        throw new ExcelMapperConvertException("File format is not valid!");
+                //    }
 
-                    //Continue validate classCode exist, lecturerId exist
-                    if (await IsClassCodeExistInSemesterAsync(@class.ClassCode, semesterId))
-                    {
-                        throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
-                    }
-                    var lecturer = await _userManager.FindByEmailAsync(@class.LecturerEmail);
-                    if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
-                    {
-                        throw new BaseBadRequestException("Lecturer is not found");
-                    }
-                    //Create student account
-                    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddClassToSemester(@class, semesterId));
-                }
+                //    //Continue validate classCode exist, lecturerId exist
+                //    if (await IsClassCodeExistInSemesterAsync(@class.ClassCode, semesterId))
+                //    {
+                //        throw new BaseBadRequestException($"Class Code {@class.ClassCode} is existed");
+                //    }
+                //    var lecturer = await _userManager.FindByEmailAsync(@class.LecturerEmail);
+                //    if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
+                //    {
+                //        throw new BaseBadRequestException("Lecturer is not found");
+                //    }
+                //    //Create student account
+                //    var jobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddClassToSemester(@class, semesterId));
+                //}
             }
             catch (Exception ex)
             {
-                if (ex is ExcelMapperConvertException || ex is NPOI.OpenXml4Net.Exceptions.InvalidFormatException)
-                {
-                    throw new BaseBadRequestException("Import file is not exist or cannot map to class data", ex);
-                }
-                else throw;
+                //if (ex is ExcelMapperConvertException || ex is NPOI.OpenXml4Net.Exceptions.InvalidFormatException)
+                //{
+                //    throw new BaseBadRequestException("Import file is not exist or cannot map to class data", ex);
+                //}
+                //else throw;
             }
         }
         public async Task UpdateClassDetail(UpdateClassDetailRequest request)
@@ -619,7 +574,7 @@ namespace IPMS.Business.Services
 
             }
 
-            classes = classRaw.OrderByDescending(x=>x.Semester.StartDate).ThenBy(x=>x.ShortName).Select(c => new GetClassDetailResponse
+            classes = classRaw.OrderByDescending(x => x.Semester.StartDate).ThenBy(x => x.ShortName).Select(c => new GetClassDetailResponse
             {
                 Id = c.Id,
                 ShortName = c.ShortName,
@@ -644,9 +599,9 @@ namespace IPMS.Business.Services
             var jobConnection = JobStorage.Current.GetConnection();
             var jobMonitoringApi = JobStorage.Current.GetMonitoringApi();
             var queueName = "import_class";
-            var enqueuedJobs = jobMonitoringApi.EnqueuedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == semesterId).ToList();
-            var fetchedJobs = jobMonitoringApi.FetchedJobs(queueName, 0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == semesterId).ToList();
-            var succeededJobs = jobMonitoringApi.SucceededJobs(0, int.MaxValue).Where(x => Guid.Parse(x.Value.Job.Args[1].ToString()!) == semesterId).ToList();
+            var enqueuedJobs = jobMonitoringApi.EnqueuedJobs(queueName, 0, int.MaxValue).Where(x => Guid.TryParse(x.Value.Job.Args[1].ToString(), out Guid semesterIdParsed) && semesterIdParsed == semesterId).ToList();
+            var fetchedJobs = jobMonitoringApi.FetchedJobs(queueName, 0, int.MaxValue).Where(x => Guid.TryParse(x.Value.Job.Args[1].ToString(), out Guid semesterIdParsed) && semesterIdParsed == semesterId).ToList();
+            var succeededJobs = jobMonitoringApi.SucceededJobs(0, int.MaxValue).Where(x => Guid.TryParse(x.Value.Job.Args[1].ToString(), out Guid semesterIdParsed) && semesterIdParsed == semesterId).ToList();
             if ((enqueuedJobs == null || !enqueuedJobs.Any()) && (fetchedJobs == null || !fetchedJobs.Any()) && (succeededJobs == null || !succeededJobs.Any()))
             {
                 return null;
@@ -659,8 +614,8 @@ namespace IPMS.Business.Services
                 {
                     states.Add(new JobImportClassStatusRecord()
                     {
-                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
                         ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
+
                     });
                 }
             }
@@ -670,7 +625,6 @@ namespace IPMS.Business.Services
                 {
                     states.Add(new JobImportClassStatusRecord()
                     {
-                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
                         ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
                     });
                 }
@@ -681,10 +635,13 @@ namespace IPMS.Business.Services
                 {
                     states.Add(new JobImportClassStatusRecord()
                     {
-                        JobStatus = jobConnection.GetStateData(job.Key)!.Name,
                         ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
                     });
                 }
+            }
+            foreach (var state in states)
+            {
+                state.StudentStatus = await GetImportStudentStatusAsync(state.ClassCode);
             }
             return states.Any() ? new JobImportStatusResponse<JobImportClassStatusRecord>
             {
@@ -815,7 +772,7 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException("Not found any student in class");
             }
-            var groups = studentGrades.Where(x=>x.ProjectTechnicalId != null).Select(x => x.ProjectTechnicalId.Value).Distinct();
+            var groups = studentGrades.Where(x => x.ProjectTechnicalId != null).Select(x => x.ProjectTechnicalId.Value).Distinct();
             var groupGrades = new Dictionary<Guid, Responses.ProjectSubmission.GetGradeResponse>();
             foreach (var group in groups)
             {
@@ -825,7 +782,7 @@ namespace IPMS.Business.Services
             }
             foreach (var student in studentGrades)
             {
-                if(student.ProjectTechnicalId != null)
+                if (student.ProjectTechnicalId != null)
                 {
                     _mapper.Map(groupGrades[student.ProjectTechnicalId.Value], student);
                 }

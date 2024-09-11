@@ -13,7 +13,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<MemberInGroupResponse> GetMemberInGroupAsync(MemberInGroupRequest request);
         Task AddStudentAsync(AddStudentsToClassRequest request);
         Task<ValidationResultModel> CheckImportStudentValidAsync(AddStudentsToClassRequest request, Guid lecturerId);
-        Task<JobImportStatusResponse<JobImportStudentStatusRecord>?> GetImportStudentStatusAsync(Guid classId);
+        Task<JobImportStatusResponse<JobImportStudentStatusRecord>?> GetImportStudentStatusAsync(string classCode);
         Task RemoveOutOfClassAsync(RemoveOutOfClassRequest request);
         Task<ValidationResultModel> CheckValidRemoveOutOfClass(RemoveOutOfClassRequest request, Guid lecturerId);
         Task<GetClassDetailResponse> GetClassDetail(Guid classId);
