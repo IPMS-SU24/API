@@ -235,5 +235,18 @@ namespace IPMS.Business.Services
         {
             return (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Classes.Where(x => x.LecturerId == lecturerId).ToList();
         }
+
+        public async Task<List<KitProject>> GetKitProjectSemester(Guid semesterId, Guid kitId)
+        {
+            List<KitProject> projects = new List<KitProject>();
+            var kitProjectsRaw = await _unitOfWork.KitProjectRepository.Get().ToListAsync();
+            var classes = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId.Equals(semesterId)).Include(x => x.Students).ToListAsync();
+            foreach (var @class in classes)
+            {
+                var projectsId = @class.Students.Select(x => x.ProjectId).Distinct().ToList();
+                projects.AddRange(kitProjectsRaw.Where(x => projectsId.Contains(x.ProjectId) && x.Id.Equals(kitId)).ToList());
+            }
+            return projects;
+        }
     }
 }

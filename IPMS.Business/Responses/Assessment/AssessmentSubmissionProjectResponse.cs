@@ -1,6 +1,4 @@
-﻿
-
-using IPMS.Business.Responses.SubmissionModule;
+﻿using IPMS.Business.Responses.SubmissionModule;
 
 namespace IPMS.Business.Responses.Assessment
 {
