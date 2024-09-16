@@ -37,6 +37,10 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<ITopicFavoriteRepository, TopicFavoriteRepository>();
             services.AddScoped<IClassModuleDeadlineRepository, ClassModuleDeadlineRepository>();
             services.AddScoped<ICommitteeRepository, CommitteeRepository>();
+            services.AddScoped<IBasicIoTDeviceRepository, BasicIotDeviceRepository>();
+            services.AddScoped<IIoTKitRepository, IoTKitRepository>();
+            services.AddScoped<IKitProjectRepository, KitProjectRepository>();
+            services.AddScoped<IKitDeviceRepository, KitDeviceRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //Add Depenency Injection

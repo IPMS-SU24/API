@@ -34,6 +34,11 @@ namespace IPMS.DataAccess
         public virtual DbSet<ComponentsMaster> ComponentsMasters { get; set; }
         public virtual DbSet<TopicFavorite> TopicFavorites { get; set; }
         public virtual DbSet<ReportType> ReportTypes { get; set; }
+        public virtual DbSet<KitDevice> KitDevices { get; set; }
+        public virtual DbSet<KitProject> KitProjects { get; set; }
+        public virtual DbSet<BasicIoTDevice> BasicIoTDevices { get; set; }
+        public virtual DbSet<IoTKit> IoTKits { get; set; }
+        
         private string _connectionString = string.Empty;
 
         public IPMSDbContext(DbContextOptions<IPMSDbContext> options) : base(options)
@@ -424,6 +429,52 @@ namespace IPMS.DataAccess
                     .WithMany(p => p.ClassModuleDeadlines)
                     .HasForeignKey(x => x.ClassId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<KitDevice>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Kit)
+                    .WithMany(p => p.Devices)
+                    .HasForeignKey(x => x.KitId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Device)
+                    .WithMany(p => p.Kits)
+                    .HasForeignKey(x => x.DeviceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<KitProject>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Project)
+                    .WithMany(p => p.Kits)
+                    .HasForeignKey(x => x.ProjectId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Kit)
+                    .WithMany(p => p.Projects)
+                    .HasForeignKey(x => x.KitId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<BasicIoTDevice>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description);
+                entity.Property(e => e.Name).HasMaxLength(50);
+            });
+            modelBuilder.Entity<IoTKit>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity.Property(e => e.Description);
+                entity.Property(e => e.Name).HasMaxLength(50);
             });
             foreach (var mutableEntityType in modelBuilder.Model.GetEntityTypes().Where(x => !x.IsOwned()))
             {
