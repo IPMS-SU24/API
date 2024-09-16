@@ -1,7 +1,7 @@
 ﻿namespace IPMS.Business.Common.Exceptions
 {
-    public class CannotCreateAccountException : BaseBadRequestException
+    public class CannotCreateAccountException : BackgroundJobException
     {
-        public CannotCreateAccountException() : base("Cannot create student account") { }
+        public CannotCreateAccountException(string hashKey, string valueKey) : base("Cannot create student account", hashKey, valueKey) { }
     }
 }
