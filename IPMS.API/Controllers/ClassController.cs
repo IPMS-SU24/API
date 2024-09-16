@@ -80,7 +80,7 @@ namespace IPMS.API.Controllers
             return GetActionResponse(response);
         }
 
-        [EnumAuthorize(UserRole.Lecturer)]
+        [EnumAuthorize(UserRole.Lecturer, UserRole.Admin)]
         [HttpPut("[action]")]
         public async Task<IActionResult> RemoveOutOfClass([FromBody] RemoveOutOfClassRequest request)
         {

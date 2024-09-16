@@ -1,4 +1,5 @@
-﻿using Hangfire;
+﻿using ClosedXML.Excel;
+using Hangfire;
 using IPMS.Business.Common.Models;
 using IPMS.Business.Models;
 
@@ -31,6 +32,6 @@ namespace IPMS.Business.Interfaces.Services
         [AutomaticRetry(Attempts = 0)]
         [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
         [Queue("import_class")]
-        Task ProcessAddAllStudentListToClass(string fileName, string classCode, Guid semesterId, int headerRowNumber, string[] headerTitles);
+        Task ProcessAddAllStudentListToClass(IXLWorksheet worksheet, string classCode, Guid semesterId, int headerRowNumber, string[] headerTitles);
     }
 }

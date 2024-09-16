@@ -1,31 +1,23 @@
-﻿using Azure.Communication.Email;
-using Azure;
+﻿using Azure;
+using Azure.Communication.Email;
+using ClosedXML.Excel;
 using Hangfire;
-using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Interfaces;
-using IPMS.Business.Models;
-using IPMS.DataAccess.Models;
-using Microsoft.AspNetCore.Identity;
+using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Enums;
+using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Hangfire;
 using IPMS.Business.Common.Models;
 using IPMS.Business.Common.Utils;
-using IPMS.Business.Common.Exceptions;
-using IPMSBackgroundService.Exceptions;
-using Microsoft.EntityFrameworkCore;
+using IPMS.Business.Interfaces;
+using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
+using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
-using MathNet.Numerics.Distributions;
-using NPOI.Util;
-using IPMS.Business.Common.Hangfire;
-using IPMS.Business.Common.Enums;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Ganss.Excel.Exceptions;
-using Ganss.Excel;
-using System.ComponentModel.DataAnnotations;
-using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.VariantTypes;
 using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Extensions;
+using System.ComponentModel.DataAnnotations;
 
 namespace IPMS.Business.Services
 {
@@ -59,7 +51,7 @@ namespace IPMS.Business.Services
             _logger = logger;
         }
 
-        public async Task AddJobIdToStudent(string jobId,Guid classId, string email)
+        public async Task AddJobIdToStudent(string jobId, Guid classId, string email)
         {
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
@@ -72,8 +64,6 @@ namespace IPMS.Business.Services
 
         public async Task ProcessAddClassToSemester(ClassDataRow @class, Guid semesterId)
         {
-            await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
-            {
                 var lecturer = await _userManager.FindByEmailAsync(@class.LecturerEmail);
                 //save class
                 var newClass = new IPMSClass()
@@ -100,11 +90,13 @@ namespace IPMS.Business.Services
                     Message = $"You are added into Class {@class.ClassCode}",
                     Title = "New Class Assigned"
                 });
-            });
         }
 
         public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string classCode)
         {
+            await TryCatchBackgroundJobException(async () =>
+            {
+
                 //Check mail is exist
                 var existUser = await _userManager.FindByEmailAsync(student.Email);
                 //If not exist => create account
@@ -122,13 +114,13 @@ namespace IPMS.Business.Services
                     var result = await _userManager.CreateAsync(stuAccount, password);
                     if (!result.Succeeded)
                     {
-                        throw new CannotCreateAccountException();
+                        throw new CannotCreateAccountException(classCode, student.StudentId);
                     }
                     if (!await _roleManager.RoleExistsAsync(UserRole.Student.ToString()))
                     {
                         await _roleManager.CreateAsync(new IdentityRole<Guid>(UserRole.Student.ToString()));
                     }
-                    await _userManager.AddToRoleAsync(stuAccount,UserRole.Student.ToString());
+                    await _userManager.AddToRoleAsync(stuAccount, UserRole.Student.ToString());
                     existUser = await _userManager.FindByEmailAsync(student.Email);
                     //Send mail confirm
                     try
@@ -141,12 +133,6 @@ namespace IPMS.Business.Services
                             student.Email,
                             ConfirmEmailTemplate.Subject,
                             EmailUtils.GetFullMailContent(ConfirmEmailTemplate.GetBody(confirmURL, password)));
-                        EmailSendResult statusMonitor = emailSendOperation.Value;
-
-                        if (statusMonitor.Status == EmailSendStatus.Failed)
-                        {
-                            //throw new SendMailFailException();
-                        }
                     }
                     catch (RequestFailedException ex)
                     {
@@ -167,7 +153,7 @@ namespace IPMS.Business.Services
                     });
                 }
                 var existStudent = await _unitOfWork.StudentRepository.Get().IgnoreQueryFilters()
-                                                                            .FirstOrDefaultAsync(x => 
+                                                                            .FirstOrDefaultAsync(x =>
                                                                                                 x.InformationId == existUser.Id &&
                                                                                                 x.ClassId == classId);
                 if (existStudent != null)
@@ -189,6 +175,10 @@ namespace IPMS.Business.Services
                     });
                 }
                 await _unitOfWork.SaveChangesAsync();
+
+                // Set Succeeded student to JobStorage
+                StoreToHash(classCode, student.StudentId, ImportJob.SucceededStatus);
+            });
         }
 
 
@@ -196,35 +186,50 @@ namespace IPMS.Business.Services
         {
             try
             {
-                using var workbook = new XLWorkbook(fileName);
-                //Get all classes
-                var classCodes = GetClassCodesFromSheetNames(workbook);
-                foreach (var classCode in classCodes)
+                await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
                 {
-                    var worksheet = workbook.Worksheet(classCode);
-                    var headerRowAndLecturerEmail = FindHeaderRowAndLecturerEmail(worksheet);
-                    if (!headerRowAndLecturerEmail.HasValue)
+                    // Set batch job Id Semester Job Hash
+                    StoreToHash(semesterId.ToString(), JobContext.CurrentJobId, DateTime.Now.ToString());
+
+                    using var workbook = new XLWorkbook(fileName);
+                    // Get all classes
+                    var classCodes = GetClassCodesFromSheetNames(workbook);
+
+                    // Store numberOfClasses need to process to batchJob Hash
+                    StoreToHash(JobContext.CurrentJobId, ImportJob.NumberOfClassesKey, classCodes.Count.ToString());
+
+                    foreach (var classCode in classCodes)
                     {
-                        throw new BaseBadRequestException($"Sheet {classCode} is not valid");
+                        await TryCatchBackgroundJobException(async () =>
+                        {
+                            var worksheet = workbook.Worksheet(classCode);
+                            var headerRowAndLecturerEmail = FindHeaderRowAndLecturerEmail(worksheet);
+                            if (!headerRowAndLecturerEmail.HasValue)
+                            {
+                                throw new BackgroundJobException($"Not found lecturer email or wrong data format", JobContext.CurrentJobId, classCode);
+                            }
+
+                            await ValidateLecturerEmailAndClassCode(classCode, headerRowAndLecturerEmail.Value.lecturerEmail!, semesterId);
+
+                            var headerRow = headerRowAndLecturerEmail.Value.headerRow!;
+                            // Import empty class
+                            var classDataRow = new ClassDataRow
+                            {
+                                ClassCode = classCode,
+                                LecturerEmail = headerRowAndLecturerEmail.Value.lecturerEmail!
+                            };
+                            await ProcessAddClassToSemester(classDataRow, semesterId);
+                            // Set Processing class to JobStorage
+                            StoreToHash(JobContext.CurrentJobId, classCode, ImportJob.ProcessingStatus);
+
+                            // Then add all student to class
+                            await ProcessAddAllStudentListToClass(worksheet, classCode, semesterId, headerRow.RowNumber(),
+                                                                                            headerRow.Cells().Select(c => c.GetValue<string>()).ToArray());
+                            // Set Done class to JobStorage
+                            StoreToHash(JobContext.CurrentJobId, classCode, ImportJob.DoneStatus);
+                        });
                     }
-
-                    await ValidateLecturerEmailAndClassCode(classCode, headerRowAndLecturerEmail.Value.lecturerEmail!, semesterId);
-
-                    var headerRow = headerRowAndLecturerEmail.Value.headerRow!;
-                    //import empty class
-                    var classDataRow = new ClassDataRow
-                    {
-                        ClassCode = classCode,
-                        LecturerEmail = headerRowAndLecturerEmail.Value.lecturerEmail!
-                    };
-                    var importEmptyClassJobId = BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddClassToSemester(classDataRow, semesterId));
-                    
-                    //Then add all student to class
-                    BackgroundJob.ContinueJobWith<IBackgoundJobService>(importEmptyClassJobId,
-                        importService => importService.ProcessAddAllStudentListToClass(fileName, classCode, semesterId, headerRow.RowNumber(),
-                                                                                    headerRow.Cells().Select(c => c.GetValue<string>()).ToArray()));
-                    
-                }
+                });
 
             }
             catch (Exception ex)
@@ -233,14 +238,12 @@ namespace IPMS.Business.Services
             }
         }
 
-        public async Task ProcessAddAllStudentListToClass(string fileName, string classCode, Guid semesterId, int headerRowNumber, string[] headerTitles)
+        public async Task ProcessAddAllStudentListToClass(IXLWorksheet worksheet, string classCode, Guid semesterId, int headerRowNumber, string[] headerTitles)
         {
             try
             {
-                await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
+                await TryCatchBackgroundJobException(async () =>
                 {
-                    using var workbook = new XLWorkbook(fileName);
-                    var worksheet = workbook.Worksheet(classCode);
                     // Find the end of the used range
                     var lastRow = worksheet.RangeUsed().LastRow().RowNumber();
 
@@ -261,18 +264,23 @@ namespace IPMS.Business.Services
                         studentList.Add(student);
                     }
 
+                    // Store numberOfStudents need to process to batchJob Hash
+                    StoreToHash(classCode, ImportJob.NumberOfStudentsKey, studentList.Count.ToString());
+
                     var validationResults = new List<ValidationResult>();
                     var classForImport = await _unitOfWork.IPMSClassRepository.Get().SingleAsync(x => x.ShortName == classCode && x.SemesterId == semesterId);
                     var existStudentInAnotherClass = await _unitOfWork.StudentRepository.Get()
                                                                                     .Include(x => x.Information)
                                                                                     .Include(x => x.Class)
-                                                                                    .AnyAsync
-                                                                                    (
-                                                                                        x => studentList.Select(y => y.StudentId)
+                                                                                    .Where(x => studentList.Select(y => y.StudentId)
                                                                                         .Contains(x.Information.UserName)
-                                                                                        && x.Class.SemesterId != classForImport.SemesterId
-                                                                                    );
-                    if (existStudentInAnotherClass) throw new BaseBadRequestException($"Exist student in another class");
+                                                                                        && x.Class.SemesterId == classForImport.SemesterId && x.ClassId != classForImport.Id)
+                                                                                    .Select(x=>x.Information.UserName)
+                                                                                    .Distinct()
+                                                                                    .ToListAsync();
+                    //if (existStudentInAnotherClass) throw new BackgroundJobException($"Exist student in another class", );
+                    studentList = studentList.SkipWhile(x => existStudentInAnotherClass.Contains(x.StudentId)).ToList();
+
                     var existStudentInClass = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
                                                                                  .Where(x => x.ClassId == classForImport.Id)
                                                                                  .ToListAsync();
@@ -281,23 +289,29 @@ namespace IPMS.Business.Services
                         _unitOfWork.StudentRepository.DeleteRange(existStudentInClass);
                         await _unitOfWork.SaveChangesAsync();
                     }
+
+
                     foreach (var student in studentList)
                     {
-                        validationResults.Clear();
-                        var validationContext = new ValidationContext(student);
-                        bool isValid = Validator.TryValidateObject(student, validationContext, validationResults, true);
-
-                        if (!isValid)
+                        await TryCatchBackgroundJobException(async () =>
                         {
-                            throw new BaseBadRequestException($"Student {student.StudentId} in Class {classCode} is not valid");
-                        }
-                        BackgroundJob.Enqueue<IBackgoundJobService>(importService => importService.ProcessAddStudentToClass(student, classForImport.Id, classCode));
+
+                            validationResults.Clear();
+                            var validationContext = new ValidationContext(student);
+                            bool isValid = Validator.TryValidateObject(student, validationContext, validationResults, true);
+
+                            if (!isValid)
+                            {
+                                throw new BackgroundJobException($"Data is not valid", classCode, student.StudentId);
+                            }
+                            await ProcessAddStudentToClass(student, classForImport.Id, classCode);
+                        });
                     }
                 });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                _logger.LogError(ex,"Import class fail");
+                _logger.LogError(ex, "Import class fail");
                 throw new BaseBadRequestException($"Sheet {classCode} is not valid");
             }
         }
@@ -314,7 +328,7 @@ namespace IPMS.Business.Services
                 }
                 if (row.Cell(1).GetValue<string>() == "StudentId"
                 && row.Cell(2).GetValue<string>() == "Email"
-                && row.Cell(3).GetValue<string>() == "Student Name") 
+                && row.Cell(3).GetValue<string>() == "Student Name")
                 {
                     result.headerRow = row;
                     break;
@@ -336,15 +350,39 @@ namespace IPMS.Business.Services
         private async Task ValidateLecturerEmailAndClassCode(string classCode, string lecturerEmail, Guid semesterId)
         {
             var lecturer = await _userManager.FindByEmailAsync(lecturerEmail);
-            if(lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
+            if (lecturer == null || !await _userManager.IsInRoleAsync(lecturer, UserRole.Lecturer.ToString()))
             {
-                throw new BaseBadRequestException($"Lecturer with {lecturerEmail} is not exist");
+                throw new BackgroundJobException($"Lecturer with {lecturerEmail} is not exist", JobContext.CurrentJobId, classCode);
             }
             var isClassExist = await _unitOfWork.IPMSClassRepository.Get().AnyAsync(x => x.ShortName == classCode && x.SemesterId == semesterId);
             if (isClassExist)
             {
-                throw new BaseBadRequestException($"Class Code {classCode} is existed");
+                throw new BackgroundJobException($"Class Code {classCode} is existed", JobContext.CurrentJobId, classCode);
             }
+        }
+
+        private async Task TryCatchBackgroundJobException(Func<Task> function)
+        {
+            try
+            {
+                await function();
+            }
+            catch (BackgroundJobException ex)
+            {
+                _logger.LogInformation(ex.Message);
+                StoreToHash(ex.HashKey, ex.ValueKey, ex.Message);
+            }
+        }
+
+        private void StoreToHash(string hashKey, string name, string value)
+        {
+            // Store fail message to JobStorage
+            var jobConnection = JobStorage.Current.GetConnection();
+            var valueDict = new Dictionary<string, string>()
+                {
+                    {name, value }
+                };
+            jobConnection.SetRangeInHash(hashKey, valueDict);
         }
     }
 }

@@ -237,8 +237,7 @@ namespace IPMS.Business.Services
                     states.Add(new JobImportStudentStatusRecord()
                     {
                         JobStatus = jobConnection.GetStateData(job.Key)!.Name,
-                        StudentEmail = (job.Value.Job.Args[0] as StudentDataRow).Email,
-                        StudentName = (job.Value.Job.Args[0] as StudentDataRow).StudentName
+                        StudentId = (job.Value.Job.Args[0] as StudentDataRow).Email
                     });
                 }
             }
@@ -249,8 +248,7 @@ namespace IPMS.Business.Services
                     states.Add(new JobImportStudentStatusRecord()
                     {
                         JobStatus = jobConnection.GetStateData(job.Key)!.Name,
-                        StudentEmail = (job.Value.Job.Args[0] as StudentDataRow).Email,
-                        StudentName = (job.Value.Job.Args[0] as StudentDataRow).StudentName
+                        StudentId = (job.Value.Job.Args[0] as StudentDataRow).Email
                     });
                 }
             }
@@ -261,8 +259,7 @@ namespace IPMS.Business.Services
                     states.Add(new JobImportStudentStatusRecord()
                     {
                         JobStatus = jobConnection.GetStateData(job.Key)!.Name,
-                        StudentEmail = (job.Value.Job.Args[0] as StudentDataRow).Email,
-                        StudentName = (job.Value.Job.Args[0] as StudentDataRow).StudentName
+                        StudentId = (job.Value.Job.Args[0] as StudentDataRow).Email
                     });
                 }
             }
@@ -591,63 +588,55 @@ namespace IPMS.Business.Services
 
         public async Task<JobImportStatusResponse<JobImportClassStatusRecord>?> GetImportClassStatusAsync(Guid semesterId)
         {
-            var importJobIds = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId == semesterId && x.JobImportId != null).Select(x => new { x.JobImportId, x.ShortName }).ToListAsync();
-            //if (importJobIds == null || !importJobIds.Any())
-            //{
-            //    return null;
-            //}
             var jobConnection = JobStorage.Current.GetConnection();
-            var jobMonitoringApi = JobStorage.Current.GetMonitoringApi();
-            var queueName = "import_class";
-            var enqueuedJobs = jobMonitoringApi.EnqueuedJobs(queueName, 0, int.MaxValue).Where(x => Guid.TryParse(x.Value.Job.Args[1].ToString(), out Guid semesterIdParsed) && semesterIdParsed == semesterId).ToList();
-            var fetchedJobs = jobMonitoringApi.FetchedJobs(queueName, 0, int.MaxValue).Where(x => Guid.TryParse(x.Value.Job.Args[1].ToString(), out Guid semesterIdParsed) && semesterIdParsed == semesterId).ToList();
-            var succeededJobs = jobMonitoringApi.SucceededJobs(0, int.MaxValue).Where(x => Guid.TryParse(x.Value.Job.Args[1].ToString(), out Guid semesterIdParsed) && semesterIdParsed == semesterId).ToList();
-            if ((enqueuedJobs == null || !enqueuedJobs.Any()) && (fetchedJobs == null || !fetchedJobs.Any()) && (succeededJobs == null || !succeededJobs.Any()))
+            // Get Newest Job of semester
+            var jobList = jobConnection.GetAllEntriesFromHash(semesterId.ToString()).OrderByDescending(x => DateTime.Parse(x.Value)).ToList();
+
+            if (!jobList.Any())
             {
                 return null;
             }
-            var states = new List<JobImportClassStatusRecord>();
-            //var processingStatus = "Processing";
-            if (enqueuedJobs != null)
-            {
-                foreach (var job in enqueuedJobs)
-                {
-                    states.Add(new JobImportClassStatusRecord()
-                    {
-                        ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
+            var response = new JobImportStatusResponse<JobImportClassStatusRecord>();
+            var newestJobId = jobList.First().Key;
 
-                    });
-                }
-            }
-            if (fetchedJobs != null)
+            var importClassData = jobConnection.GetAllEntriesFromHash(newestJobId);
+
+            foreach (var classState in importClassData.Where(x => x.Key != ImportJob.NumberOfClassesKey))
             {
-                foreach (var job in fetchedJobs)
+                var importClassStatus = new JobImportClassStatusRecord
                 {
-                    states.Add(new JobImportClassStatusRecord()
-                    {
-                        ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
-                    });
-                }
-            }
-            if (succeededJobs != null)
-            {
-                foreach (var job in succeededJobs)
+                    ClassCode = classState.Key,
+                    StudentStatus = new JobImportStatusResponse<JobImportStudentStatusRecord>()
+                };
+                if (classState.Value != ImportJob.DoneStatus && classState.Value != ImportJob.ProcessingStatus)
                 {
-                    states.Add(new JobImportClassStatusRecord()
-                    {
-                        ClassCode = (job.Value.Job.Args[0] as ClassDataRow).ClassCode
-                    });
+                    importClassStatus.Error = classState.Value;
+                    importClassStatus.StudentStatus = null;
                 }
+                else
+                {
+                    var importStudentData = jobConnection.GetAllEntriesFromHash(classState.Key);
+
+                    foreach (var stuState in importStudentData.Where(x => x.Key != ImportJob.NumberOfStudentsKey))
+                    {
+                        var status = new JobImportStudentStatusRecord
+                        {
+                            StudentId = stuState.Key,
+                            JobStatus = ImportJob.SucceededStatus
+                        };
+                        if (stuState.Value != ImportJob.SucceededStatus)
+                        {
+                            status.JobStatus = ImportJob.FailedStatus;
+                            status.Error = stuState.Value;
+                        }
+                        importClassStatus.StudentStatus.States.Add(status);
+                    }
+                    importClassStatus.StudentStatus.IsDone = int.Parse(importStudentData[ImportJob.NumberOfStudentsKey]) == importClassStatus.StudentStatus.States.Count();
+                }
+                response.States.Add(importClassStatus);
             }
-            foreach (var state in states)
-            {
-                state.StudentStatus = await GetImportStudentStatusAsync(state.ClassCode);
-            }
-            return states.Any() ? new JobImportStatusResponse<JobImportClassStatusRecord>
-            {
-                IsDone = !states.Any(x => x.JobStatus != "Succeeded"),
-                States = states
-            } : null;
+            response.IsDone = int.Parse(importClassData[ImportJob.NumberOfClassesKey]) == response.States.Count();
+            return response;
         }
 
         public async Task<ValidationResultModel> CheckImportClassValidAsync(ImportClassRequest request)
