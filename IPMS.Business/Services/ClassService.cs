@@ -17,6 +17,7 @@ using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver.Linq;
 using NPOI.Util;
 using System.ComponentModel.DataAnnotations;
@@ -36,6 +37,7 @@ namespace IPMS.Business.Services
         private readonly IStudentGroupService _studentGroupService;
         private readonly IProjectSubmissionService _projectSubmissionService;
         private readonly IMapper _mapper;
+        private readonly ILogger<ClassService> _logger;
 
         public ClassService(IUnitOfWork unitOfWork,
             UserManager<IPMSUser> userManager,
@@ -45,7 +47,8 @@ namespace IPMS.Business.Services
             ICommonServices commonServices,
             IStudentGroupService studentGroupService,
             IProjectSubmissionService projectSubmissionService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<ClassService> logger)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
@@ -56,6 +59,7 @@ namespace IPMS.Business.Services
             _studentGroupService = studentGroupService;
             _projectSubmissionService = projectSubmissionService;
             _mapper = mapper;
+            _logger = logger;
         }
         public async Task<ValidationResultModel> CheckSetMaxMemberRequestValid(Guid lecturerId, SetMaxMemberRequest request)
         {
@@ -591,7 +595,7 @@ namespace IPMS.Business.Services
         {
             var jobConnection = JobStorage.Current.GetConnection();
             // Get Newest Job of semester
-            var jobList = jobConnection.GetAllEntriesFromHash(semesterId.ToString())?.OrderByDescending(x => DateTime.Parse(x.Value, DateTimeFormatInfo.InvariantInfo)).ToList();
+            var jobList = jobConnection.GetAllEntriesFromHash(semesterId.ToString())?.OrderByDescending(x => DateTime.ParseExact(x.Value, "MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture)).ToList();
 
             if (jobList == null || !jobList.Any())
             {
@@ -642,6 +646,19 @@ namespace IPMS.Business.Services
                 await Task.Run(() => response.States.Add(importClassStatus));
             }
             response.IsDone = int.Parse(importClassData[ImportJob.NumberOfClassesKey]) == response.States.Count();
+            if (response.IsDone)
+            {
+                var jobData = jobConnection.GetJobData(newestJobId);
+                var filePath = jobData.Job.Args[1].ToString()!;
+                try
+                {
+                    FileUtils.DeleteFile(filePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Cannot delete file {filePath}", filePath);
+                }
+            }
             return response;
         }
 
