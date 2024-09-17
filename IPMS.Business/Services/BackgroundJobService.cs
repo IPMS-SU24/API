@@ -190,7 +190,7 @@ namespace IPMS.Business.Services
                 await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
                 {
                     // Set batch job Id Semester Job Hash
-                    StoreToHash(semesterId.ToString(), JobContext.CurrentJobId, DateTime.Now.ToString(DateTimeFormatInfo.InvariantInfo));
+                    StoreToHash(semesterId.ToString(), JobContext.CurrentJobId, DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture));
 
                     using var workbook = new XLWorkbook(fileName);
                     // Get all classes
@@ -265,23 +265,24 @@ namespace IPMS.Business.Services
                         studentList.Add(student);
                     }
 
-                    // Store numberOfStudents need to process to batchJob Hash
-                    StoreToHash(classCode, ImportJob.NumberOfStudentsKey, studentList.Count.ToString());
-
                     var validationResults = new List<ValidationResult>();
                     var classForImport = await _unitOfWork.IPMSClassRepository.Get().SingleAsync(x => x.ShortName == classCode && x.SemesterId == semesterId);
                     var existStudentInAnotherClass = await _unitOfWork.StudentRepository.Get()
                                                                                     .Include(x => x.Information)
                                                                                     .Include(x => x.Class)
-                                                                                    .Where(x => studentList.Select(y => y.StudentId)
-                                                                                        .Contains(x.Information.UserName)
+                                                                                    .Where(x => (studentList.Select(y => y.StudentId)
+                                                                                        .Contains(x.Information.UserName) || studentList.Select(y => y.Email)
+                                                                                        .Contains(x.Information.Email))
                                                                                         && x.Class.SemesterId == classForImport.SemesterId && x.ClassId != classForImport.Id)
-                                                                                    .Select(x=>x.Information.UserName)
+                                                                                    .Select(x=> new { x.Information.UserName, x.Information.Email } )
                                                                                     .Distinct()
                                                                                     .ToListAsync();
                     //if (existStudentInAnotherClass) throw new BackgroundJobException($"Exist student in another class", );
-                    studentList = studentList.SkipWhile(x => existStudentInAnotherClass.Contains(x.StudentId)).ToList();
+                    studentList.RemoveAll(x => existStudentInAnotherClass.Select(e=>e.UserName).Contains(x.StudentId) ||
+                                                            existStudentInAnotherClass.Select(e => e.Email).Contains(x.Email));
 
+                    // Store numberOfStudents need to process to batchJob Hash
+                    StoreToHash(classCode, ImportJob.NumberOfStudentsKey, studentList.Count.ToString());
                     var existStudentInClass = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
                                                                                  .Where(x => x.ClassId == classForImport.Id)
                                                                                  .ToListAsync();
