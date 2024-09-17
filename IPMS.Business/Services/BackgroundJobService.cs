@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 
 namespace IPMS.Business.Services
 {
@@ -189,7 +190,7 @@ namespace IPMS.Business.Services
                 await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
                 {
                     // Set batch job Id Semester Job Hash
-                    StoreToHash(semesterId.ToString(), JobContext.CurrentJobId, DateTime.Now.ToString());
+                    StoreToHash(semesterId.ToString(), JobContext.CurrentJobId, DateTime.Now.ToString(DateTimeFormatInfo.InvariantInfo));
 
                     using var workbook = new XLWorkbook(fileName);
                     // Get all classes

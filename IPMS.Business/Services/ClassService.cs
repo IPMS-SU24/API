@@ -21,6 +21,7 @@ using MongoDB.Driver.Linq;
 using NPOI.Util;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Globalization;
 
 namespace IPMS.Business.Services
 {
@@ -590,7 +591,7 @@ namespace IPMS.Business.Services
         {
             var jobConnection = JobStorage.Current.GetConnection();
             // Get Newest Job of semester
-            var jobList = jobConnection.GetAllEntriesFromHash(semesterId.ToString())?.OrderByDescending(x => DateTime.Parse(x.Value)).ToList();
+            var jobList = jobConnection.GetAllEntriesFromHash(semesterId.ToString())?.OrderByDescending(x => DateTime.Parse(x.Value, DateTimeFormatInfo.InvariantInfo)).ToList();
 
             if (jobList == null || !jobList.Any())
             {
@@ -633,12 +634,12 @@ namespace IPMS.Business.Services
                                 status.JobStatus = ImportJob.FailedStatus;
                                 status.Error = stuState.Value;
                             }
-                            importClassStatus.StudentStatus.States.Add(status);
+                            await Task.Run(() => importClassStatus.StudentStatus.States.Add(status));
                         }
                         importClassStatus.StudentStatus.IsDone = int.Parse(importStudentData[ImportJob.NumberOfStudentsKey]) == importClassStatus.StudentStatus.States.Count();
                     }
                 }
-                response.States.Add(importClassStatus);
+                await Task.Run(() => response.States.Add(importClassStatus));
             }
             response.IsDone = int.Parse(importClassData[ImportJob.NumberOfClassesKey]) == response.States.Count();
             return response;
