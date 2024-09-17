@@ -590,9 +590,9 @@ namespace IPMS.Business.Services
         {
             var jobConnection = JobStorage.Current.GetConnection();
             // Get Newest Job of semester
-            var jobList = jobConnection.GetAllEntriesFromHash(semesterId.ToString()).OrderByDescending(x => DateTime.Parse(x.Value)).ToList();
+            var jobList = jobConnection.GetAllEntriesFromHash(semesterId.ToString())?.OrderByDescending(x => DateTime.Parse(x.Value)).ToList();
 
-            if (!jobList.Any())
+            if (jobList == null || !jobList.Any())
             {
                 return null;
             }
@@ -600,7 +600,10 @@ namespace IPMS.Business.Services
             var newestJobId = jobList.First().Key;
 
             var importClassData = jobConnection.GetAllEntriesFromHash(newestJobId);
-
+            if(importClassData == null)
+            {
+                return response;
+            }
             foreach (var classState in importClassData.Where(x => x.Key != ImportJob.NumberOfClassesKey))
             {
                 var importClassStatus = new JobImportClassStatusRecord
@@ -616,22 +619,24 @@ namespace IPMS.Business.Services
                 else
                 {
                     var importStudentData = jobConnection.GetAllEntriesFromHash(classState.Key);
-
-                    foreach (var stuState in importStudentData.Where(x => x.Key != ImportJob.NumberOfStudentsKey))
+                    if (importStudentData != null)
                     {
-                        var status = new JobImportStudentStatusRecord
+                        foreach (var stuState in importStudentData.Where(x => x.Key != ImportJob.NumberOfStudentsKey))
                         {
-                            StudentId = stuState.Key,
-                            JobStatus = ImportJob.SucceededStatus
-                        };
-                        if (stuState.Value != ImportJob.SucceededStatus)
-                        {
-                            status.JobStatus = ImportJob.FailedStatus;
-                            status.Error = stuState.Value;
+                            var status = new JobImportStudentStatusRecord
+                            {
+                                StudentId = stuState.Key,
+                                JobStatus = ImportJob.SucceededStatus
+                            };
+                            if (stuState.Value != ImportJob.SucceededStatus)
+                            {
+                                status.JobStatus = ImportJob.FailedStatus;
+                                status.Error = stuState.Value;
+                            }
+                            importClassStatus.StudentStatus.States.Add(status);
                         }
-                        importClassStatus.StudentStatus.States.Add(status);
+                        importClassStatus.StudentStatus.IsDone = int.Parse(importStudentData[ImportJob.NumberOfStudentsKey]) == importClassStatus.StudentStatus.States.Count();
                     }
-                    importClassStatus.StudentStatus.IsDone = int.Parse(importStudentData[ImportJob.NumberOfStudentsKey]) == importClassStatus.StudentStatus.States.Count();
                 }
                 response.States.Add(importClassStatus);
             }
