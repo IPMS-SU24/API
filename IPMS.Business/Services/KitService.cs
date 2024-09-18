@@ -45,7 +45,7 @@ namespace IPMS.Business.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<List<BasicIoTDeviceResponse>> GetAllBasicIoTDevice()
+        public async Task<List<BasicIoTDeviceResponse>> GetAllBasicIoTDevice(GetAllBasicIoTDeviceRequest request)
         {
             return await _unitOfWork.BasicIoTDeviceRepository.Get().Select(x => new BasicIoTDeviceResponse
             {
@@ -55,18 +55,40 @@ namespace IPMS.Business.Services
             }).ToListAsync();
         }
 
-        public async Task<List<KitResponse>> GetAllKit()
+        public async Task<List<KitResponse>> GetAllKit(GetAllKitRequest request)
         {
-            var kitsRaw = _unitOfWork.IoTKitRepository.Get().Include(x => x.Devices);
+            var kitsRaw = _unitOfWork.IoTKitRepository.Get().Include(x => x.Devices).ThenInclude(x => x.Device);
             var kits = await kitsRaw.Select(x => new KitResponse
             {
+                Id = x.Id,
                 Name = x.Name,
                 Description = x.Description,
-                Devices = x.Devices
+                Devices = x.Devices.Select(x => new DeviceInformation
+                {
+                    Id = x.DeviceId,
+                    Name = x.Device.Name,
+                    Description = x.Device.Description
+                }).ToList() 
             }).ToListAsync();
             return kits;
         }
-
+        public async Task<KitResponse> GetKitDetail(Guid Id)
+        {
+            var kitRaw = await _unitOfWork.IoTKitRepository.Get().Where(x => x.Id.Equals(Id)).Include(x => x.Devices).ThenInclude(x => x.Device).FirstOrDefaultAsync();
+            var kit = new KitResponse
+            {
+                Id = kitRaw.Id,
+                Name = kitRaw.Name,
+                Description = kitRaw.Description,
+                Devices = kitRaw.Devices.Select(x => new DeviceInformation
+                {
+                    Id = x.DeviceId,
+                    Name = x.Device.Name,
+                    Description = x.Device.Description
+                }).ToList()
+            };
+            return kit;
+        }
         public async Task CreateKit(CreateKitRequest request)
         {
             foreach (var device in request.Devices)
@@ -134,6 +156,27 @@ namespace IPMS.Business.Services
             await _unitOfWork.KitDeviceRepository.InsertRangeAsync(kitDevices);
             await _unitOfWork.SaveChangesAsync();
 
+        }
+        public async Task UpdateBasicIoTDevice(UpdateBasicIoTDeviceRequest request)
+        {
+            var device = await _unitOfWork.BasicIoTDeviceRepository.Get().Where(x => x.Id.Equals(request.Id)).FirstOrDefaultAsync();
+            if (device == null) {
+                throw new DataNotFoundException("Device does not exist!");
+            }
+            device.Name = request.Name;
+            device.Description = request.Description;
+            _unitOfWork.BasicIoTDeviceRepository.Update(device);
+            await _unitOfWork.SaveChangesAsync();
+
+        }
+        public async Task<BasicIoTDeviceResponse> GetBasicDetail(Guid Id)
+        {
+            return await _unitOfWork.BasicIoTDeviceRepository.Get().Select(x => new BasicIoTDeviceResponse
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description
+            }).FirstOrDefaultAsync();
         }
     }
 }

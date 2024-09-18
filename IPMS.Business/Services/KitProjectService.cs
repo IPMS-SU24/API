@@ -2,8 +2,10 @@
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Requests.Kit;
 using IPMS.Business.Requests.KitProject;
 using IPMS.Business.Requests.ProjectKit;
+using IPMS.Business.Responses.Kit;
 using IPMS.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,9 +53,20 @@ namespace IPMS.Business.Services
 
         }
 
-        public Task GetAllProjectKit()
+        public async Task<List<GetAllKitProjectResponse>> GetAllKitProject(GetAllKitProjectRequest request)
         {
-            throw new NotImplementedException();
+            var kitProjectsRaw = _unitOfWork.KitProjectRepository.Get().Include(x => x.Project).Include(x => x.Kit);
+            return await kitProjectsRaw.Select(kp => new GetAllKitProjectResponse
+            {
+                Id = kp.Id,
+                BorrowedDate = kp.BorrowedDate,
+                ReturnedDate = kp.ReturnedDate,
+                Comment = kp.Comment,
+                ProjectId = kp.ProjectId,
+                KitId = kp.KitId,
+                KitName = kp.Kit.Name,
+                ProjectNum = kp.Project.GroupNum
+            }).ToListAsync();
         }
 
         public async Task UpdateKitProject(UpdateKitProjectRequest request)
@@ -61,14 +74,12 @@ namespace IPMS.Business.Services
             var kitProject = await _unitOfWork.KitProjectRepository.Get().FirstOrDefaultAsync(x => x.Id.Equals(request.Id));
             if (kitProject == null)
             {
-                throw new DataNotFoundException("Project borrow Kit cannot found");
+                throw new DataNotFoundException("Request borrow not found");
             }
             kitProject.Comment = request.Comment;
             kitProject.ReturnedDate = DateTime.Now;
             _unitOfWork.KitProjectRepository.Update(kitProject);
             await _unitOfWork.SaveChangesAsync();
-
-
         }
     }
 }

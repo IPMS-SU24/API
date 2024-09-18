@@ -70,6 +70,8 @@ namespace IPMS.API.Common.Extensions
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IFavoriteTopicListService, FavoriteTopicListService>();
             services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<IKitService, KitService>();
+            services.AddScoped<IKitProjectService, KitProjectService>();
             services.AddScoped<ApiExceptionFilterAttribute>();
         }
     }
