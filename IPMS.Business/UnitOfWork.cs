@@ -33,7 +33,10 @@ namespace IPMS.Business
         public ITopicFavoriteRepository TopicFavoriteRepository { get; }
         public IClassModuleDeadlineRepository ClassModuleDeadlineRepository { get; }
         public ICommitteeRepository CommitteeRepository { get; }
-
+        public IBasicIoTDeviceRepository BasicIoTDeviceRepository { get; }
+        public IKitDeviceRepository KitDeviceRepository { get; }
+        public IKitProjectRepository KitProjectRepository { get; }
+        public IIoTKitRepository IoTKitRepository { get; }
 
         //TODO in Sprint 2
         //Add repository
@@ -47,7 +50,8 @@ namespace IPMS.Business
                     IAssessmentRepository assessmentRepository, IReportTypeRepository reportTypeRepository, IReportRepository reportRepository,
                     IMemberHistoryRepository memberHistoryRepository, ILecturerGradeRepository lecturerGradeRepository,
                     IFavoriteRepository favoriteRepository, ITopicFavoriteRepository topicFavoriteRepository, IClassModuleDeadlineRepository classModuleDeadlineRepository, 
-                    ICommitteeRepository committeeRepository)
+                    ICommitteeRepository committeeRepository, IBasicIoTDeviceRepository basicIoTDeviceRepository, IKitDeviceRepository kitDeviceRepository, 
+                    IKitProjectRepository kitProjectRepository, IIoTKitRepository ioTKitRepository)
         {
             _context = context;
             ProjectRepository = projectRepository;
@@ -58,7 +62,7 @@ namespace IPMS.Business
             SemesterRepository = semesterRepository;
             SyllabusRepository = syllabusRepository;
             AssessmentRepository = assessmentRepository;
-            TopicRepository = topicRepository;
+            TopicRepository = topicRepository; 
             ProjectSubmissionRepository = projectSubmissionRepository;
             SemesterRepository = semesterRepository;
             TopicRepository = topicRepository;
@@ -75,6 +79,10 @@ namespace IPMS.Business
             TopicFavoriteRepository = topicFavoriteRepository;
             ClassModuleDeadlineRepository = classModuleDeadlineRepository;
             CommitteeRepository = committeeRepository;
+            BasicIoTDeviceRepository = basicIoTDeviceRepository;
+            KitDeviceRepository = kitDeviceRepository;
+            KitProjectRepository = kitProjectRepository;
+            IoTKitRepository = ioTKitRepository;
         }
         public async Task SaveChangesAsync()
         {

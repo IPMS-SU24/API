@@ -1,5 +1,4 @@
-﻿using IPMS.DataAccess.Common.Enums;
-using IPMS.DataAccess.Common.Models;
+﻿using IPMS.DataAccess.Common.Models;
 
 namespace IPMS.DataAccess.Models
 {
@@ -14,6 +13,6 @@ namespace IPMS.DataAccess.Models
         public virtual ICollection<Student> Students {get; set;} = new List<Student>();
         public virtual ICollection<ProjectSubmission> Submissions {get; set;} = new List<ProjectSubmission>();
         public virtual ICollection<Topic> SuggestedTopic {get; set;} = new List<Topic>();
-
+        public virtual ICollection<KitProject> Kits { get; set; } = new List<KitProject>();
     }
 }

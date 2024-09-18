@@ -26,6 +26,7 @@ namespace IPMS.Business.Interfaces.Services
         IPMSClass? GetClass();
         Project? GetProject();
         Task<Project?> GetProject(Guid currentUserId, Guid currentClassId);
+        Task<List<KitProject>> GetKitProjectSemester(Guid semesterId, Guid kitId);
 
     }
 }

@@ -24,6 +24,10 @@ namespace IPMS.Business.Interfaces
         IFavoriteRepository FavoriteRepository { get; }
         ITopicFavoriteRepository TopicFavoriteRepository { get; }
         ICommitteeRepository CommitteeRepository { get; }
+        IBasicIoTDeviceRepository BasicIoTDeviceRepository { get; }
+        IKitDeviceRepository KitDeviceRepository { get; }
+        IKitProjectRepository KitProjectRepository { get; }
+        IIoTKitRepository IoTKitRepository { get; }
         //Start the database Transaction
         Task CreateTransactionAsync();
         //Commit the database Transaction

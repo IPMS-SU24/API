@@ -2,7 +2,7 @@
 
 namespace IPMS.Business.Interfaces.Repositories
 {
-    public interface IIPMSClassRepository : IGenericRepository<IPMSClass>
+    public interface IKitDeviceRepository : IGenericRepository<KitDevice>
     {
     }
 }
