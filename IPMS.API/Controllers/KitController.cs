@@ -65,7 +65,7 @@ namespace IPMS.API.Controllers
         }
         [EnumAuthorize(UserRole.Admin)]
         [HttpPost("basic-device-create")]
-        public async Task<IActionResult> UpdateBasicIoTDevice([FromBody] UpdateBasicIoTDetailRequest request)
+        public async Task<IActionResult> UpdateBasicIoTDevice([FromBody] UpdateBasicIoTDeviceRequest request)
         {
             await _kitService.UpdateBasicIoTDevice(request);
             return GetActionResponse(new IPMSResponse<object>());
