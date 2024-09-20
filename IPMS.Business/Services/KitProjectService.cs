@@ -1,4 +1,5 @@
 ﻿using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Extensions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
 using IPMS.Business.Interfaces.Services;
@@ -7,6 +8,7 @@ using IPMS.Business.Requests.KitProject;
 using IPMS.Business.Requests.ProjectKit;
 using IPMS.Business.Responses.Kit;
 using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
@@ -15,10 +17,12 @@ namespace IPMS.Business.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICommonServices _commonServices;
-        public KitProjectService(IUnitOfWork unitOfWork, ICommonServices commonServices)
+        private readonly IHttpContextAccessor _context;
+        public KitProjectService(IUnitOfWork unitOfWork, ICommonServices commonServices, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
             _commonServices = commonServices;
+            _context = context;
         }
 
         public async Task CreateKitProject(CreateKitProjectRequest request)
@@ -55,7 +59,31 @@ namespace IPMS.Business.Services
 
         public async Task<List<GetAllKitProjectResponse>> GetAllKitProject(GetAllKitProjectRequest request)
         {
-            var kitProjectsRaw = _unitOfWork.KitProjectRepository.Get().Include(x => x.Project).Include(x => x.Kit);
+            var kitProjectsRaw = _unitOfWork.KitProjectRepository.Get()
+                        .Include(x => x.Project)
+                        .ThenInclude(x => x.Students)
+                        .ThenInclude(x => x.Class)
+                        .Include(x => x.Kit).AsQueryable();
+            if (request.SemesterId != null)
+            {
+                var classes = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id.Equals(request.SemesterId)).Include(x => x.Students).ToListAsync();
+
+                var projectsId = classes.SelectMany(x => x.Students.Select(y => y.ProjectId!.Value)).ToList();
+                kitProjectsRaw = kitProjectsRaw.Where(x => projectsId.Contains(x.ProjectId));
+            }
+
+            if (request.ClassId != null)
+            {
+                var classes = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id.Equals(request.ClassId)).Include(x => x.Students).ToListAsync();
+
+                var projectsId = classes.SelectMany(x => x.Students.Select(y => y.ProjectId!.Value)).ToList();
+                kitProjectsRaw = kitProjectsRaw.Where(x => projectsId.Contains(x.ProjectId));
+            }
+
+            if (request.ProjectId != null)
+            {
+                kitProjectsRaw = kitProjectsRaw.Where(x => x.ProjectId.Equals(request.ProjectId));
+            }
             return await kitProjectsRaw.Select(kp => new GetAllKitProjectResponse
             {
                 Id = kp.Id,
@@ -65,8 +93,38 @@ namespace IPMS.Business.Services
                 ProjectId = kp.ProjectId,
                 KitId = kp.KitId,
                 KitName = kp.Kit.Name,
-                ProjectNum = kp.Project.GroupNum
+                ProjectNum = kp.Project.GroupNum,
+                ClassId = kp.Project.Students.First().ClassId,
+                ClassName = kp.Project.Students.First().Class.ShortName
             }).ToListAsync();
+        }
+
+        public async Task<List<GetKitProjectStudentResponse>> GetAllKitProjectStudent(GetKitProjectStudentRequest request)
+        {
+            var kitsProject = new List<GetKitProjectStudentResponse>();
+            Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
+            if (project == null)
+            {
+                return kitsProject;
+            }
+            kitsProject = await _unitOfWork.KitProjectRepository.Get()
+                .Where(x => x.ProjectId.Equals(project.Id))
+                .Include(x => x.Kit)
+                .ThenInclude(y => y.Devices)
+                .ThenInclude(z => z.Device)
+                .Select(x => new GetKitProjectStudentResponse
+                {
+                    BorrowedDate = x.BorrowedDate,
+                    ReturnedDate = x.ReturnedDate,
+                    Comment = x.Comment,
+                    KitName = x.Kit.Name,
+                    Devices = x.Kit.Devices.Select(y => new KitDeviceResponse
+                    {
+                        Name = y.Device.Name,
+                        Quantity = y.Quantity
+                    }).ToList()
+                }).ToListAsync();
+            return kitsProject;
         }
 
         public async Task UpdateKitProject(UpdateKitProjectRequest request)

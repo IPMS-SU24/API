@@ -6,7 +6,6 @@ using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Requests.Kit;
 using IPMS.Business.Requests.KitProject;
 using IPMS.Business.Requests.ProjectKit;
-using IPMS.Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IPMS.API.Controllers
@@ -21,14 +20,21 @@ namespace IPMS.API.Controllers
             _kitProjectService = kitProjectService;
         }
         [EnumAuthorize(UserRole.Admin)]
-        [HttpPost("get-all")]
+        [HttpGet("get-all")]
         public async Task<IActionResult> GetAllKit([FromQuery] GetAllKitProjectRequest request)
         {
             var kitsProject = await _kitProjectService.GetAllKitProject(request);
             var response = await kitsProject.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
             return GetActionResponse(response);
         }
-
+        [EnumAuthorize(UserRole.Student)]
+        [HttpGet("get-kit-student")]
+        public async Task<IActionResult> GetKitStudent([FromQuery] GetKitProjectStudentRequest request)
+        {
+            var kitsProject = await _kitProjectService.GetAllKitProjectStudent(request);
+            var response = await kitsProject.GetPaginatedResponse(page: request.Page, pageSize: request.PageSize);
+            return GetActionResponse(response);
+        }
         [EnumAuthorize(UserRole.Admin)]
         [HttpPost("create")]
         public async Task<IActionResult> CreateKitProject([FromBody] CreateKitProjectRequest request)

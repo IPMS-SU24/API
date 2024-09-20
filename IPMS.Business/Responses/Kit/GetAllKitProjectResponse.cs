@@ -10,5 +10,7 @@
         public Guid KitId { get; set; }
         public string KitName { get; set; }
         public int ProjectNum { get; set; }
+        public Guid ClassId { get; set; }
+        public string ClassName { get; set; } 
     }
 }
