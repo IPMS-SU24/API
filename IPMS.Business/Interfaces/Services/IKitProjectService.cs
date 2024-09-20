@@ -8,6 +8,7 @@ namespace IPMS.Business.Interfaces.Services
     public interface IKitProjectService
     {
         Task<List<GetAllKitProjectResponse>> GetAllKitProject(GetAllKitProjectRequest request);
+        Task<List<GetKitProjectStudentResponse>> GetAllKitProjectStudent(GetKitProjectStudentRequest request);
         Task CreateKitProject(CreateKitProjectRequest request);
         Task UpdateKitProject(UpdateKitProjectRequest request);
     }
