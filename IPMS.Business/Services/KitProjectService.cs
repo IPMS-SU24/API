@@ -66,9 +66,9 @@ namespace IPMS.Business.Services
                         .Include(x => x.Kit).AsQueryable();
             if (request.SemesterId != null)
             {
-                var classes = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id.Equals(request.SemesterId)).Include(x => x.Students).ToListAsync();
+                var classes = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.SemesterId.Equals(request.SemesterId)).Include(x => x.Students).ToListAsync();
 
-                var projectsId = classes.SelectMany(x => x.Students.Select(y => y.ProjectId!.Value)).ToList();
+                var projectsId = classes.SelectMany(x => x.Students.Where(y => y.ProjectId != null).Select(y => y.ProjectId!.Value)).ToList();
                 kitProjectsRaw = kitProjectsRaw.Where(x => projectsId.Contains(x.ProjectId));
             }
 
@@ -76,7 +76,7 @@ namespace IPMS.Business.Services
             {
                 var classes = await _unitOfWork.IPMSClassRepository.Get().Where(x => x.Id.Equals(request.ClassId)).Include(x => x.Students).ToListAsync();
 
-                var projectsId = classes.SelectMany(x => x.Students.Select(y => y.ProjectId!.Value)).ToList();
+                var projectsId = classes.SelectMany(x => x.Students.Where(y => y.ProjectId != null).Select(y => y.ProjectId!.Value)).ToList();
                 kitProjectsRaw = kitProjectsRaw.Where(x => projectsId.Contains(x.ProjectId));
             }
 
