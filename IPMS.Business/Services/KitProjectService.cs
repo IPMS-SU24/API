@@ -40,20 +40,20 @@ namespace IPMS.Business.Services
             {
                 var projectsId = @class.Students.Select(x => x.ProjectId).Distinct().ToList();
                 isProjectExisted = projectsId.Any(x => x.Equals(request.ProjectId));
+                if (isProjectExisted == true)
+                {
+                    await _unitOfWork.KitProjectRepository.InsertAsync(new KitProject
+                    {
+                        ProjectId = request.ProjectId,
+                        KitId = request.KitId,
+                        BorrowedDate = DateTime.Now,
+                        Comment = request.Comment
+                    });
+                    await _unitOfWork.SaveChangesAsync();
+                    break;
+                }
             }
-            if (isProjectExisted == false)
-            {
-                throw new DataNotFoundException("Project does not exist!");
 
-            }
-            await _unitOfWork.KitProjectRepository.InsertAsync(new KitProject
-            {
-                ProjectId = request.ProjectId,
-                KitId = request.KitId,
-                BorrowedDate = DateTime.Now,
-                Comment = request.Comment
-            });
-            await _unitOfWork.SaveChangesAsync();
 
         }
 
@@ -118,6 +118,7 @@ namespace IPMS.Business.Services
                     ReturnedDate = x.ReturnedDate,
                     Comment = x.Comment,
                     KitName = x.Kit.Name,
+                    KitDescription = x.Kit.Description,
                     Devices = x.Kit.Devices.Select(y => new KitDeviceResponse
                     {
                         Name = y.Device.Name,
