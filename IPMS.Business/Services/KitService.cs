@@ -149,6 +149,7 @@ namespace IPMS.Business.Services
 
             kit.Name = request.Name;
             kit.Description = request.Description;
+            _unitOfWork.IoTKitRepository.Update(kit);
             _unitOfWork.KitDeviceRepository.DeleteRange(kit.Devices);
             await _unitOfWork.SaveChangesAsync();
             var kitDevices = request.Devices.Select(x => new KitDevice
