@@ -271,7 +271,7 @@ namespace IPMS.Business.Services
         {
             var userRoles = await _userManager.GetRolesAsync(user);
             var isFirstLogin = !user.RefreshTokens.Any();
-            var isMultipleTopic = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.IsMultipleTopic;
+            var isMultipleTopic = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester?.IsMultipleTopic;
             var authClaims = new List<Claim>
                     {
                         new (ClaimTypes.Email, user.Email),
@@ -279,11 +279,13 @@ namespace IPMS.Business.Services
                         new ("Id", user.UserName),
                         new ("FullName", user.FullName),
                         new ("isFirstLogin", isFirstLogin.ToString(), ClaimValueTypes.Boolean),
-                        new ("isMultipleTopic", isMultipleTopic.ToString(), ClaimValueTypes.Boolean),
                         new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                         new (ClaimTypes.Role, JsonSerializer.Serialize(userRoles), JsonClaimValueTypes.JsonArray)
                     };
-
+            if(isMultipleTopic.HasValue && isMultipleTopic.Value)
+            {
+                authClaims.Add(new("isMultipleTopic", isMultipleTopic.GetValueOrDefault().ToString(), ClaimValueTypes.Boolean));
+            }
             if (userRoles.Contains(UserRole.Student.ToString()))
             {
                 //If student => Add ProjectId to Claim
