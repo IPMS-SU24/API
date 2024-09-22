@@ -35,6 +35,7 @@ namespace IPMS.API.Controllers
         }
 
         [EnumAuthorize(UserRole.Lecturer)]
+        [ProducesResponseType(type: typeof(IPMSResponse<IList<LecturerTopicIotComponentReponse>>), statusCode: StatusCodes.Status200OK)]
         [HttpGet("[action]/{classId}/{isCommittee}")]
         public async Task<IActionResult> ClassTopicsByLecturer([FromRoute] LecturerClassTopicRequest request)
         {
@@ -56,7 +57,7 @@ namespace IPMS.API.Controllers
         [HttpPut]
         public async Task<IActionResult> PickTopic([FromBody] PickTopicRequest request)
         {
-            bool isPickedSuccessfully = await _classTopicService.PickTopic(request.TopicId);
+            bool isPickedSuccessfully = await _classTopicService.PickTopic(request);
 
             var response = new IPMSResponse<object>(); // Default is success
 

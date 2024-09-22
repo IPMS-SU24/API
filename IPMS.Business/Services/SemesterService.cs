@@ -31,7 +31,8 @@ namespace IPMS.Business.Services
                 Name = x.Name,
                 IsCurrent = currentSemester.Id == x.Id,
                 EndDate = x.EndDate,
-                StartDate = x.StartDate
+                StartDate = x.StartDate,
+                IsMultipleTopic = x.IsMultipleTopic
             }).OrderByDescending(x=>x.StartDate).ToListAsync();
             if(semesters == null || !semesters.Any())
             {

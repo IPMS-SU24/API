@@ -6,6 +6,8 @@ namespace IPMS.Business.Responses.Assessment
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public virtual ICollection<SubmissionModuleResponse> SubmissionModules { get; set; } = new List<SubmissionModuleResponse>(); 
+        public virtual ICollection<SubmissionModuleResponse> SubmissionModules { get; set; } = new List<SubmissionModuleResponse>();
+
+        public string? Topic { get; set; }
     }
 }

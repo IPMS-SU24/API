@@ -12,7 +12,7 @@ namespace IPMS.API.Validators.Topic
             RuleFor(x => x).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
-                var validationResult = await topicService.PickTopicValidators(x.TopicId);
+                var validationResult = await topicService.PickTopicValidators(x);
                 if (!validationResult.Result)
                 {
                     validationContext.AddBusinessFailure(validationResult.Message);
