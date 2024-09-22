@@ -154,6 +154,8 @@ namespace IPMS.Business.Services
                     Items = g.Select(g => new IotItem
                     {
                         Id = g.Id,
+                        Comment = g.Comment,
+                        ReturnedAt = g.Status == BorrowedStatus.Returned ? g.LastModified : null,
                         Name = g.Component!.Name,
                         Quantity = g.Quantity,
                         ComponentId = g.ComponentId,

@@ -27,9 +27,11 @@ namespace IPMS.Business.Responses.Project
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
+        public string? Comment { get; set; }
         public int Quantity { get; set; }
         public Guid ComponentId { get; set; }
         public BorrowedStatus? Status { get; set; }
+        public DateTime? ReturnedAt { get; set; }
         public int? MaxQuantityInTopic { get; set; }
     }
 }
