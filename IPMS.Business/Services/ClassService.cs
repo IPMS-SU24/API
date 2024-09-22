@@ -297,8 +297,7 @@ namespace IPMS.Business.Services
             //Check student exists -> also class exists
             var student = await _unitOfWork.StudentRepository.Get()
                 .FirstOrDefaultAsync(x => x.InformationId == request.StudentId &&
-                x.ClassId == request.ClassId &&
-                x.Class.LecturerId == lecturerId);
+                x.ClassId == request.ClassId);
             if (student == null)
             {
                 result.Message = "Student does not exist or in different class";
