@@ -20,6 +20,8 @@ namespace IPMS.Business.Responses.Topic
 
     public class LecturerTopicIotComponentReponse : TopicIotComponentReponse
     {
+        public string? AssessmentName { get; set; }
+        public Guid? AssessmentId { get; set; }
         public Guid? PickedBy { get; set; }
     }
 }

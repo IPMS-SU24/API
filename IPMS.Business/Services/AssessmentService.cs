@@ -101,12 +101,16 @@ namespace IPMS.Business.Services
 
                                                                     }).ToList()
                                                                 }).ToList();
-
+            var topicName = await _unitOfWork.ClassTopicRepository.Get().Include(x => x.Topic)
+                                                                        .Where(x => x.AssessmentId == assessment.Id && x.ClassId == @class.Id && x.ProjectId == project.Id)
+                                                                        .Select(x => x.Topic.Name)
+                                                                        .FirstOrDefaultAsync();
             AssessmentSubmissionProjectResponse response = new AssessmentSubmissionProjectResponse
             {
                 Id = assessment.Id,
                 Name = assessment.Name,
-                SubmissionModules = submissionsModule
+                SubmissionModules = submissionsModule,
+                Topic = topicName
             };
             return response;
         }

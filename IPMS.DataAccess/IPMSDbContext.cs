@@ -145,6 +145,12 @@ namespace IPMS.DataAccess
                     .HasForeignKey("TopicId")
                     .OnDelete(DeleteBehavior.Cascade);
 
+                entity.HasOne(e => e.Project)
+                    .WithMany(p => p.AssessmentTopic)
+                    .HasForeignKey(e=> e.ProjectId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+
             });
 
             modelBuilder.Entity<Committee>(entity =>
@@ -246,10 +252,6 @@ namespace IPMS.DataAccess
                     .WithMany(p => p.OwnProjects)
                     .HasForeignKey("OwnerId")
                     .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne<ClassTopic>(e => e.Topic)
-                    .WithOne(e => e.Project)
-                    .HasForeignKey<ClassTopic>(e => e.ProjectId);
             });
 
             modelBuilder.Entity<ComponentsMaster>(entity =>

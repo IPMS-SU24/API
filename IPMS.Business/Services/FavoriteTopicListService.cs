@@ -160,10 +160,22 @@ namespace IPMS.Business.Services
                 result.Message = "Does not have any incoming semester";
                 return result;
             }
-            var @class = await _unitOfWork.IPMSClassRepository.Get().Where(c => request.ClassesId.Contains(c.Id) && c.LecturerId.Equals(lecturerId) && c.SemesterId.Equals(comingSemester.Id)).ToListAsync();
+
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x=>x.Semester).Where(c => request.ClassesId.Contains(c.Id) && c.LecturerId.Equals(lecturerId) && c.SemesterId.Equals(comingSemester.Id)).ToListAsync();
             if (@class.Count() != request.ClassesId.Count())
             {
                 result.Message = "Class cannot found in semester";
+                return result;
+            }
+            if(@class.Select(x=>x.SemesterId).Distinct().Count() > 1)
+            {
+                result.Message = "Cannot assign topic in different semester";
+                return result;
+            }
+
+            if(@class.First().Semester.StartDate <= DateTime.Now)
+            {
+                result.Message = "Cannot assign topic to classes which started";
                 return result;
             }
 
@@ -188,6 +200,13 @@ namespace IPMS.Business.Services
                 result.Message = "Topic list does have enough topics to add";
                 return result;
             }
+
+            var isMultipleTopic = @class.First().Semester.IsMultipleTopic;
+            if(isMultipleTopic && !request.AssessmentId.HasValue)
+            {
+                result.Message = "Assessment cannot be empty";
+                return result;
+            }
             result.Message = string.Empty;
             result.Result = true;
             return result;
@@ -195,27 +214,28 @@ namespace IPMS.Business.Services
 
         public async Task AssignTopicList(AssignTopicListRequest request, Guid lecturerId)
         {
-            var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(c => request.ClassesId.Contains(c.ClassId)).ToListAsync();
-            _unitOfWork.ClassTopicRepository.DeleteRange(classTopics);
-            await _unitOfWork.SaveChangesAsync();
-
-            var topics = await _unitOfWork.TopicFavoriteRepository.Get().Where(tf => tf.FavoriteId.Equals(request.ListId)).ToListAsync();
-            var newClassTopics = new List<ClassTopic>();
-
-            foreach (var classId in request.ClassesId)
+            await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
-                newClassTopics.AddRange(topics.Select(t => new ClassTopic
-                {
-                    ClassId = classId,
-                    TopicId = t.TopicId
-                }).ToList());
-            }
+                var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(c => request.ClassesId.Contains(c.ClassId)).ToListAsync();
+                _unitOfWork.ClassTopicRepository.DeleteRange(classTopics);
+                await _unitOfWork.SaveChangesAsync();
 
-            await _unitOfWork.ClassTopicRepository.InsertRangeAsync(newClassTopics);
-            await _unitOfWork.SaveChangesAsync();
-                 
-            
-            
+                var topics = await _unitOfWork.TopicFavoriteRepository.Get().Where(tf => tf.FavoriteId.Equals(request.ListId)).ToListAsync();
+                var newClassTopics = new List<ClassTopic>();
+
+                foreach (var classId in request.ClassesId)
+                {
+                    newClassTopics.AddRange(topics.Select(t => new ClassTopic
+                    {
+                        ClassId = classId,
+                        TopicId = t.TopicId,
+                        AssessmentId = request.AssessmentId
+                    }).ToList());
+                }
+
+                await _unitOfWork.ClassTopicRepository.InsertRangeAsync(newClassTopics);
+                await _unitOfWork.SaveChangesAsync();
+            });
         }
     }
 }
