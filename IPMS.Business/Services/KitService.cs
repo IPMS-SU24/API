@@ -75,19 +75,23 @@ namespace IPMS.Business.Services
         public async Task<KitResponse> GetKitDetail(Guid Id)
         {
             var kitRaw = await _unitOfWork.IoTKitRepository.Get().Where(x => x.Id.Equals(Id)).Include(x => x.Devices).ThenInclude(x => x.Device).FirstOrDefaultAsync();
-            var kit = new KitResponse
+            if (kitRaw != null)
             {
-                Id = kitRaw.Id,
-                Name = kitRaw.Name,
-                Description = kitRaw.Description,
-                Devices = kitRaw.Devices.Select(x => new DeviceInformation
+                return new KitResponse
                 {
-                    Id = x.DeviceId,
-                    Name = x.Device.Name,
-                    Description = x.Device.Description
-                }).ToList()
-            };
-            return kit;
+                    Id = kitRaw.Id,
+                    Name = kitRaw.Name,
+                    Description = kitRaw.Description,
+                    Devices = kitRaw.Devices.Select(x => new DeviceInformation
+                    {
+                        Id = x.DeviceId,
+                        Name = x.Device.Name,
+                        Description = x.Device.Description
+                    }).ToList()
+                };
+            }
+            return null;
+          
         }
         public async Task CreateKit(CreateKitRequest request)
         {
