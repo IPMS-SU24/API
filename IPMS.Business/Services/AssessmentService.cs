@@ -268,13 +268,13 @@ namespace IPMS.Business.Services
 
             foreach (var assessment in assessments)
             {
-                var topic = groupTopics.First(x => x.AssessmentId == assessment.Id).Topic;
+                var topic = groupTopics.FirstOrDefault(x => x.AssessmentId == assessment.Id)?.Topic;
                 response.Add(new GetAssessmentTopicResponse
                 {
                     AssessmentId = assessment.Id,
                     AssessmentName = assessment.Name,
-                    TopicId = topic.Id,
-                    TopicName = topic.Name
+                    TopicId = topic?.Id,
+                    TopicName = topic?.Name
 
                 });
             }
