@@ -766,8 +766,25 @@ namespace IPMS.Business.Services
 
         public async Task<ClassGradeExportResponse> ExportGradesAsync(ClassExportGradeRequest request)
         {
+            var studentGrades = await ProcessClassGrades(request.ClassId);
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == request.ClassId);
+            var fileName = $"{S3KeyPrefix.ExportGrade}_{@class.Id}_{@class.ShortName}_Grade.xlsx";
+            // Save to tempfile
+            var filePath = SaveFile(fileName, studentGrades);
+
+            //Get Upload presign
+
+            var uploadUrl = _presignedUrlService.GeneratePresignedUploadUrl(fileName);
+            await _presignedUrlService.UploadToS3(filePath, uploadUrl);
+            return new ClassGradeExportResponse
+            {
+                ExportFileUrl = _presignedUrlService.GeneratePresignedDownloadUrl(fileName)!
+            };
+        }
+        private async Task<IList<ClassGradeDataRow>> ProcessClassGrades(Guid classId)
+        {
             var studentGrades = await _unitOfWork.StudentRepository.Get().Include(x => x.Project).Include(x => x.Information)
-                .Where(x => x.ClassId == request.ClassId)
+                .Where(x => x.ClassId == classId)
                 .OrderBy(x => x.Project.GroupNum).ThenBy(x => x.Information.UserName)
                 .Select(x => new ClassGradeDataRow
                 {
@@ -798,21 +815,8 @@ namespace IPMS.Business.Services
                     _mapper.Map(groupGrades[student.ProjectTechnicalId.Value], student);
                 }
             }
-            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == request.ClassId);
-            var fileName = $"{S3KeyPrefix.ExportGrade}_{@class.Id}_{@class.ShortName}_Grade.xlsx";
-            // Save to tempfile
-            var filePath = SaveFile(fileName, studentGrades);
-
-            //Get Upload presign
-
-            var uploadUrl = _presignedUrlService.GeneratePresignedUploadUrl(fileName);
-            await _presignedUrlService.UploadToS3(filePath, uploadUrl);
-            return new ClassGradeExportResponse
-            {
-                ExportFileUrl = _presignedUrlService.GeneratePresignedDownloadUrl(fileName)!
-            };
+            return studentGrades;
         }
-
         private string SaveFile(string fileName, IEnumerable<ClassGradeDataRow> studentGrades)
         {
             var tempPath = Path.GetTempPath();
@@ -918,6 +922,11 @@ namespace IPMS.Business.Services
             result.Message = string.Empty;
             result.Result = true;
             return result;
+        }
+
+        public async Task<IList<ClassGradeDataRow>> GetClassGrades(ClassExportGradeRequest request)
+        {
+            return await ProcessClassGrades(request.ClassId); 
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using IPMS.Business.Common.Constants;
+using IPMS.Business.Common.Exceptions;
 using IPMS.Business.Common.Extensions;
 using IPMS.Business.Common.Utils;
 using IPMS.Business.Interfaces;
@@ -196,7 +197,7 @@ namespace IPMS.Business.Services
                 result.Message = "Syllabus not found";
                 return result;
             }
-            
+
             if (syllabus.Semesters.Count() > 0)
             {
                 result.Message = "Cannot configure assessment used";
@@ -223,8 +224,8 @@ namespace IPMS.Business.Services
         }
         public async Task ConfigureAssessments(ConfigureAssessmentsRequest request)
         {
-            var insertList = new List<Assessment>();    
-            foreach(var ass in request.Assessments)
+            var insertList = new List<Assessment>();
+            foreach (var ass in request.Assessments)
             {
                 if (ass.Id == Guid.Empty)
                 {
@@ -236,7 +237,8 @@ namespace IPMS.Business.Services
                         Percentage = ass.Percentage,
                         SyllabusId = request.SyllabusId,
                     });
-                } else
+                }
+                else
                 {
                     var uptAss = await _unitOfWork.AssessmentRepository.Get().FirstOrDefaultAsync(a => a.Id.Equals(ass.Id));
                     uptAss.Name = ass.Name;
@@ -252,6 +254,31 @@ namespace IPMS.Business.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
+        public async Task<IList<GetAssessmentTopicResponse>> GetAssessmentTopic(GetAssessmentTopicRequest request)
+        {
+            var assessments = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Syllabus.Assessments;
 
+            var groupTopics = await _unitOfWork.ClassTopicRepository.Get().Include(x => x.Topic)
+                .Where(x => x.ProjectId == request.GroupId && x.AssessmentId != null).ToListAsync();
+            if(groupTopics == null || !groupTopics.Any())
+            {
+                throw new DataNotFoundException();
+            }
+            var response = new List<GetAssessmentTopicResponse>();
+
+            foreach (var assessment in assessments)
+            {
+                var topic = groupTopics.First(x => x.AssessmentId == assessment.Id).Topic;
+                response.Add(new GetAssessmentTopicResponse
+                {
+                    AssessmentId = assessment.Id,
+                    AssessmentName = assessment.Name,
+                    TopicId = topic.Id,
+                    TopicName = topic.Name
+
+                });
+            }
+            return response;
+        }
     }
 }

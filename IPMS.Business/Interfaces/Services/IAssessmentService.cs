@@ -11,5 +11,6 @@ namespace IPMS.Business.Interfaces.Services
         Task ConfigureAssessments(ConfigureAssessmentsRequest request);
         Task<ValidationResultModel> ConfigureAssessmentsValidators(ConfigureAssessmentsRequest request);
         Task<ValidationResultModel> GetAssessmentByIdValidators(Guid assessmentId);
+        Task<IList<GetAssessmentTopicResponse>> GetAssessmentTopic(GetAssessmentTopicRequest request);
     }
 }
