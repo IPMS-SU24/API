@@ -1,14 +1,10 @@
 ﻿using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Common.Extensions;
-using IPMS.DataAccess.Common.Models;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Configuration;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
-using System.Linq.Expressions;
 using System.Reflection;
 
 namespace IPMS.DataAccess
@@ -435,6 +431,7 @@ namespace IPMS.DataAccess
             modelBuilder.Entity<KitDevice>(entity =>
             {
                 entity
+                    .ToTable("KitDevice")
                     .HasKey(e => e.Id);
 
                 entity.HasOne(e => e.Kit)
@@ -450,6 +447,7 @@ namespace IPMS.DataAccess
             modelBuilder.Entity<KitProject>(entity =>
             {
                 entity
+                    .ToTable("KitProject")
                     .HasKey(e => e.Id);
 
                 entity.HasOne(e => e.Project)
@@ -461,10 +459,22 @@ namespace IPMS.DataAccess
                     .WithMany(p => p.Projects)
                     .HasForeignKey(x => x.KitId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Borrower)
+                    .WithMany(p => p.Borrowed)
+                    .HasForeignKey(x => x.BorrowerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Returner)
+                    .WithMany(p => p.Returned)
+                    .HasForeignKey(x => x.ReturnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
             });
             modelBuilder.Entity<BasicIoTDevice>(entity =>
             {
                 entity
+                    .ToTable("BasicIoTDevice")
                     .HasKey(e => e.Id);
 
                 entity.Property(e => e.Description);
@@ -473,6 +483,7 @@ namespace IPMS.DataAccess
             modelBuilder.Entity<IoTKit>(entity =>
             {
                 entity
+                    .ToTable("IoTKit")
                     .HasKey(e => e.Id);
 
                 entity.Property(e => e.Description);

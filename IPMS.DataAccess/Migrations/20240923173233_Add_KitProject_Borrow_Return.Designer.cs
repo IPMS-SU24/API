@@ -3,6 +3,7 @@ using System;
 using IPMS.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IPMS.DataAccess.Migrations
 {
     [DbContext(typeof(IPMSDbContext))]
-    partial class IPMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240923173233_Add_KitProject_Borrow_Return")]
+    partial class Add_KitProject_Borrow_Return
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -157,9 +159,6 @@ namespace IPMS.DataAccess.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("uuid_generate_v4()");
 
-                    b.Property<Guid?>("AssessmentId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("ClassId")
                         .HasColumnType("uuid");
 
@@ -186,11 +185,10 @@ namespace IPMS.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssessmentId");
-
                     b.HasIndex("ClassId");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("ProjectId")
+                        .IsUnique();
 
                     b.HasIndex("TopicId");
 
@@ -1390,10 +1388,6 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.ClassTopic", b =>
                 {
-                    b.HasOne("IPMS.DataAccess.Models.Assessment", "Assessment")
-                        .WithMany()
-                        .HasForeignKey("AssessmentId");
-
                     b.HasOne("IPMS.DataAccess.Models.IPMSClass", "Class")
                         .WithMany("Topics")
                         .HasForeignKey("ClassId")
@@ -1401,17 +1395,14 @@ namespace IPMS.DataAccess.Migrations
                         .IsRequired();
 
                     b.HasOne("IPMS.DataAccess.Models.Project", "Project")
-                        .WithMany("AssessmentTopic")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .WithOne("Topic")
+                        .HasForeignKey("IPMS.DataAccess.Models.ClassTopic", "ProjectId");
 
                     b.HasOne("IPMS.DataAccess.Models.Topic", "Topic")
                         .WithMany("Classes")
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Assessment");
 
                     b.Navigation("Class");
 
@@ -1860,8 +1851,6 @@ namespace IPMS.DataAccess.Migrations
 
             modelBuilder.Entity("IPMS.DataAccess.Models.Project", b =>
                 {
-                    b.Navigation("AssessmentTopic");
-
                     b.Navigation("Kits");
 
                     b.Navigation("Students");
@@ -1869,6 +1858,8 @@ namespace IPMS.DataAccess.Migrations
                     b.Navigation("Submissions");
 
                     b.Navigation("SuggestedTopic");
+
+                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("IPMS.DataAccess.Models.ProjectSubmission", b =>

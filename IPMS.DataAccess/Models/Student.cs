@@ -14,5 +14,8 @@ namespace IPMS.DataAccess.Models
         public virtual IPMSClass Class { get; set; } = null!;
         public virtual Project? Project { get; set; }
         public int? JobImportId { get; set; }
+        public virtual ICollection<KitProject> Borrowed { get; set; } = new List<KitProject>();
+        public virtual ICollection<KitProject> Returned { get; set; } = new List<KitProject>();
+
     }
 }
