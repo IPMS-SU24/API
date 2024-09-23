@@ -96,16 +96,26 @@ namespace IPMS.Business.Services
             return response;
         }
 
-        public async Task<IList<GetFavoriteTopicResponse>> GetInFavoriteAsync(Guid listId)
+        public async Task<IList<GetFavoriteTopicResponse>> GetInFavoriteAsync(Guid listId, bool isAdminRequest = false)
         {
-            var response = await _unitOfWork.TopicRepository.GetApprovedTopics().Include(x => x.Favorites).Select(x => new GetFavoriteTopicResponse
+            var query = _unitOfWork.TopicRepository.Get();
+            if (isAdminRequest)
+            {
+                query = query.Where(x => x.Status == RequestStatus.Approved || x.Status == RequestStatus.Hidden);
+            }
+            else
+            {
+                query = query.Where(x => x.Status == RequestStatus.Approved);
+            }
+            var response = await query.Include(x => x.Favorites).Select(x => new GetFavoriteTopicResponse
             {
                 Description = x.Description,
                 TopicId = x.Id,
                 TopicName = x.Name,
                 Owner = x.Owner.FullName,
                 DetailLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, x.Id, x.Detail)),
-                IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId)
+                IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId),
+                ProjectSuggestId = x.SuggesterId
             }).ToListAsync();
             if(response ==  null || !response.Any()) throw new DataNotFoundException();
             var allTopicIoT = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x=>x.Component).Where(x => response.Select(x => x.TopicId).ToList().Contains(x.MasterId)).Select(x => new
@@ -115,7 +125,8 @@ namespace IPMS.Business.Services
                 Id = x.ComponentId,
                 TopicId = x.MasterId
             }).ToListAsync();
-
+            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            var allClassesInSemester = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.Class.SemesterId == currentSemesterId).ToListAsync();
             foreach (var topic in response)
             {
                 topic.IoTComponents.AddRange(allTopicIoT.Where(x => x.TopicId == topic.TopicId).Select(x => new FavoriteIoTInfo
@@ -124,7 +135,7 @@ namespace IPMS.Business.Services
                     Id = x.Id,
                     Title = x.Title
                 }));
-
+                topic.Status = allClassesInSemester.Any(x => x.TopicId == topic.TopicId) ? "Used" : "Unused";
             }
             return response;
         }

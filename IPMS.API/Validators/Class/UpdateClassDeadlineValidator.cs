@@ -13,8 +13,6 @@ namespace IPMS.API.Validators.Class
             RuleFor(x => x.ClassId).NotEmpty();
             RuleFor(x => x.CreateGroup).NotEmpty();
             RuleFor(x => x.ChangeGroup).NotEmpty();
-            RuleFor(x => x.ChangeTopic).NotEmpty();
-            RuleFor(x => x.BorrowIot).NotEmpty();
             RuleFor(x => x).CustomAsync(async (x, validationContext, cancellationToken) =>
             {
                 var validationResult = await classService.UpdateClassDeadlineValidators(x, lecturerId);
