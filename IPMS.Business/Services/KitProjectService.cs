@@ -16,12 +16,10 @@ namespace IPMS.Business.Services
     public class KitProjectService : IKitProjectService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICommonServices _commonServices;
         private readonly IHttpContextAccessor _context;
-        public KitProjectService(IUnitOfWork unitOfWork, ICommonServices commonServices, IHttpContextAccessor context)
+        public KitProjectService(IUnitOfWork unitOfWork, IHttpContextAccessor context)
         {
             _unitOfWork = unitOfWork;
-            _commonServices = commonServices;
             _context = context;
         }
 
@@ -42,24 +40,38 @@ namespace IPMS.Business.Services
                 isProjectExisted = projectsId.Any(x => x.Equals(request.ProjectId));
                 if (isProjectExisted == true)
                 {
-                    await _unitOfWork.KitProjectRepository.InsertAsync(new KitProject
+                    var isInProject = await _unitOfWork.StudentRepository.Get()
+                        .Where(x => x.Id.Equals(request.StudentId)
+                                && x.ProjectId.Equals(request.ProjectId))
+                        .FirstOrDefaultAsync();
+                    if (isInProject != null)
                     {
-                        ProjectId = request.ProjectId,
-                        KitId = request.KitId,
-                        BorrowedDate = DateTime.Now,
-                        Comment = request.Comment
-                    });
+                        await _unitOfWork.KitProjectRepository.InsertAsync(new KitProject
+                        {
+                            ProjectId = request.ProjectId,
+                            KitId = request.KitId,
+                            BorrowedDate = DateTime.Now,
+                            Comment = request.Comment,
+                            BorrowerId = request.StudentId
+                        });
+                    }
+                    else
+                    {
+                        throw new DataNotFoundException("Student not found!");
+                    }
                     await _unitOfWork.SaveChangesAsync();
                     break;
                 }
             }
-
-
         }
 
         public async Task<List<GetAllKitProjectResponse>> GetAllKitProject(GetAllKitProjectRequest request)
         {
             var kitProjectsRaw = _unitOfWork.KitProjectRepository.Get()
+                        .Include(x => x.Borrower)
+                        .ThenInclude(y => y.Information)
+                        .Include(x => x.Returner)
+                        .ThenInclude(y => y.Information)
                         .Include(x => x.Project)
                         .ThenInclude(x => x.Students)
                         .ThenInclude(x => x.Class)
@@ -95,7 +107,10 @@ namespace IPMS.Business.Services
                 KitName = kp.Kit.Name,
                 ProjectNum = kp.Project.GroupNum,
                 ClassId = kp.Project.Students.First().ClassId,
-                ClassName = kp.Project.Students.First().Class.ShortName
+                ClassName = kp.Project.Students.First().Class.ShortName,
+                BorrowerName = kp.Borrower.Information.FullName,
+                ReturnerName = kp.ReturnerId != null ? kp.Returner.Information.FullName : null
+                
             }).ToListAsync();
         }
 
@@ -109,13 +124,15 @@ namespace IPMS.Business.Services
             }
             kitsProject = await _unitOfWork.KitProjectRepository.Get()
                 .Where(x => x.ProjectId.Equals(project.Id))
-                .Include(x => x.Kit)
-                .ThenInclude(y => y.Devices)
-                .ThenInclude(z => z.Device)
+                .Include(x => x.Kit).ThenInclude(y => y.Devices).ThenInclude(z => z.Device)
+                .Include(x => x.Borrower).ThenInclude(y => y.Information)
+                .Include(x => x.Returner).ThenInclude(y => y.Information)
                 .Select(x => new GetKitProjectStudentResponse
                 {
                     BorrowedDate = x.BorrowedDate,
                     ReturnedDate = x.ReturnedDate,
+                    BorrowerName = x.Borrower.Information.FullName,
+                    ReturnerName = x.ReturnerId != null ? x.Returner.Information.FullName : null,
                     Comment = x.Comment,
                     KitName = x.Kit.Name,
                     KitDescription = x.Kit.Description,
@@ -135,8 +152,18 @@ namespace IPMS.Business.Services
             {
                 throw new DataNotFoundException("Request borrow not found");
             }
+            var isInProject = await _unitOfWork.StudentRepository.Get()
+                        .Where(x => x.Id.Equals(request.StudentId)
+                                && x.ProjectId.Equals(kitProject.ProjectId)).FirstOrDefaultAsync();
+
+            if (isInProject == null)
+            {
+                throw new DataNotFoundException("Student not found!");
+            }
+
             kitProject.Comment = request.Comment;
             kitProject.ReturnedDate = DateTime.Now;
+            kitProject.ReturnerId = request.StudentId;
             _unitOfWork.KitProjectRepository.Update(kitProject);
             await _unitOfWork.SaveChangesAsync();
         }

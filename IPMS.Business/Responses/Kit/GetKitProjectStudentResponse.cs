@@ -7,6 +7,8 @@
         public string? Comment { get; set; }
         public string KitName { get; set; }
         public string KitDescription { get; set; }
+        public string BorrowerName { get; set; }
+        public string? ReturnerName { get; set; }
         public List<KitDeviceResponse> Devices { get; set; } = new();
     }
     public class KitDeviceResponse
