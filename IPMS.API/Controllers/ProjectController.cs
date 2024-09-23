@@ -1,16 +1,14 @@
 ﻿using IPMS.API.Common.Attributes;
-using IPMS.Business.Common.Enums;
+using IPMS.API.Common.Enums;
 using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
+using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Requests.Project;
+using IPMS.Business.Requests.ProjectPreference;
+using IPMS.Business.Responses.Project;
 using IPMS.Business.Responses.ProjectDashboard;
 using Microsoft.AspNetCore.Mvc;
-using IPMS.API.Common.Enums;
-using IPMS.Business.Requests.ProjectPreference;
-using IPMS.Business.Responses.ProjectPreference;
-using IPMS.DataAccess.Models;
-using IPMS.Business.Requests.Project;
-using IPMS.Business.Responses.Project;
 
 namespace IPMS.API.Controllers
 {

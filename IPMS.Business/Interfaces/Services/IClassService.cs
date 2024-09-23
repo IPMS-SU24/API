@@ -29,5 +29,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<GetClassDeadlineResponse> GetClassDeadline(Guid classId, Guid lecturerId);
         Task<ClassGradeExportResponse> ExportGradesAsync(ClassExportGradeRequest request);
         Task<ValidationResultModel> CheckExportGradeValid(ClassExportGradeRequest x, Guid lecturerId);
+        Task<IList<ClassGradeDataRow>> GetClassGrades(ClassExportGradeRequest request);
     }
 }

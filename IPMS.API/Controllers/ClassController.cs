@@ -3,6 +3,7 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Responses;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using Microsoft.AspNetCore.Authorization;
@@ -166,6 +167,18 @@ namespace IPMS.API.Controllers
         {
             var response = await _classService.ExportGradesAsync(request);
             return GetActionResponse(new IPMSResponse<ClassGradeExportResponse>
+            {
+                Data = response
+            });
+        }
+
+        [EnumAuthorize(UserRole.Lecturer)]
+        [HttpGet("[action]/{classId}")]
+        [ProducesResponseType(type: typeof(IList<ClassGradeDataRow>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> ClassGrades([FromRoute] ClassExportGradeRequest request)
+        {
+            var response = await _classService.GetClassGrades(request);
+            return GetActionResponse(new IPMSResponse<IList<ClassGradeDataRow>>
             {
                 Data = response
             });

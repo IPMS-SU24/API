@@ -1,5 +1,6 @@
 ﻿using IPMS.API.Common.Enums;
 using IPMS.API.Responses;
+using IPMS.Business.Common.Singleton;
 
 namespace IPMS.API.Middlewares
 {
@@ -18,6 +19,7 @@ namespace IPMS.API.Middlewares
         {
             try
             {
+                CurrentSemesterInfo.Instance.CurrentSemester = null;
                 await _next(context);
             }
             catch (Exception ex)

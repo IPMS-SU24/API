@@ -31,6 +31,18 @@ namespace IPMS.API.Controllers
             };
             return GetActionResponse(response);
         }
+        
+        [EnumAuthorize(UserRole.Student, UserRole.Lecturer)]
+        [HttpGet("[action]")]
+        [ProducesResponseType(type: typeof(IList<GetAssessmentTopicResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> AssessmentTopic([FromQuery] GetAssessmentTopicRequest request)
+        {
+            var response = new IPMSResponse<IList<GetAssessmentTopicResponse>>
+            {
+                Data = await _assessmentService.GetAssessmentTopic(request)
+            };
+            return GetActionResponse(response);
+        }
 
         /// <summary>
         /// Get All Assessments
