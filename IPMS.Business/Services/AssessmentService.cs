@@ -276,15 +276,15 @@ namespace IPMS.Business.Services
                     AssessmentName = assessment.Name,
                     TopicId = topic?.Id,
                     TopicName = topic?.Name,
-                    TopicDescription = topic.Description,
-                    TopicDetailLink = topic.Detail,
-                    TopicShortName = topic.ShortName,
-                    TopicIots = allIots.Where(x => x.MasterId == topic.Id).Select(x => new TopicIoTInfo
+                    TopicDescription = topic?.Description,
+                    TopicDetailLink = topic?.Detail,
+                    TopicShortName = topic?.ShortName,
+                    TopicIots = topic != null ? allIots.Where(x => x.MasterId == topic.Id).Select(x => new TopicIoTInfo
                     {
                         Id = x.ComponentId,
                         Name = x.Component.Name,
                         Quantity = x.Quantity
-                    }).ToList()
+                    }).ToList() : new List<TopicIoTInfo>()
                 });
             }
             return response;
