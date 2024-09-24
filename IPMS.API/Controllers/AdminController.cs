@@ -8,6 +8,8 @@ using IPMS.API.Common.Extensions;
 using IPMS.API.Common.Attributes;
 using IPMS.Business.Common.Enums;
 using IPMS.Business.Responses.Admin;
+using IPMS.Business.Responses.FavoriteTopic;
+using IPMS.Business.Requests.Topic;
 
 namespace IPMS.API.Controllers
 {
@@ -16,11 +18,18 @@ namespace IPMS.API.Controllers
     {
         private readonly IAuthenticationService _authenticationService;
         private readonly IAdminService _adminService;
+        private readonly IFavoriteTopicListService _favoriteTopicListService;
+        private readonly ITopicService _topicService;
 
-        public AdminController(IAuthenticationService authenticationService, IAdminService adminService)
+        public AdminController(IAuthenticationService authenticationService,
+            IAdminService adminService,
+            IFavoriteTopicListService favoriteTopicListService,
+            ITopicService topicService)
         {
             _authenticationService = authenticationService;
             _adminService = adminService;
+            _favoriteTopicListService = favoriteTopicListService;
+            _topicService = topicService;
         }
 
         [HttpPost("lecturer")]
@@ -230,6 +239,25 @@ namespace IPMS.API.Controllers
         public async Task<IActionResult> DeleteSemester([FromBody] Guid semesterId)
         {
             await _adminService.DeleteSemester(semesterId);
+            return GetActionResponse(new IPMSResponse<object>());
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpGet("[action]")]
+        public async Task<IActionResult> Topics()
+        {
+            var response = await _favoriteTopicListService.GetInFavoriteAsync(Guid.NewGuid(), true);
+            return GetActionResponse(new IPMSResponse<IList<GetFavoriteTopicResponse>>
+            {
+                Data = response
+            });
+        }
+
+        [EnumAuthorize(UserRole.Admin)]
+        [HttpPut("[action]")]
+        public async Task<IActionResult> Topics([FromBody] ChangeVisibleTopicRequest request)
+        {
+            await _topicService.ChangeVisible(request);
             return GetActionResponse(new IPMSResponse<object>());
         }
     }

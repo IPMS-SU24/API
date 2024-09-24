@@ -14,6 +14,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<IList<GetListTopicResponse>> GetListTopic(Guid lecturerId);
         Task<ValidationResultModel> AssignTopicListValidators(AssignTopicListRequest request, Guid lecturerId);
         Task AssignTopicList(AssignTopicListRequest request, Guid lecturerId);
-        Task<IList<GetFavoriteTopicResponse>> GetInFavoriteAsync(Guid listId);
+        Task<IList<GetFavoriteTopicResponse>> GetInFavoriteAsync(Guid listId, bool isAdminRequest = false);
     }
 }

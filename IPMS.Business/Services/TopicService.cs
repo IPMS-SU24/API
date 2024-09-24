@@ -17,6 +17,7 @@ using MathNet.Numerics.Distributions;
 using ZstdSharp.Unsafe;
 using IPMS.Business.Common.Constants;
 using IPMS.Business.Common.Utils;
+using IPMS.Business.Common.Exceptions;
 
 namespace IPMS.Business.Services
 {
@@ -472,6 +473,18 @@ namespace IPMS.Business.Services
             _unitOfWork.TopicRepository.Update(preTopic);
             await _unitOfWork.SaveChangesAsync();
 
+        }
+
+        public async Task ChangeVisible(ChangeVisibleTopicRequest request)
+        {
+            var topic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(x => x.Id == request.Id && x.Status == RequestStatus.Approved || x.Status == RequestStatus.Hidden);
+            if(topic == null)
+            {
+                throw new DataNotFoundException();
+            }
+            topic.Status = request.IsPublic ? RequestStatus.Approved : RequestStatus.Hidden;
+            _unitOfWork.TopicRepository.Update(topic);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

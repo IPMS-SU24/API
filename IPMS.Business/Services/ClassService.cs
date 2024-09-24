@@ -201,7 +201,8 @@ namespace IPMS.Business.Services
                     GroupName = x.Students.First().ProjectId != null ? $"{x.Students.First().Project.GroupNum}" : NoGroup.Name,
                     StudentId = x.UserName,
                     StudentName = x.FullName,
-                    Email = x.Email
+                    Email = x.Email,
+                    StudentClassId = x.Students.First().Id
                 }),
                 ChangeMemberDeadline = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
                                                                         .Where(x => x.Id == request.ClassId)
@@ -702,32 +703,56 @@ namespace IPMS.Business.Services
             }
 
             var endSemester = @class.Semester.EndDate;
-            if (request.CreateGroup > endSemester || request.ChangeGroup > endSemester || request.ChangeTopic > endSemester || request.BorrowIot > endSemester) // semester is continuous
+            if (request.CreateGroup > endSemester || request.ChangeGroup > endSemester) // semester is continuous
             {
                 result.Message = "Deadline must before end of semester";
                 return result;
             }
 
             var startSemester = @class.Semester.StartDate;
-            if (request.CreateGroup < startSemester || request.ChangeGroup < startSemester || request.ChangeTopic < startSemester || request.BorrowIot < startSemester) // semester is continuous
+            if (request.CreateGroup < startSemester || request.ChangeGroup < startSemester) // semester is continuous
+            {
+                result.Message = "Deadline must after start of semester";
+                return result;
+            }
+
+            if(request.ChangeTopic.HasValue && request.ChangeTopic.Value > endSemester)
+            {
+                result.Message = "Deadline must before end of semester";
+                return result;
+            }
+
+            if(request.BorrowIot.HasValue && request.BorrowIot.Value > endSemester)
+            {
+                result.Message = "Deadline must before end of semester";
+                return result;
+            }
+
+            if(request.ChangeTopic.HasValue && request.ChangeTopic.Value < startSemester)
+            {
+                result.Message = "Deadline must after start of semester";
+                return result;
+            }
+
+            if(request.BorrowIot.HasValue && request.BorrowIot.Value < startSemester)
             {
                 result.Message = "Deadline must after start of semester";
                 return result;
             }
             // create group -> change topic -> change group , borrow 2 cái này cùng cấp, không cần so sánh
-            if (request.CreateGroup > request.ChangeTopic)
+            if (request.ChangeTopic.HasValue && request.CreateGroup > request.ChangeTopic)
             {
                 result.Message = "Please set Create Group deadline before Change Topic Deadline";
                 return result;
             }
 
-            if (request.ChangeTopic > request.ChangeGroup)
+            if (request.ChangeTopic.HasValue && request.ChangeTopic > request.ChangeGroup)
             {
                 result.Message = "Please set Change Topic deadline before Change Group Deadline";
                 return result;
             }
 
-            if (request.ChangeTopic > request.BorrowIot)
+            if (request.ChangeTopic.HasValue && request.BorrowIot.HasValue && request.ChangeTopic > request.BorrowIot)
             {
                 result.Message = "Please set Change Topic deadline before Borrow Iot Devices Deadline";
                 return result;

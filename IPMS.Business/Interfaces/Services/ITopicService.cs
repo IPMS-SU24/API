@@ -19,5 +19,6 @@ namespace IPMS.Business.Interfaces.Services
         Task<ValidationResultModel> CheckRegisterValid(RegisterTopicRequest request, Guid leaderId);
         Task ReviewSuggestedTopic(ReviewSuggestedTopicRequest request, Guid lecturerId);
         Task<ValidationResultModel> ReviewSuggestedTopicValidators(ReviewSuggestedTopicRequest request, Guid lecturerId);
+        Task ChangeVisible(ChangeVisibleTopicRequest request);
     }
 }

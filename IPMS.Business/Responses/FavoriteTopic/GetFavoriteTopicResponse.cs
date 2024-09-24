@@ -9,6 +9,11 @@
         public List<FavoriteIoTInfo> IoTComponents { get; set; } = new List<FavoriteIoTInfo>();
         public string? DetailLink { get; set; }
         public bool IsBelongToList { get; set; }
+
+        public string Suggester => IsStudentSuggest ? "Lecturer" : "Student";
+        public bool IsStudentSuggest => ProjectSuggestId.HasValue;
+        public Guid? ProjectSuggestId { get; set; }
+        public string Status { get; set; }
     }
 
     public class FavoriteIoTInfo
