@@ -7,6 +7,7 @@ using IPMS.Business.Interfaces.Services;
 using IPMS.Business.Models;
 using IPMS.Business.Requests.Assessment;
 using IPMS.Business.Responses.Assessment;
+using IPMS.Business.Responses.ProjectDashboard;
 using IPMS.Business.Responses.ProjectSubmission;
 using IPMS.Business.Responses.SubmissionModule;
 using IPMS.DataAccess.Models;
@@ -265,7 +266,7 @@ namespace IPMS.Business.Services
                 throw new DataNotFoundException();
             }
             var response = new List<GetAssessmentTopicResponse>();
-
+            var allIots = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x=>x.Component).Where(x => groupTopics.Select(g => g.TopicId).Contains(x.MasterId)).ToListAsync();
             foreach (var assessment in assessments)
             {
                 var topic = groupTopics.FirstOrDefault(x => x.AssessmentId == assessment.Id)?.Topic;
@@ -277,7 +278,13 @@ namespace IPMS.Business.Services
                     TopicName = topic?.Name,
                     TopicDescription = topic.Description,
                     TopicDetailLink = topic.Detail,
-                    TopicShortName = topic.ShortName
+                    TopicShortName = topic.ShortName,
+                    TopicIots = allIots.Where(x => x.MasterId == topic.Id).Select(x => new TopicIoTInfo
+                    {
+                        Id = x.ComponentId,
+                        Name = x.Component.Name,
+                        Quantity = x.Quantity
+                    }).ToList()
                 });
             }
             return response;
