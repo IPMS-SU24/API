@@ -274,8 +274,10 @@ namespace IPMS.Business.Services
                     AssessmentId = assessment.Id,
                     AssessmentName = assessment.Name,
                     TopicId = topic?.Id,
-                    TopicName = topic?.Name
-
+                    TopicName = topic?.Name,
+                    TopicDescription = topic.Description,
+                    TopicDetailLink = topic.Detail,
+                    TopicShortName = topic.ShortName
                 });
             }
             return response;
