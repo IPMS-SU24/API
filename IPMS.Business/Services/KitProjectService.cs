@@ -108,8 +108,11 @@ namespace IPMS.Business.Services
                 ProjectNum = kp.Project.GroupNum,
                 ClassId = kp.Project.Students.First().ClassId,
                 ClassName = kp.Project.Students.First().Class.ShortName,
+                BorrowerId = kp.BorrowerId,
                 BorrowerName = kp.Borrower.Information.FullName,
-                ReturnerName = kp.ReturnerId != null ? kp.Returner.Information.FullName : null
+                BorrowerEmail = kp.Borrower.Information.Email,
+                ReturnerName = kp.ReturnerId != null ? kp.Returner.Information.FullName : null,
+                ReturnerEmail = kp.ReturnerId != null ? kp.Returner.Information.Email : null
                 
             }).ToListAsync();
         }

@@ -120,11 +120,9 @@ namespace IPMS.Business.Services
                 classes = classes.Where(c => request.ClassIds.Contains(c.Id)).ToList();
             }
 
-
             var components = await _unitOfWork.ComponentsMasterRepository.Get() // get components
                                     .Where(cm => cm.MasterType == ComponentsMasterType.Project)
                                     .Include(cm => cm.Component).ToListAsync();
-
 
             List<ProjectInformation> projects = new List<ProjectInformation>();
             foreach (var @class in classes) // prepare information
@@ -489,6 +487,7 @@ namespace IPMS.Business.Services
             {
                 var updtCompont = components.FirstOrDefault(c => c.Id.Equals(compont.Id));
                 updtCompont.Status = BorrowedStatus.Returned;
+                updtCompont.Comment = compont.Comment;
                 _unitOfWork.ComponentsMasterRepository.Update(updtCompont);
 
                 var lecCompont = lecComponnts.FirstOrDefault(c => compont.ComponentId.Equals(c.ComponentId));
