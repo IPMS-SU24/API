@@ -201,7 +201,8 @@ namespace IPMS.Business.Services
                     GroupName = x.Students.First().ProjectId != null ? $"{x.Students.First().Project.GroupNum}" : NoGroup.Name,
                     StudentId = x.UserName,
                     StudentName = x.FullName,
-                    Email = x.Email
+                    Email = x.Email,
+                    StudentClassId = x.Students.First().Id
                 }),
                 ChangeMemberDeadline = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
                                                                         .Where(x => x.Id == request.ClassId)
