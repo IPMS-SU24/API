@@ -12,7 +12,10 @@
         public int ProjectNum { get; set; }
         public Guid ClassId { get; set; }
         public string ClassName { get; set; } 
+        public Guid BorrowerId { get; set; }
         public string BorrowerName { get; set; } 
-        public string? ReturnerName { get; set; } 
+        public string BorrowerEmail { get; set; }
+        public string? ReturnerName { get; set; }
+        public string? ReturnerEmail { get; set; }
     }
 }

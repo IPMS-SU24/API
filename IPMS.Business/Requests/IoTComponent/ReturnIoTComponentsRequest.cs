@@ -1,6 +1,4 @@
-﻿
-
-namespace IPMS.Business.Requests.IoTComponent
+﻿namespace IPMS.Business.Requests.IoTComponent
 {
     public class ReturnIoTComponentsRequest
     {
