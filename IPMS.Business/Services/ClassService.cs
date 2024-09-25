@@ -863,7 +863,7 @@ namespace IPMS.Business.Services
 
                 int startCol = 5;
 
-                List<string> assessmentTitle = new List<string> { "Assessment Average", "Student Assessment Average" };
+                List<string> assessmentTitle = new List<string> { "Group Average", "Student Average" };
                 foreach (var assessment in studentGrades.First().AssessmentGrades)
                 {
                     int colSpan = assessment.SubmissionGrades.Count;
@@ -920,7 +920,7 @@ namespace IPMS.Business.Services
                         worksheet.Cell(row, col).Value = assessment.AssessmentAvg?.ToString("F2");
                         col++;
 
-                        worksheet.Cell(row, col).Value = (assessment.AssessmentAvg * dataRow.Contribute)?.ToString("F2");
+                        worksheet.Cell(row, col).Value = (assessment.AssessmentAvg * dataRow.Contribute / 100 )? .ToString("F2");
                         col++;
 
                     }

@@ -10,7 +10,7 @@
         public string? DetailLink { get; set; }
         public bool IsBelongToList { get; set; }
 
-        public string Suggester => IsStudentSuggest ? "Lecturer" : "Student";
+        public string Suggester => IsStudentSuggest ? "Student" : "Lecturer";
         public bool IsStudentSuggest => ProjectSuggestId.HasValue;
         public Guid? ProjectSuggestId { get; set; }
         public string Status { get; set; }
