@@ -183,10 +183,14 @@ namespace IPMS.Business.Services
             IPMSClass? @class = _context.HttpContext.Session.GetObject<IPMSClass?>("Class");
             Project? project = _context.HttpContext.Session.GetObject<Project?>("Project");
 
-            ClassTopic? pickedTopic = await _unitOfWork.ClassTopicRepository.Get() // Find ClassTopic picked
-                                                                      .Include(ct => ct.Topic).FirstOrDefaultAsync(ct => ct.ClassId.Equals(@class.Id)
-                                                                      && ct.ProjectId.Equals(project.Id));
             var isMultipleTopic = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.IsMultipleTopic;
+
+            var pickedTopicQuery = _unitOfWork.ClassTopicRepository.Get() // Find ClassTopic picked
+                                                                      .Where(ct => ct.ClassId.Equals(@class.Id)
+                                                                      && ct.ProjectId.Equals(project.Id));
+            var pickedTopic = isMultipleTopic 
+                ? await pickedTopicQuery.FirstOrDefaultAsync(x => x.AssessmentId == request.AssessmentId) 
+                : await pickedTopicQuery.FirstOrDefaultAsync(); 
 
             var pickedTopicAvailableQuery = _unitOfWork.ClassTopicRepository.Get() // Is Picked Topic available
                                                                                .Where(ct => ct.ClassId.Equals(@class.Id)
