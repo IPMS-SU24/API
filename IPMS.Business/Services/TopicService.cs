@@ -477,7 +477,7 @@ namespace IPMS.Business.Services
 
         public async Task ChangeVisible(ChangeVisibleTopicRequest request)
         {
-            var topic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(x => x.Id == request.Id && x.Status == RequestStatus.Approved || x.Status == RequestStatus.Hidden);
+            var topic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(x => x.Id == request.Id && (x.Status == RequestStatus.Approved || x.Status == RequestStatus.Hidden));
             if(topic == null)
             {
                 throw new DataNotFoundException();
