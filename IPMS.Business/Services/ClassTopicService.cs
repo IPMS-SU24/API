@@ -222,7 +222,7 @@ namespace IPMS.Business.Services
                                                                       .Where(ct => ct.ClassId.Equals(request.ClassId) &&
                                                                                    ct.Topic!.Status == RequestStatus.Approved // Only Topic Approved can choose
                                                                                                                                  )
-                                                                      .Include(ct => ct.Topic).Include(x=>x.Assessment);
+                                                                      .Include(ct => ct.Topic);
 
             if (request.IsCommittee.HasValue && request.IsCommittee.Value)
             {

@@ -147,6 +147,8 @@ namespace IPMS.DataAccess
                     .IsRequired(false)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                entity.Navigation(e => e.Assessment).AutoInclude();
+
             });
 
             modelBuilder.Entity<Committee>(entity =>
