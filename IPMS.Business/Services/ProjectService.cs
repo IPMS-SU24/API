@@ -125,7 +125,7 @@ namespace IPMS.Business.Services
                     TopicName = topic?.Name ?? string.Empty,
                     Description = topic?.Description ?? string.Empty,
                     EndDate = @class!.ChangeTopicDeadline,
-                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline!.Value, @class.ChangeGroupDeadline!.Value),
+                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline, @class.ChangeGroupDeadline!.Value),
 
                 },
                 BorrowInfo = new()

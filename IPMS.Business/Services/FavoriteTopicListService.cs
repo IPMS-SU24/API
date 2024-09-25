@@ -115,7 +115,8 @@ namespace IPMS.Business.Services
                 Owner = x.Owner.FullName,
                 DetailLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, x.Id, x.Detail)),
                 IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId),
-                ProjectSuggestId = x.SuggesterId
+                ProjectSuggestId = x.SuggesterId,
+                IsPublic = x.Status == RequestStatus.Approved
             }).ToListAsync();
             if(response ==  null || !response.Any()) throw new DataNotFoundException();
             var allTopicIoT = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x=>x.Component).Where(x => response.Select(x => x.TopicId).ToList().Contains(x.MasterId)).Select(x => new

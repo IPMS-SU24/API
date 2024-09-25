@@ -14,6 +14,7 @@
         public bool IsStudentSuggest => ProjectSuggestId.HasValue;
         public Guid? ProjectSuggestId { get; set; }
         public string Status { get; set; }
+        public bool IsPublic { get; set; }
     }
 
     public class FavoriteIoTInfo
