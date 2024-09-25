@@ -199,7 +199,9 @@ namespace IPMS.Business.Services
                         Id = g.Id,
                         Name = g.Component!.Name,
                         Quantity = g.Quantity,
-                        Status = g.Status
+                        Status = g.Status,
+                        Comment = g.Comment,
+                        ReturnedAt = g.Status == BorrowedStatus.Returned ? g.LastModified : null,
                     }).ToList()
 
                 }).ToList();
