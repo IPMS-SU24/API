@@ -605,7 +605,7 @@ namespace IPMS.Business.Services
             var newestJobId = jobList.First().Key;
 
             var importClassData = jobConnection.GetAllEntriesFromHash(newestJobId);
-            if(importClassData == null)
+            if (importClassData == null)
             {
                 return response;
             }
@@ -716,25 +716,25 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            if(request.ChangeTopic.HasValue && request.ChangeTopic.Value > endSemester)
+            if (request.ChangeTopic.HasValue && request.ChangeTopic.Value > endSemester)
             {
                 result.Message = "Deadline must before end of semester";
                 return result;
             }
 
-            if(request.BorrowIot.HasValue && request.BorrowIot.Value > endSemester)
+            if (request.BorrowIot.HasValue && request.BorrowIot.Value > endSemester)
             {
                 result.Message = "Deadline must before end of semester";
                 return result;
             }
 
-            if(request.ChangeTopic.HasValue && request.ChangeTopic.Value < startSemester)
+            if (request.ChangeTopic.HasValue && request.ChangeTopic.Value < startSemester)
             {
                 result.Message = "Deadline must after start of semester";
                 return result;
             }
 
-            if(request.BorrowIot.HasValue && request.BorrowIot.Value < startSemester)
+            if (request.BorrowIot.HasValue && request.BorrowIot.Value < startSemester)
             {
                 result.Message = "Deadline must after start of semester";
                 return result;
@@ -854,23 +854,24 @@ namespace IPMS.Business.Services
                 worksheet.Range("A1:A2").Merge().Value = "StudentId";
                 worksheet.Range("B1:B2").Merge().Value = "Student Name";
                 worksheet.Range("C1:C2").Merge().Value = "Group";
+                worksheet.Range("D1:D2").Merge().Value = "Contribute Percentage";
 
+                worksheet.Range("A1:D2").Style.Font.Bold = true;
+                worksheet.Range("A1:D2").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Range("A1:D2").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                worksheet.Range("A1:D2").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-                worksheet.Range("A1:C2").Style.Font.Bold = true;
-                worksheet.Range("A1:C2").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                worksheet.Range("A1:C2").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                int startCol = 5;
 
-                int startCol = 4;
-
-
+                List<string> assessmentTitle = new List<string> { "Assessment Average", "Student Assessment Average" };
                 foreach (var assessment in studentGrades.First().AssessmentGrades)
                 {
                     int colSpan = assessment.SubmissionGrades.Count;
 
-                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Merge().Value = assessment.Name;
-                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Style.Font.Bold = true;
-                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    worksheet.Range(1, startCol, 1, startCol + colSpan - 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                    worksheet.Range(1, startCol, 1, startCol + colSpan + assessmentTitle.Count - 1).Merge().Value = assessment.Name;
+                    worksheet.Range(1, startCol, 1, startCol + colSpan + assessmentTitle.Count - 1).Style.Font.Bold = true;
+                    worksheet.Range(1, startCol, 1, startCol + colSpan + assessmentTitle.Count - 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    worksheet.Range(1, startCol, 1, startCol + colSpan + assessmentTitle.Count - 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
                     for (int i = 0; i < colSpan; i++)
                     {
@@ -879,17 +880,21 @@ namespace IPMS.Business.Services
                         worksheet.Cell(2, startCol + i).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                         worksheet.Cell(2, startCol + i).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                     }
-
-                    startCol += colSpan;
+                    for (int i = 0; i < assessmentTitle.Count; i++)
+                    {
+                        worksheet.Cell(2, startCol + colSpan + i).Value = assessmentTitle[i];
+                        worksheet.Cell(2, startCol + colSpan + i).Style.Font.Bold = true;
+                        worksheet.Cell(2, startCol + colSpan + i).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        worksheet.Cell(2, startCol + colSpan + i).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                    }
+                    startCol += colSpan + assessmentTitle.Count;
                 }
 
                 worksheet.Range(1, startCol, 2, startCol).Merge().Value = "Group Grade";
-                worksheet.Range(1, startCol + 1, 2, startCol + 1).Merge().Value = "Contribute Percentage";
-                worksheet.Range(1, startCol + 2, 2, startCol + 2).Merge().Value = "Final Grade";
+                worksheet.Range(1, startCol + 1, 2, startCol + 1).Merge().Value = "Final Grade";
 
                 // Apply styles
                 worksheet.Range(1, startCol, 2, startCol + 2).Style.Font.Bold = true;
-                worksheet.Range(1, startCol, 2, startCol + 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 worksheet.Range(1, startCol, 2, startCol + 2).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
                 // Fill in the data
@@ -900,8 +905,9 @@ namespace IPMS.Business.Services
                     worksheet.Cell(row, 1).Value = dataRow.StudentId;
                     worksheet.Cell(row, 2).Value = dataRow.StudentName;
                     worksheet.Cell(row, 3).Value = dataRow.Group;
+                    worksheet.Cell(row, 4).Value = dataRow.Contribute?.ToString("F2");
 
-                    int col = 4;
+                    int col = 5;
 
                     foreach (var assessment in dataRow.AssessmentGrades)
                     {
@@ -910,12 +916,17 @@ namespace IPMS.Business.Services
                             worksheet.Cell(row, col).Value = submission.Grade?.ToString("F2");
                             col++;
                         }
+
+                        worksheet.Cell(row, col).Value = assessment.AssessmentAvg?.ToString("F2");
+                        col++;
+
+                        worksheet.Cell(row, col).Value = (assessment.AssessmentAvg * dataRow.Contribute)?.ToString("F2");
+                        col++;
+
                     }
 
-
                     worksheet.Cell(row, col).Value = dataRow.Total?.ToString("F2");
-                    worksheet.Cell(row, col + 1).Value = dataRow.Contribute?.ToString("F2");
-                    worksheet.Cell(row, col + 2).Value = dataRow.Final?.ToString("F2");
+                    worksheet.Cell(row, col + 1).Value = dataRow.Final?.ToString("F2");
 
                     row++;
                 }
@@ -951,7 +962,7 @@ namespace IPMS.Business.Services
 
         public async Task<IList<ClassGradeDataRow>> GetClassGrades(ClassExportGradeRequest request)
         {
-            return await ProcessClassGrades(request.ClassId); 
+            return await ProcessClassGrades(request.ClassId);
         }
     }
 }
