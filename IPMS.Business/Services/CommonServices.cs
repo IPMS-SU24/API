@@ -124,6 +124,7 @@ namespace IPMS.Business.Services
         public async Task<AssessmentStatus> GetBorrowIoTStatus(Guid projectId, IPMSClass @class)
         {
             var now = DateTime.Now;
+            if (!@class.BorrowIoTComponentDeadline.HasValue) return AssessmentStatus.NotAvailable;
             var isBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == projectId).AnyAsync();
             if (isBorrowed && @class.BorrowIoTComponentDeadline < now) return AssessmentStatus.Done;
             if (@class.BorrowIoTComponentDeadline > now && @class.ChangeTopicDeadline < now) return AssessmentStatus.InProgress;
@@ -167,9 +168,11 @@ namespace IPMS.Business.Services
             };
         }
 
-        public AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime changeTopicDeadline, DateTime changeGroupDeadline)
+        public AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime? changeTopicDeadline, DateTime changeGroupDeadline)
         {
+            
             var now = DateTime.Now;
+            if (!changeTopicDeadline.HasValue) return AssessmentStatus.NotAvailable;
             //changeGroupDeadline be startDate
             //changeTopicDeadline be endDate
             if (changeGroupDeadline > now) return AssessmentStatus.NotYet;

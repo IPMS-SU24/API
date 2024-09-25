@@ -21,7 +21,7 @@ namespace IPMS.Business.Interfaces.Services
         Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId);
         Task<List<IPMSClass>> GetAllCurrentClassesOfLecturer(Guid lecturerId);
         Task<(DateTime startDate, DateTime endDate)> GetAssessmentTime(Guid assessmentId, Guid classId);
-        AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime changeTopicDeadline, DateTime changeGroupDeadline);
+        AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime? changeTopicDeadline, DateTime changeGroupDeadline);
         Task SetCommonSessionUserEntity(Guid currentUserId);
         IPMSClass? GetClass();
         Project? GetProject();

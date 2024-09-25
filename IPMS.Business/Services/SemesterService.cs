@@ -57,16 +57,26 @@ namespace IPMS.Business.Services
             {
                 classesQuery = classesQuery.Where(x => x.LecturerId == lecturerId);
             }
+            Func<IPMSClass, bool> isSetDeadlineFunc;
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstAsync(x=>x.ShortName == request.SemesterCode);
+            if (semester.IsMultipleTopic)
+            {
+                isSetDeadlineFunc = x => x.ChangeGroupDeadline != null && x.CreateGroupDeadline != null;
+            }
+            else
+            {
+                isSetDeadlineFunc = x => x.ChangeGroupDeadline != null &&
+                                                                             x.CreateGroupDeadline != null &&
+                                                                             x.BorrowIoTComponentDeadline != null &&
+                                                                             x.ChangeTopicDeadline != null;
+            }
             var classesResult = await classesQuery.Select(x => new
             {
                 ClassCode = x.ShortName,
                 ClassId = x.Id,
                 ClassName = x.Name,
                 MaxMembers = x.MaxMember,
-                IsSetDeadline = x.ChangeGroupDeadline != null &&
-                                                                             x.CreateGroupDeadline != null &&
-                                                                             x.BorrowIoTComponentDeadline != null &&
-                                                                             x.ChangeTopicDeadline != null
+                IsSetDeadline = isSetDeadlineFunc(x)
             }).ToListAsync();
             //Calculate enrolled Student (EmailConfirmed == true), total student, number of groups
             var studentQuery = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
