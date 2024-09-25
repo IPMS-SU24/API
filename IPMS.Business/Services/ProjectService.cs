@@ -112,6 +112,9 @@ namespace IPMS.Business.Services
             var project = _commonServices.GetProject();
             if (project == null) throw new DataNotFoundException("Not found Project");
             var topic = await _commonServices.GetProjectTopic(project.Id);
+            var assessmentInfo = topic != null ? await _unitOfWork.ClassTopicRepository.Get().Include(x => x.Assessment)
+                .Where(x => x.ProjectId == project.Id && x.TopicId == topic.Id)
+                .Select(x => x.Assessment).FirstOrDefaultAsync() : null;
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var @class = _commonServices.GetClass();
             var componentBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == project.Id).Include(x => x.Component).ToListAsync();
@@ -126,7 +129,8 @@ namespace IPMS.Business.Services
                     Description = topic?.Description ?? string.Empty,
                     EndDate = @class!.ChangeTopicDeadline,
                     AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline, @class.ChangeGroupDeadline!.Value),
-
+                    AssessmentId = assessmentInfo?.Id,
+                    AssessmentName = assessmentInfo?.Name
                 },
                 BorrowInfo = new()
                 {
