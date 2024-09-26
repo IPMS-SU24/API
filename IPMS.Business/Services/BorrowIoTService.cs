@@ -63,7 +63,13 @@ namespace IPMS.Business.Services
                 return result;
             }
             //Check iot in iot list of Topic
-            var topicId = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == project.Id && x.Topic.Status == RequestStatus.Approved).Select(x => x.TopicId).FirstOrDefaultAsync(); //checked project get topic
+            var topic = await _commonServices.GetProjectTopic(project.Id);
+            if(topic == null)
+            {
+                result.Message = "Not picked topic yet";
+                return result;
+            }
+            var topicId = topic.Id; //checked project get topic
             var topicComponents = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents()
                                                                                     .Where(x => x.MasterId == topicId && x.ComponentId == request.ComponentId).FirstOrDefaultAsync();
             if (topicComponents == null)
