@@ -8,7 +8,6 @@ using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace IPMS.Business.Services
 {
@@ -77,8 +76,36 @@ namespace IPMS.Business.Services
 
         public async Task<Topic?> GetProjectTopic(Guid projectId)
         {
-            return await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
-                                                        .Include(x => x.Topic).Select(x => x.Topic).FirstOrDefaultAsync();
+            
+            var result = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.ProjectId == projectId)
+                                                        .Include(x => x.Topic).ToListAsync();
+            if (result == null || !result.Any()) return null;
+
+            //single topic
+            if(result.Count == 1 && !result.First().AssessmentId.HasValue)
+            {
+                return result.First().Topic;
+            }
+
+            // multiple topic -> get current assessment topic
+            if(result.All(x => x.AssessmentId.HasValue))
+            {
+                var classId = result.First().ClassId;
+                var now = DateTime.Now;
+                var currentAssessment = await _unitOfWork.ClassModuleDeadlineRepository.Get()
+                                                                .Where(x => result.Select(x => x.AssessmentId).Contains(x.SubmissionModule.AssessmentId) && x.ClassId == classId)
+                                                                .GroupBy(x=>x.SubmissionModule.AssessmentId)
+                                                                .Select(x=> new
+                                                                {
+                                                                    StartDate = x.Min(x=>x.StartDate),
+                                                                    EndDate = x.Max(x=>x.EndDate),
+                                                                    x.First().SubmissionModule.AssessmentId,
+                                                                })
+                                                                .FirstOrDefaultAsync(x=>x.StartDate < now && x.EndDate > now);
+
+                return result.First(x=>x.AssessmentId!.Value == currentAssessment!.AssessmentId).Topic;
+            }
+            return null;
         }
 
         public async Task<AssessmentStatus> GetAssessmentStatus(Guid assessmentId, IEnumerable<ProjectSubmission> submissionList)
@@ -124,6 +151,7 @@ namespace IPMS.Business.Services
         public async Task<AssessmentStatus> GetBorrowIoTStatus(Guid projectId, IPMSClass @class)
         {
             var now = DateTime.Now;
+            if (!@class.BorrowIoTComponentDeadline.HasValue) return AssessmentStatus.InProgress;
             var isBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == projectId).AnyAsync();
             if (isBorrowed && @class.BorrowIoTComponentDeadline < now) return AssessmentStatus.Done;
             if (@class.BorrowIoTComponentDeadline > now && @class.ChangeTopicDeadline < now) return AssessmentStatus.InProgress;
@@ -167,9 +195,11 @@ namespace IPMS.Business.Services
             };
         }
 
-        public AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime changeTopicDeadline, DateTime changeGroupDeadline)
+        public AssessmentStatus GetChangeTopicStatus(Topic? topic, DateTime? changeTopicDeadline, DateTime changeGroupDeadline)
         {
+            
             var now = DateTime.Now;
+            if (!changeTopicDeadline.HasValue) return AssessmentStatus.NotAvailable;
             //changeGroupDeadline be startDate
             //changeTopicDeadline be endDate
             if (changeGroupDeadline > now) return AssessmentStatus.NotYet;

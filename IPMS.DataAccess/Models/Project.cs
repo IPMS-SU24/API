@@ -9,7 +9,11 @@ namespace IPMS.DataAccess.Models
         public decimal? Grade { get; set; }
         public Guid OwnerId { get; set; }
         public virtual IPMSUser Owner { get; set; } //lecturer
-        public virtual ClassTopic? Topic => AssessmentTopic?.FirstOrDefault(x=>x.AssessmentId == null);
+
+        /// <summary>
+        /// Just use for project reference
+        /// </summary>
+        public virtual ClassTopic? Topic => AssessmentTopic?.FirstOrDefault(x=>x.AssessmentId == null) ?? AssessmentTopic?.MaxBy(x=>x.Assessment?.Order);
         public virtual ICollection<ClassTopic> AssessmentTopic { get; set; } = new List<ClassTopic>();
         public virtual ICollection<Student> Students {get; set;} = new List<Student>();
         public virtual ICollection<ProjectSubmission> Submissions {get; set;} = new List<ProjectSubmission>();

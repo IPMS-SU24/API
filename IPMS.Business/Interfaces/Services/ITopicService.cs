@@ -20,5 +20,6 @@ namespace IPMS.Business.Interfaces.Services
         Task ReviewSuggestedTopic(ReviewSuggestedTopicRequest request, Guid lecturerId);
         Task<ValidationResultModel> ReviewSuggestedTopicValidators(ReviewSuggestedTopicRequest request, Guid lecturerId);
         Task ChangeVisible(ChangeVisibleTopicRequest request);
+        Task<ValidationResultModel> ChangeVisibleValidator(ChangeVisibleTopicRequest request);
     }
 }

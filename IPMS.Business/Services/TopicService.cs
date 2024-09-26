@@ -1,23 +1,18 @@
-﻿using IPMS.Business.Interfaces.Services;
-using IPMS.Business.Interfaces;
-using IPMS.Business.Requests.Topic;
-using IPMS.DataAccess.Models;
-using AutoFilterer.Extensions;
-using Microsoft.EntityFrameworkCore;
-using IPMS.Business.Models;
+﻿using AutoFilterer.Extensions;
 using AutoMapper;
-using IPMS.DataAccess.Common.Enums;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using IPMS.Business.Common.Extensions;
-using IPMS.Business.Responses.Topic;
-using System.Runtime.InteropServices;
-using IPMS.Business.Responses.Group;
-using MathNet.Numerics.Distributions;
-using ZstdSharp.Unsafe;
 using IPMS.Business.Common.Constants;
-using IPMS.Business.Common.Utils;
 using IPMS.Business.Common.Exceptions;
+using IPMS.Business.Common.Extensions;
+using IPMS.Business.Common.Utils;
+using IPMS.Business.Interfaces;
+using IPMS.Business.Interfaces.Services;
+using IPMS.Business.Models;
+using IPMS.Business.Requests.Topic;
+using IPMS.Business.Responses.Topic;
+using IPMS.DataAccess.Common.Enums;
+using IPMS.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace IPMS.Business.Services
 {
@@ -70,8 +65,8 @@ namespace IPMS.Business.Services
                 return result;
             }
             //Check Project have topic
-            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Topic));
-            if(project.Topic != null)
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.AssessmentTopic));
+            if (project.Topic != null)
             {
                 result.Message = "Project already has topic";
                 return result;
@@ -354,11 +349,11 @@ namespace IPMS.Business.Services
                 return topic;
             }
             List<Guid> groupsIds = groups.Select(g => g.Id).ToList();
-            
+
             Topic preTopic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(t => groupsIds.Contains((Guid)t.SuggesterId) // validate that topic get belong to class and project lecturer teach!
                                                                          && t.Id.Equals(request.TopicId));
 
-            var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic 
+            var components = await _unitOfWork.ComponentsMasterRepository.Get().Where(cm => cm.MasterType == ComponentsMasterType.Topic
                                                                             && cm.MasterId.Equals(preTopic.Id))
                                                                         .Include(cm => cm.Component)
                                                                         .ToListAsync();
@@ -446,7 +441,7 @@ namespace IPMS.Business.Services
         {
             SuggestedTopicsResponse topic = new SuggestedTopicsResponse();
             IPMSClass @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(c => c.Id.Equals(request.ClassId) && c.LecturerId.Equals(lecturerId));
-            
+
 
             // Find distinct project in class
             List<Guid> groupsIds = await _unitOfWork.StudentRepository.Get().Where(x => x.ClassId == @class.Id && x.ProjectId != null)
@@ -460,7 +455,8 @@ namespace IPMS.Business.Services
             if (request.IsApproved == true)
             {
                 preTopic.Status = RequestStatus.Approved;
-            } else if (request.IsApproved == false)
+            }
+            else if (request.IsApproved == false)
             {
                 preTopic.Status = RequestStatus.Rejected;
                 //Reset topic of project
@@ -477,14 +473,35 @@ namespace IPMS.Business.Services
 
         public async Task ChangeVisible(ChangeVisibleTopicRequest request)
         {
-            var topic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(x => x.Id == request.Id && x.Status == RequestStatus.Approved || x.Status == RequestStatus.Hidden);
-            if(topic == null)
+            var topic = await _unitOfWork.TopicRepository.Get().FirstOrDefaultAsync(x => x.Id == request.Id && (x.Status == RequestStatus.Approved || x.Status == RequestStatus.Hidden));
+            if (topic == null)
             {
                 throw new DataNotFoundException();
             }
             topic.Status = request.IsPublic ? RequestStatus.Approved : RequestStatus.Hidden;
             _unitOfWork.TopicRepository.Update(topic);
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<ValidationResultModel> ChangeVisibleValidator(ChangeVisibleTopicRequest request)
+        {
+            var result = new ValidationResultModel
+            {
+                Message = "Cannot Change Visble"
+            };
+
+
+            var currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
+            var allClassesInSemester = await _unitOfWork.ClassTopicRepository.Get().Where(x => x.Class.SemesterId == currentSemesterId && x.TopicId == request.Id).AnyAsync();
+
+            if (allClassesInSemester)
+            {
+                result.Message = "Cannot hide topic currently in used";
+                return result;
+            }
+            result.Result = true;
+            result.Message = string.Empty;
+            return result;
         }
     }
 }

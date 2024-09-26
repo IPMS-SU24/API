@@ -115,10 +115,11 @@ namespace IPMS.Business.Services
                 Owner = x.Owner.FullName,
                 DetailLink = _presignedUrlService.GeneratePresignedDownloadUrl(S3KeyUtils.GetS3Key(S3KeyPrefix.Topic, x.Id, x.Detail)),
                 IsBelongToList = x.Favorites.Any(x => x.FavoriteId == listId),
-                ProjectSuggestId = x.SuggesterId
+                ProjectSuggestId = x.SuggesterId,
+                IsPublic = x.Status == RequestStatus.Approved
             }).ToListAsync();
-            if(response ==  null || !response.Any()) throw new DataNotFoundException();
-            var allTopicIoT = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x=>x.Component).Where(x => response.Select(x => x.TopicId).ToList().Contains(x.MasterId)).Select(x => new
+            if (response == null || !response.Any()) throw new DataNotFoundException();
+            var allTopicIoT = await _unitOfWork.ComponentsMasterRepository.GetTopicComponents().Include(x => x.Component).Where(x => response.Select(x => x.TopicId).ToList().Contains(x.MasterId)).Select(x => new
             {
                 Title = x.Component.Name,
                 x.Component.Description,
@@ -172,19 +173,19 @@ namespace IPMS.Business.Services
                 return result;
             }
 
-            var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x=>x.Semester).Where(c => request.ClassesId.Contains(c.Id) && c.LecturerId.Equals(lecturerId) && c.SemesterId.Equals(comingSemester.Id)).ToListAsync();
+            var @class = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester).Where(c => request.ClassesId.Contains(c.Id) && c.LecturerId.Equals(lecturerId) && c.SemesterId.Equals(comingSemester.Id)).ToListAsync();
             if (@class.Count() != request.ClassesId.Count())
             {
                 result.Message = "Class cannot found in semester";
                 return result;
             }
-            if(@class.Select(x=>x.SemesterId).Distinct().Count() > 1)
+            if (@class.Select(x => x.SemesterId).Distinct().Count() > 1)
             {
                 result.Message = "Cannot assign topic in different semester";
                 return result;
             }
 
-            if(@class.First().Semester.StartDate <= DateTime.Now)
+            if (@class.First().Semester.StartDate <= DateTime.Now)
             {
                 result.Message = "Cannot assign topic to classes which started";
                 return result;
@@ -203,17 +204,17 @@ namespace IPMS.Business.Services
                 result.Message = "Does not have any topic in list";
                 return result;
             }
-            var minGroups = await _unitOfWork.StudentRepository.Get().Include(x=>x.Class)
+            var minGroups = await _unitOfWork.StudentRepository.Get().Include(x => x.Class)
                 .Where(x => request.ClassesId.Contains(x.ClassId)).ToListAsync();
             var minGroupsList = minGroups.GroupBy(x => x.ClassId).ToList();
-            if (minGroupsList.Any(x=> topicCount < (int)Math.Ceiling((decimal)x.Count() / x.First().Class.MaxMember)))
+            if (minGroupsList.Any(x => topicCount < (int)Math.Ceiling((decimal)x.Count() / x.First().Class.MaxMember)))
             {
                 result.Message = "Topic list does have enough topics to add";
                 return result;
             }
 
             var isMultipleTopic = @class.First().Semester.IsMultipleTopic;
-            if(isMultipleTopic && !request.AssessmentId.HasValue)
+            if (isMultipleTopic && !request.AssessmentId.HasValue)
             {
                 result.Message = "Assessment cannot be empty";
                 return result;
@@ -228,6 +229,11 @@ namespace IPMS.Business.Services
             await _unitOfWork.RollbackTransactionOnFailAsync(async () =>
             {
                 var classTopics = await _unitOfWork.ClassTopicRepository.Get().Where(c => request.ClassesId.Contains(c.ClassId)).ToListAsync();
+                if (request.AssessmentId != null)
+                {
+                    classTopics = classTopics.Where(c => c.AssessmentId.Equals(request.AssessmentId)).ToList();
+                }
+
                 _unitOfWork.ClassTopicRepository.DeleteRange(classTopics);
                 await _unitOfWork.SaveChangesAsync();
 

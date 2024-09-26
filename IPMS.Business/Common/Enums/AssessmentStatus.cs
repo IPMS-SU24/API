@@ -13,6 +13,8 @@ namespace IPMS.Business.Common.Enums
         [Display(Name = "Done")]
         Done = 2,
         [Display(Name = "Expired")]
-        Expired = -1
+        Expired = -1,
+        [Display(Name = "Not Available")]
+        NotAvailable = -99
     }
 }

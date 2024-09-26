@@ -43,44 +43,41 @@ namespace IPMS.Business.Services
                 Semesters = semesters
             };
         }
-        private bool CheckSetDeadline(IPMSClass @class)
-        {
-            bool result = false;
-            if (@class.Semester.IsMultipleTopic)
-            {
-                result = @class.ChangeGroupDeadline != null &&
-                         @class.CreateGroupDeadline != null;
-            }
-            else
-            {
-                result = @class.ChangeGroupDeadline != null &&
-                         @class.CreateGroupDeadline != null &&
-                         @class.BorrowIoTComponentDeadline != null &&
-                         @class.ChangeTopicDeadline != null;
-            }
-            return result;
-        }
+
         public async Task<GetClassInfoInSemesterResponse> GetClassesInSemester(Guid lecturerId, GetClassInfoInSemesterRequest request)
         {
             //All Class Query
-            var classesQuery = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
-                                                         .Where(x => x.Semester.ShortName == request.SemesterCode).ToListAsync();
+            var classesQuery = _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
+                                                         .Where(x => x.Semester.ShortName == request.SemesterCode);
             if(request.IsCommittee.HasValue && request.IsCommittee.Value)
             {
-                classesQuery = classesQuery.Where(x => x.LecturerId != lecturerId && x.Committees.Any(c => c.LecturerId == lecturerId)).ToList();
+                classesQuery = classesQuery.Where(x => x.LecturerId != lecturerId && x.Committees.Any(c => c.LecturerId == lecturerId));
             }
             else
             {
-                classesQuery = classesQuery.Where(x => x.LecturerId == lecturerId).ToList();
+                classesQuery = classesQuery.Where(x => x.LecturerId == lecturerId);
             }
-            var classesResult = classesQuery.Select(x => new
+            Func<IPMSClass, bool> isSetDeadlineFunc;
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstAsync(x=>x.ShortName == request.SemesterCode);
+            if (semester.IsMultipleTopic)
+            {
+                isSetDeadlineFunc = x => x.ChangeGroupDeadline != null && x.CreateGroupDeadline != null;
+            }
+            else
+            {
+                isSetDeadlineFunc = x => x.ChangeGroupDeadline != null &&
+                                                                             x.CreateGroupDeadline != null &&
+                                                                             x.BorrowIoTComponentDeadline != null &&
+                                                                             x.ChangeTopicDeadline != null;
+            }
+            var classesResult = await classesQuery.Select(x => new
             {
                 ClassCode = x.ShortName,
                 ClassId = x.Id,
                 ClassName = x.Name,
                 MaxMembers = x.MaxMember,
-                IsSetDeadline = CheckSetDeadline(x)
-            }).ToList();
+                IsSetDeadline = isSetDeadlineFunc(x)
+            }).ToListAsync();
             //Calculate enrolled Student (EmailConfirmed == true), total student, number of groups
             var studentQuery = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
                                                                     .GroupBy(x => x.ClassId).Select(x => new

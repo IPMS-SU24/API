@@ -116,17 +116,31 @@ namespace IPMS.Business.Services
                 result.Message = "You are not in any project";
                 return result;
             }
-            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.Topic));
-            if(project.Topic == null)
+            await _unitOfWork.ProjectRepository.LoadExplicitProperty(project, nameof(Project.AssessmentTopic));
+
+            var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
+
+            if (!currentSemester!.IsMultipleTopic)
             {
-                result.Message = "Your group haven't had topic yet";
-                return result;
+                if (project.Topic == null)
+                {
+                    result.Message = "Your group haven't had topic yet";
+                    return result;
+                }
+                await _unitOfWork.ClassTopicRepository.LoadExplicitProperty(project.Topic, nameof(ClassTopic.Topic));
+                if (project.Topic.Topic.Status != RequestStatus.Approved)
+                {
+                    result.Message = "Topic hasn't been approved";
+                    return result;
+                }
             }
-            await _unitOfWork.ClassTopicRepository.LoadExplicitProperty(project.Topic, nameof(ClassTopic.Topic));
-            if (project.Topic.Topic.Status != RequestStatus.Approved)
+            else
             {
-                result.Message = "Topic hasn't been approved";
-                return result;
+                if(!await _unitOfWork.ClassTopicRepository.Get().Where(x=>x.ProjectId == project.Id && x.AssessmentId == submissionModule.AssessmentId).AnyAsync())
+                {
+                    result.Message = "Your group haven't had topic yet";
+                    return result;
+                }
             }
             result.Message = string.Empty;
             result.Result = true;

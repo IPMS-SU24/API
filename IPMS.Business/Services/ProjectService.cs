@@ -44,33 +44,31 @@ namespace IPMS.Business.Services
         public async Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferences(ProjectPreferenceRequest request)
         {
             var prjPref = new List<ProjectPreferenceResponse>();
-            IQueryable<Project> prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true)
-                            .Include(p => p.Topic).ThenInclude(t => t.Topic)
-                            .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
-                            .Include(p => p.Submissions);
+            IEnumerable<Project> prjQueryable = await _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true)
+                            .Include(p => p.AssessmentTopic).ThenInclude(t => t.Topic)
+                            .Include(p => p.AssessmentTopic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
+                            .Include(p => p.Submissions).ToListAsync();
 
             if (request.SearchValue != null) // search value base on topic name or description
             {
                 request.SearchValue = request.SearchValue.Trim().ToLower();
-                prjQueryable = prjQueryable.Where(p => p.Topic.Topic.Name.ToLower().Contains(request.SearchValue)
-                                                        || p.Topic.Topic.Description.ToLower().Contains(request.SearchValue));
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && (p.Topic.Topic.Name.ToLower().Contains(request.SearchValue)
+                                                        || p.Topic.Topic.Description.ToLower().Contains(request.SearchValue)));
             }
 
             if (request.LecturerId != null && request.LecturerId != Guid.Empty) // search base on lecturerId
             {
-                prjQueryable = prjQueryable.Where(p => p.Topic.Class.LecturerId.Equals(request.LecturerId));
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && p.Topic.Class.LecturerId.Equals(request.LecturerId));
             }
 
             if (request.SemesterCode != null) // search base on semester code - semester shortname
             {
                 request.SemesterCode = request.SemesterCode.Trim().ToLower();
-                prjQueryable = prjQueryable.Where(p => p.Topic.Class.Semester.ShortName.ToLower().Contains(request.SemesterCode));
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && p.Topic.Class.Semester.ShortName.ToLower().Contains(request.SemesterCode));
 
             }
 
-            var projects = await prjQueryable.ToListAsync();
-
-            List<IPMSUser> users = _userManager.Users.ToList();
+            var projects = prjQueryable.ToList();
             var lastAssessmentId = await _unitOfWork.AssessmentRepository.Get().GroupBy(x => x.SyllabusId)
                 .Select(x => x.OrderByDescending(a => a.Order).Select(a => a.Id).First()
                 ).ToListAsync();
@@ -79,7 +77,7 @@ namespace IPMS.Business.Services
             {
                 TopicTitle = p.Topic.Topic.Name != null ? p.Topic.Topic.Name : "",
                 LecturerId = p.Topic.Class.LecturerId != Guid.Empty ? p.Topic.Class.LecturerId : Guid.Empty,
-                LecturerName = GetLecturerName(users, p.Topic.Class.LecturerId),
+                LecturerName = GetLecturerName(p.Topic.Class.LecturerId),
                 Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
                 SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
                 Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
@@ -95,12 +93,12 @@ namespace IPMS.Business.Services
             return prjPref;
         }
 
-        private string GetLecturerName(List<IPMSUser> users, Guid? lecturerId)
+        private string GetLecturerName(Guid? lecturerId)
         {
             if (lecturerId == null) return "";
             if (lecturerId == Guid.Empty) return "";
 
-            var lecturer = users.FirstOrDefault(u => u.Id.Equals(lecturerId));
+            var lecturer = _userManager.Users.FirstOrDefault(u => u.Id.Equals(lecturerId));
             if (lecturer == null)
             {
                 return "";
@@ -112,6 +110,9 @@ namespace IPMS.Business.Services
             var project = _commonServices.GetProject();
             if (project == null) throw new DataNotFoundException("Not found Project");
             var topic = await _commonServices.GetProjectTopic(project.Id);
+            var assessmentInfo = topic != null ? await _unitOfWork.ClassTopicRepository.Get()
+                .Where(x => x.ProjectId == project.Id && x.TopicId == topic.Id)
+                .Select(x => x.Assessment).FirstOrDefaultAsync() : null;
             var currentSemester = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester;
             var @class = _commonServices.GetClass();
             var componentBorrowed = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.MasterId == project.Id).Include(x => x.Component).ToListAsync();
@@ -125,8 +126,9 @@ namespace IPMS.Business.Services
                     TopicName = topic?.Name ?? string.Empty,
                     Description = topic?.Description ?? string.Empty,
                     EndDate = @class!.ChangeTopicDeadline,
-                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline!.Value, @class.ChangeGroupDeadline!.Value),
-
+                    AssessmentStatus = _commonServices.GetChangeTopicStatus(topic, @class.ChangeTopicDeadline, @class.ChangeGroupDeadline!.Value),
+                    AssessmentId = assessmentInfo?.Id,
+                    AssessmentName = assessmentInfo?.Name
                 },
                 BorrowInfo = new()
                 {
@@ -370,7 +372,10 @@ namespace IPMS.Business.Services
             }
 
             var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)
-                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).Include(p => p.Topic).ThenInclude(t => t.Class).ToListAsync();
+                                                            ).Include(p => p.AssessmentTopic).ThenInclude(t => t.Class).ToListAsync();
+
+            projects = projects.Where(p => p.Topic != null && p.Topic.Class.LecturerId.Equals(currentUserId)).ToList();
+            
             if (projects.Count != request.Projects.Count()) // check all request project need to be existed and have Id same lecturer Id updated
             {
                 result.Message = "Have project invalid";
@@ -392,8 +397,8 @@ namespace IPMS.Business.Services
         }
         public async Task UpdateProjectPreferencesStatus(UpdateProjectPreferenceStatusRequest request, Guid currentUserId)
         {
-            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)
-                                                            && p.Topic.Class.LecturerId.Equals(currentUserId)).ToListAsync();
+            var projects = await _unitOfWork.ProjectRepository.Get().Where(p => request.Projects.Select(x => x.ProjectId).Contains(p.Id)).Include(p => p.AssessmentTopic).ThenInclude(x=>x.Class).ToListAsync();
+            projects = projects.Where(p => p.Topic != null && p.Topic.Class.LecturerId.Equals(currentUserId)).ToList();
             foreach (var project in projects)
             {
                 project.IsPublished = request.Projects.FirstOrDefault(p => p.ProjectId.Equals(project.Id)).IsPublished;
@@ -406,45 +411,39 @@ namespace IPMS.Business.Services
         public async Task<IEnumerable<ProjectPreferenceResponse>> GetProjectPreferencesLecturer(ProjectPreferenceRequest request, Guid currentUserId)
         {
             var prjPref = new List<ProjectPreferenceResponse>();
-            IQueryable<Project> prjQueryable;
+            IEnumerable<Project> prjQueryable = await _unitOfWork.ProjectRepository.Get().Include(p => p.AssessmentTopic).ThenInclude(t => t.Topic)
+                            .Include(p => p.AssessmentTopic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
+                            .Include(p => p.Submissions).ToListAsync();
             if (request.isPublished == true)
             {
-                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.IsPublished == true && p.Topic.Topic.Status == RequestStatus.Approved)
-                            .Include(p => p.Topic).ThenInclude(t => t.Topic)
-                            .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
-                            .Include(p => p.Submissions);
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && p.IsPublished == true && p.Topic.Topic.Status == RequestStatus.Approved);
             }
             else
             {
-                prjQueryable = _unitOfWork.ProjectRepository.Get().Where(p => p.Topic.Class.LecturerId.Equals(currentUserId) && p.IsPublished == false && p.Topic.Topic.Status == RequestStatus.Approved)
-                            .Include(p => p.Topic).ThenInclude(t => t.Topic)
-                            .Include(p => p.Topic).ThenInclude(t => t.Class).ThenInclude(c => c.Semester)
-                            .Include(p => p.Submissions);
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && p.Topic.Class.LecturerId.Equals(currentUserId) && p.IsPublished == false && p.Topic.Topic.Status == RequestStatus.Approved);
             }
 
 
             if (request.SearchValue != null) // search value base on topic name or description
             {
                 request.SearchValue = request.SearchValue.Trim().ToLower();
-                prjQueryable = prjQueryable.Where(p => p.Topic.Topic.Name.ToLower().Contains(request.SearchValue)
-                                                        || p.Topic.Topic.Description.ToLower().Contains(request.SearchValue));
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && (p.Topic.Topic.Name.ToLower().Contains(request.SearchValue)
+                                                        || p.Topic.Topic.Description.ToLower().Contains(request.SearchValue)));
             }
 
             if (request.LecturerId != null && request.LecturerId != Guid.Empty) // search base on lecturerId
             {
-                prjQueryable = prjQueryable.Where(p => p.Topic.Class.LecturerId.Equals(request.LecturerId));
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && p.Topic.Class.LecturerId.Equals(request.LecturerId));
             }
 
             if (request.SemesterCode != null) // search base on semester code - semester shortname
             {
                 request.SemesterCode = request.SemesterCode.Trim().ToLower();
-                prjQueryable = prjQueryable.Where(p => p.Topic.Class.Semester.ShortName.ToLower().Contains(request.SemesterCode));
+                prjQueryable = prjQueryable.Where(p => p.Topic != null && p.Topic.Class.Semester.ShortName.ToLower().Contains(request.SemesterCode));
 
             }
 
-            var projects = await prjQueryable.ToListAsync();
-
-            List<IPMSUser> users = _userManager.Users.ToList();
+            var projects = prjQueryable.ToList();
             var lastAssessmentId = await _unitOfWork.AssessmentRepository.Get().Where(x => x.Modules.Any(m => m.LectureId == currentUserId && m.Semester.ShortName.ToLower().Contains(request.SemesterCode)))
                 .OrderByDescending(x => x.Order).Select(x => x.Id).FirstOrDefaultAsync();
             var lastSubmissionModuleIds = await _unitOfWork.SubmissionModuleRepository.Get().Where(x => x.AssessmentId == lastAssessmentId).Select(x => x.Id).ToListAsync();
@@ -453,7 +452,7 @@ namespace IPMS.Business.Services
                 ProjectId = p.Id,
                 TopicTitle = p.Topic.Topic.Name != null ? p.Topic.Topic.Name : "",
                 LecturerId = p.Topic.Class.LecturerId != Guid.Empty ? p.Topic.Class.LecturerId : Guid.Empty,
-                LecturerName = GetLecturerName(users, p.Topic.Class.LecturerId),
+                LecturerName = GetLecturerName(p.Topic.Class.LecturerId),
                 Semester = p.Topic.Class.Semester.Name != null ? p.Topic.Class.Semester.Name : "",
                 SemesterCode = p.Topic.Class.Semester.ShortName != null ? p.Topic.Class.Semester.ShortName : "",
                 Description = p.Topic.Topic.Description != null ? p.Topic.Topic.Description : "",
