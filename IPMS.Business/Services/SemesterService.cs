@@ -43,31 +43,44 @@ namespace IPMS.Business.Services
                 Semesters = semesters
             };
         }
-
-        public async Task<GetClassInfoInSemesterResponse> GetClassesInSemester(Guid lecturerId, GetClassInfoInSemesterRequest request)
+        private bool CheckSetDeadline(IPMSClass @class)
         {
-            //All Class Query
-            var classesQuery = _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
-                                                         .Where(x => x.Semester.ShortName == request.SemesterCode);
-            if(request.IsCommittee.HasValue && request.IsCommittee.Value)
+            bool result = false;
+            if (@class.Semester.IsMultipleTopic)
             {
-                classesQuery = classesQuery.Where(x => x.LecturerId != lecturerId && x.Committees.Any(c => c.LecturerId == lecturerId));
+                result = @class.ChangeGroupDeadline != null &&
+                         @class.CreateGroupDeadline != null;
             }
             else
             {
-                classesQuery = classesQuery.Where(x => x.LecturerId == lecturerId);
+                result = @class.ChangeGroupDeadline != null &&
+                         @class.CreateGroupDeadline != null &&
+                         @class.BorrowIoTComponentDeadline != null &&
+                         @class.ChangeTopicDeadline != null;
             }
-            var classesResult = await classesQuery.Select(x => new
+            return result;
+        }
+        public async Task<GetClassInfoInSemesterResponse> GetClassesInSemester(Guid lecturerId, GetClassInfoInSemesterRequest request)
+        {
+            //All Class Query
+            var classesQuery = await _unitOfWork.IPMSClassRepository.Get().Include(x => x.Semester)
+                                                         .Where(x => x.Semester.ShortName == request.SemesterCode).ToListAsync();
+            if(request.IsCommittee.HasValue && request.IsCommittee.Value)
+            {
+                classesQuery = classesQuery.Where(x => x.LecturerId != lecturerId && x.Committees.Any(c => c.LecturerId == lecturerId)).ToList();
+            }
+            else
+            {
+                classesQuery = classesQuery.Where(x => x.LecturerId == lecturerId).ToList();
+            }
+            var classesResult = classesQuery.Select(x => new
             {
                 ClassCode = x.ShortName,
                 ClassId = x.Id,
                 ClassName = x.Name,
                 MaxMembers = x.MaxMember,
-                IsSetDeadline = x.ChangeGroupDeadline != null &&
-                                                                             x.CreateGroupDeadline != null &&
-                                                                             x.BorrowIoTComponentDeadline != null &&
-                                                                             x.ChangeTopicDeadline != null
-            }).ToListAsync();
+                IsSetDeadline = CheckSetDeadline(x)
+            }).ToList();
             //Calculate enrolled Student (EmailConfirmed == true), total student, number of groups
             var studentQuery = await _unitOfWork.StudentRepository.Get().Include(x => x.Information)
                                                                     .GroupBy(x => x.ClassId).Select(x => new

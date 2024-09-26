@@ -10,6 +10,6 @@ namespace IPMS.Business.Requests.Kit
     public class KitDeviceRequest
     {
         public Guid DeviceId { get; set; }
-        public int Quantity { get; set; }
+        public string Quantity { get; set; }
     }
 }

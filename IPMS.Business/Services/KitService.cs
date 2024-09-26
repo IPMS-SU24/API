@@ -86,7 +86,8 @@ namespace IPMS.Business.Services
                     {
                         Id = x.DeviceId,
                         Name = x.Device.Name,
-                        Description = x.Device.Description
+                        Description = x.Device.Description,
+                        Quantity = x.Quantity
                     }).ToList()
                 };
             }
@@ -114,7 +115,7 @@ namespace IPMS.Business.Services
             {
                 KitId = newKit.Id,
                 DeviceId = x.DeviceId,
-                Quantity = x.Quantity
+                Quantity = Int32.Parse(x.Quantity)
             });
             await _unitOfWork.KitDeviceRepository.InsertRangeAsync(kitDevices);
             await _unitOfWork.SaveChangesAsync();
@@ -156,7 +157,7 @@ namespace IPMS.Business.Services
             {
                 KitId = kit.Id,
                 DeviceId = x.DeviceId,
-                Quantity = x.Quantity
+                Quantity = Int32.Parse(x.Quantity)
             });
             await _unitOfWork.KitDeviceRepository.InsertRangeAsync(kitDevices);
             await _unitOfWork.SaveChangesAsync();
@@ -176,12 +177,17 @@ namespace IPMS.Business.Services
         }
         public async Task<BasicIoTDeviceResponse> GetBasicDetail(Guid Id)
         {
-            return await _unitOfWork.BasicIoTDeviceRepository.Get().Select(x => new BasicIoTDeviceResponse
+            var detail = await _unitOfWork.BasicIoTDeviceRepository.Get().Where(bd => bd.Id.Equals(Id)).FirstOrDefaultAsync();
+            if (detail != null)
             {
-                Id = x.Id,
-                Name = x.Name,
-                Description = x.Description
-            }).FirstOrDefaultAsync();
+                return new BasicIoTDeviceResponse
+                {
+                    Id = detail.Id,
+                    Name = detail.Name,
+                    Description = detail.Description
+                };
+            }
+            return null;
         }
     }
 }
