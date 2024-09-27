@@ -243,9 +243,10 @@ namespace IPMS.Business.Services
             }
 
             var components = await _unitOfWork.ComponentsMasterRepository.Get()
-                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.ProjectId) && cm.Status == BorrowedStatus.Pending) // check that cannot review approved || rejected component
+                                    .Where(cm => cm.MasterType == ComponentsMasterType.Project && cm.MasterId.Equals(request.ProjectId) && (cm.Status == BorrowedStatus.Pending || cm.Status == BorrowedStatus.Approved)) // check that cannot review approved || rejected component
                                     .Include(cm => cm.Component).ToListAsync();
-            if (components.Count() == 0)
+
+            if (components.Count(x=>x.Status == BorrowedStatus.Pending) == 0)
             {
                 result.Message = "Does not have any request from Project";
                 return result;
@@ -314,6 +315,14 @@ namespace IPMS.Business.Services
                     return result;
                 }
 
+                var borrowedComponentQuantity = components.Where(x => x.ComponentId == compont.ComponentId && x.Status == BorrowedStatus.Approved).Count();
+
+
+                if (topicCompontns.Any(iot => iot.ComponentId.Equals(compont.ComponentId) && (compont.Quantity + borrowedComponentQuantity) > iot.Quantity)) // check with topic must lower or equal quantity of request
+                {
+                    result.Message = "Sum of borrow quantity is greater than component quantity in topic allowed";
+                    return result;
+                }
             }
 
             // get borrowed
