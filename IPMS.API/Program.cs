@@ -110,7 +110,7 @@ builder.Services.AddHangfire(configuration => configuration
         }));
 builder.Services.AddHangfireServer(opts =>
 {
-    opts.Queues = new[] { "import_class","import_student" };
+    opts.Queues = new[] { "import_class","import_student", "send_mail" };
 });
 builder.Services.AddSwaggerGen(options =>
 {
@@ -169,11 +169,14 @@ GlobalConfiguration.Configuration.UseFilter(new JobContext());
 var app = builder.Build();
 app.UseGlobalExceptionHandling();
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI();
-if (!app.Environment.IsDevelopment())
+if (!(app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Dev / Test"))
 {
     app.UseHsts();
+}
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
 app.UseCors(options => options.AllowAnyMethod()
