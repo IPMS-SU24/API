@@ -46,10 +46,7 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
-if (!builder.Environment.IsDevelopment())
-{
-    builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env");
-}
+builder.Configuration.AddAmazonSecretsManager("ap-southeast-1", "env");
 builder.Services.AddFluentValidationAutoValidation(option =>
 {
     option.OverrideDefaultResultFactoryWith<IPMSResultFactory>();
