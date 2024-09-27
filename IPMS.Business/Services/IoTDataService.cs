@@ -86,7 +86,7 @@ namespace IPMS.Business.Services
             }).ToListAsync();
 
             var projectIds = await _commonServices.GetAllCurrentProjectsOfLecturer(lecturerId);
-            var groupBorrowQuery = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.Status == BorrowedStatus.Approved || x.Status == BorrowedStatus.Returned)
+            var groupBorrowQuery = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.Status == BorrowedStatus.Approved)
                                 .Join(_unitOfWork.StudentRepository.Get()
                                     .Include(x => x.Class).Include(x => x.Project)
                                     .Where(x => x.ProjectId != null && projectIds.Contains(x.ProjectId.Value)),
@@ -97,8 +97,7 @@ namespace IPMS.Business.Services
                                         Id = com.ComponentId,
                                         ClassCode = stu.Class.ShortName,
                                         GroupNumber = stu.Project!.GroupNum,
-                                        BorrowNumber = com.Quantity,
-                                        com.Status
+                                        BorrowNumber = com.Quantity
                                     }
                                     ).ToListAsync();
             var result = lecturerIoTQuery.Select(lec => new GetIoTRepositoryResponse
@@ -110,7 +109,7 @@ namespace IPMS.Business.Services
                 .GroupBy(x => new { x.ClassCode, x.GroupNumber }).Select(x => new BorrowInGroup
                 {
                     ClassCode = x.Key.ClassCode,
-                    BorrowNumber = x.Where(x=>x.Status == BorrowedStatus.Approved).Sum(g=> g.BorrowNumber) - x.Where(x => x.Status == BorrowedStatus.Returned).Sum(g => g.BorrowNumber),
+                    BorrowNumber = x.Sum(g=> g.BorrowNumber),
                     GroupNumber = x.Key.GroupNumber
                 })
             });
