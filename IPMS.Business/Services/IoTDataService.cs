@@ -97,7 +97,8 @@ namespace IPMS.Business.Services
                                         Id = com.ComponentId,
                                         ClassCode = stu.Class.ShortName,
                                         GroupNumber = stu.Project!.GroupNum,
-                                        BorrowNumber = com.Quantity
+                                        BorrowNumber = com.Quantity,
+                                        StudentId = stu.Id
                                     }
                                     ).ToListAsync();
             var result = lecturerIoTQuery.Select(lec => new GetIoTRepositoryResponse
@@ -109,7 +110,7 @@ namespace IPMS.Business.Services
                 .GroupBy(x => new { x.ClassCode, x.GroupNumber }).Select(x => new BorrowInGroup
                 {
                     ClassCode = x.Key.ClassCode,
-                    BorrowNumber = x.Sum(g=> g.BorrowNumber),
+                    BorrowNumber = x.Where(s=>s.StudentId == x.First().StudentId).Sum(g=> g.BorrowNumber),
                     GroupNumber = x.Key.GroupNumber
                 })
             });
