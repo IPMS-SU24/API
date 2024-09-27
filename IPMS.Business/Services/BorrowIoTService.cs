@@ -386,11 +386,11 @@ namespace IPMS.Business.Services
                 var updtCompont = components.FirstOrDefault(c => c.Id.Equals(compont.Id));
 
 
-                if (updtCompont.Quantity == 0)
+                if (compont.Quantity == 0)
                 {
                     updtCompont.Status = BorrowedStatus.Rejected;
                 }
-                else if (updtCompont.Quantity > 0)
+                else if (compont.Quantity > 0)
                 {
                     updtCompont.Status = BorrowedStatus.Approved;
                     updtCompont.Quantity = compont.Quantity;
