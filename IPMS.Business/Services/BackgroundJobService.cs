@@ -137,7 +137,7 @@ namespace IPMS.Business.Services
                             MailTo = new List<string> { student.Email }
                         };
 
-                        if(_env.IsDevelopment() && student.Email == _mailDev)
+                        if((_env.IsDevelopment() || _env.IsEnvironment("Dev / Test")) && student.Email == _mailDev)
                         {
                             await ProcessSendMail(new List<IPMSMailMessage> { mailMessage });
                         }
@@ -252,7 +252,7 @@ namespace IPMS.Business.Services
                     });
                 }
 
-                if (!_env.IsDevelopment())
+                if (!_env.IsDevelopment() || _env.IsEnvironment("Dev / Test"))
                 {
                     for (int i = 0; i < mailMessageList.Count; i += _maxMailPerHours)
                     {
