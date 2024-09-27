@@ -161,12 +161,9 @@ namespace IPMS.Business.Services
 
         public async Task<int> GetRemainComponentQuantityOfLecturer(Guid lecturerId, Guid componentId)
         {
-            //Get all project of lecturerId
-            var allProject = await GetAllCurrentProjectsOfLecturer(lecturerId);
             //Get all quantity of component of Lecturer
-            var quantity = await _unitOfWork.ComponentsMasterRepository.GetBorrowComponents().Where(x => x.Status == BorrowedStatus.Approved && allProject.Contains(x.MasterId) && x.ComponentId == componentId).SumAsync(x => x.Quantity);
             var lecturerQuantity = await _unitOfWork.ComponentsMasterRepository.GetLecturerOwnComponents().Where(x => x.MasterId == lecturerId && x.ComponentId == componentId).SumAsync(x => x.Quantity);
-            return lecturerQuantity - quantity;
+            return lecturerQuantity;
         }
 
         public async Task<List<Guid>> GetAllCurrentProjectsOfLecturer(Guid lecturerId)

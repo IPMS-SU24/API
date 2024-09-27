@@ -106,11 +106,11 @@ namespace IPMS.Business.Services
                 Name = lec.Name,
                 TotalQuantity = lec.TotalQuantity,
                 Components = groupBorrowQuery.Where(x => x.Id == lec.Id)
-                .DistinctBy(x => new { x.ClassCode, x.GroupNumber }).Select(x => new BorrowInGroup
+                .GroupBy(x => new { x.ClassCode, x.GroupNumber }).Select(x => new BorrowInGroup
                 {
-                    ClassCode = x.ClassCode,
-                    BorrowNumber = x.BorrowNumber,
-                    GroupNumber = x.GroupNumber
+                    ClassCode = x.Key.ClassCode,
+                    BorrowNumber = x.Sum(g=> g.BorrowNumber),
+                    GroupNumber = x.Key.GroupNumber
                 })
             });
             var totalComponents = await _unitOfWork.ComponentsMasterRepository.GetLecturerOwnComponents().Where(x => x.MasterId == lecturerId).CountAsync();
