@@ -19,17 +19,17 @@ namespace IPMS.Business.Services
 
         public async Task<IList<NotificationMessage>> GetAllNotificationOfUserAsync(Guid userId)
         {
-            var response =   await (await _dbContext.NotificationMessages.FindAsync(x=>x.AccountId == userId)).ToListAsync();
-            if(response == null || !response.Any())
+            var response = await (await _dbContext.NotificationMessages.FindAsync(x => x.AccountId == userId)).ToListAsync();
+            if (response == null || !response.Any())
             {
                 throw new DataNotFoundException();
             }
-            return response.OrderByDescending(x=>x.DateSent).ToList();
+            return response.OrderByDescending(x => x.DateSent).ToList();
         }
 
         public async Task MarkAsRead(MarkAsReadRequest request)
         {
-            var notiObjectIds = request.NotificationIds.Select(x => ObjectId.Parse(x));
+            var notiObjectIds = request.NotificationIds.Where(x => ObjectId.TryParse(x, out ObjectId e)).Select(x => ObjectId.Parse(x));
             await _dbContext.NotificationMessages.UpdateManyAsync(x => notiObjectIds.Contains(x._id), Builders<NotificationMessage>.Update.Set(x => x.MarkAsRead, true));
         }
 

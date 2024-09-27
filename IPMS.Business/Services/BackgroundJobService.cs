@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -32,6 +33,9 @@ namespace IPMS.Business.Services
         private readonly IMessageService _messageService;
         private readonly IHttpContextAccessor _httpContext;
         private readonly string _mailHost;
+        private readonly string? _mailDev;
+        private readonly int _maxMailPerHours;
+        private readonly IHostEnvironment _env;
 
         public BackgroundJobService(UserManager<IPMSUser> userManager,
                                     MailServer mailServer,
@@ -40,7 +44,8 @@ namespace IPMS.Business.Services
                                     IHttpContextAccessor httpContext,
                                     IConfiguration configuration,
                                     RoleManager<IdentityRole<Guid>> roleManager,
-                                    ILogger<BackgroundJobService> logger)
+                                    ILogger<BackgroundJobService> logger,
+                                    IHostEnvironment env)
         {
             _userManager = userManager;
             _mailServer = mailServer;
@@ -48,8 +53,11 @@ namespace IPMS.Business.Services
             _messageService = messageService;
             _httpContext = httpContext;
             _mailHost = configuration["MailFrom"];
+            _mailDev = configuration["MailDev"];
+            _maxMailPerHours = configuration.GetSection("MaxMailPerHours").Get<int>();
             _roleManager = roleManager;
             _logger = logger;
+            _env = env;
         }
 
         public async Task AddJobIdToStudent(string jobId, Guid classId, string email)
@@ -86,8 +94,9 @@ namespace IPMS.Business.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task ProcessAddStudentToClass(StudentDataRow student, Guid classId, string classCode)
+        public async Task<IPMSMailMessage?> ProcessAddStudentToClass(StudentDataRow student, Guid classId, string classCode)
         {
+            IPMSMailMessage? mailMessage = null;
             await TryCatchBackgroundJobException(async () =>
             {
 
@@ -121,12 +130,18 @@ namespace IPMS.Business.Services
                     {
                         var confirmEmailToken = await _userManager.GenerateEmailConfirmationTokenAsync(existUser);
                         var confirmURL = PathUtils.GetConfirmURL(existUser.Id, confirmEmailToken);
-                        _mailServer.Client.SendAsync(
-                            WaitUntil.Started,
-                            _mailHost,
-                            student.Email,
-                            ConfirmEmailTemplate.Subject,
-                            EmailUtils.GetFullMailContent(ConfirmEmailTemplate.GetBody(confirmURL, password)));
+                        mailMessage = new IPMSMailMessage
+                        {
+                            Subject = ConfirmEmailTemplate.Subject,
+                            Body = EmailUtils.GetFullMailContent(ConfirmEmailTemplate.GetBody(confirmURL, password)),
+                            MailTo = new List<string> { student.Email }
+                        };
+
+                        if(_env.IsDevelopment() && student.Email == _mailDev)
+                        {
+                            await ProcessSendMail(new List<IPMSMailMessage> { mailMessage });
+                        }
+
                     }
                     catch (RequestFailedException ex)
                     {
@@ -173,6 +188,7 @@ namespace IPMS.Business.Services
                 // Set Succeeded student to JobStorage
                 StoreToHash(classCode, student.StudentId, ImportJob.SucceededStatus);
             });
+            return mailMessage;
         }
 
 
@@ -190,6 +206,7 @@ namespace IPMS.Business.Services
                 // Store numberOfClasses need to process to batchJob Hash
                 StoreToHash(JobContext.CurrentJobId, ImportJob.NumberOfClassesKey, classCodes.Count.ToString());
 
+                var mailMessageList = new List<IPMSMailMessage>();
                 foreach (var classCode in classCodes)
                 {
                     await TryCatchBackgroundJobException(async () =>
@@ -218,8 +235,8 @@ namespace IPMS.Business.Services
                             StoreToHash(JobContext.CurrentJobId, classCode, ImportJob.ProcessingStatus);
 
                             // Then add all student to class
-                            await ProcessAddAllStudentListToClass(worksheet, classCode, semesterId, headerRow.RowNumber(),
-                                                                                            headerRow.Cells().Select(c => c.GetValue<string>()).ToArray());
+                            mailMessageList.AddRange(await ProcessAddAllStudentListToClass(worksheet, classCode, semesterId, headerRow.RowNumber(),
+                                                                                            headerRow.Cells().Select(c => c.GetValue<string>()).ToArray()));
                             // Set Done class to JobStorage
                             StoreToHash(JobContext.CurrentJobId, classCode, ImportJob.DoneStatus);
 
@@ -235,6 +252,22 @@ namespace IPMS.Business.Services
                     });
                 }
 
+                if (!_env.IsDevelopment())
+                {
+                    for (int i = 0; i < mailMessageList.Count; i += _maxMailPerHours)
+                    {
+                        var sublist = mailMessageList.GetRange(i, Math.Min(_maxMailPerHours, mailMessageList.Count - i));
+
+                        if (i == 0)
+                        {
+                            BackgroundJob.Enqueue<IBackgoundJobService>(s => s.ProcessSendMail(sublist));
+                        }
+                        else
+                        {
+                            BackgroundJob.Schedule<IBackgoundJobService>(s => s.ProcessSendMail(sublist), TimeSpan.FromHours(i));
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -242,8 +275,9 @@ namespace IPMS.Business.Services
             }
         }
 
-        public async Task ProcessAddAllStudentListToClass(IXLWorksheet worksheet, string classCode, Guid semesterId, int headerRowNumber, string[] headerTitles)
+        public async Task<IList<IPMSMailMessage>> ProcessAddAllStudentListToClass(IXLWorksheet worksheet, string classCode, Guid semesterId, int headerRowNumber, string[] headerTitles)
         {
+            var mailMessageList = new List<IPMSMailMessage>();
             try
             {
                 await TryCatchBackgroundJobException(async () =>
@@ -295,7 +329,6 @@ namespace IPMS.Business.Services
                         await _unitOfWork.SaveChangesAsync();
                     }
 
-
                     foreach (var student in studentList)
                     {
                         await TryCatchBackgroundJobException(async () =>
@@ -309,9 +342,10 @@ namespace IPMS.Business.Services
                             {
                                 throw new BackgroundJobException($"Data is not valid", classCode, student.StudentId);
                             }
-                            await ProcessAddStudentToClass(student, classForImport.Id, classCode);
+                            mailMessageList.Add(await ProcessAddStudentToClass(student, classForImport.Id, classCode));
                         });
                     }
+
                 });
             }
             catch (Exception ex)
@@ -319,6 +353,7 @@ namespace IPMS.Business.Services
                 _logger.LogError(ex, "Import class fail");
                 throw new BaseBadRequestException($"Sheet {classCode} is not valid");
             }
+            return mailMessageList;
         }
 
         private static (IXLRow? headerRow, string? lecturerEmail)? FindHeaderRowAndLecturerEmail(IXLWorksheet worksheet)
@@ -388,6 +423,22 @@ namespace IPMS.Business.Services
                     {name, value }
                 };
             jobConnection.SetRangeInHash(hashKey, valueDict);
+        }
+
+        public async Task ProcessSendMail(IList<IPMSMailMessage> mailMessages)
+        {
+            foreach (var mail in mailMessages)
+            {
+                try
+                {
+                    EmailSendOperation emailSendOperation = await _mailServer.Client.SendAsync(
+                       WaitUntil.Started, _mailHost, mail.MailTo!.First(), mail.Subject, mail.Body);
+                }
+                catch (RequestFailedException ex)
+                {
+                    _logger.LogError(ex,"Send mail fail");
+                }
+            }
         }
     }
 }
