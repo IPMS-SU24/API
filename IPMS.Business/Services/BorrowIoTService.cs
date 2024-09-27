@@ -385,7 +385,6 @@ namespace IPMS.Business.Services
 
                 var updtCompont = components.FirstOrDefault(c => c.Id.Equals(compont.Id));
 
-                updtCompont.Quantity = compont.Quantity;
 
                 if (updtCompont.Quantity == 0)
                 {
@@ -394,6 +393,7 @@ namespace IPMS.Business.Services
                 else if (updtCompont.Quantity > 0)
                 {
                     updtCompont.Status = BorrowedStatus.Approved;
+                    updtCompont.Quantity = compont.Quantity;
 
                 }
                 _unitOfWork.ComponentsMasterRepository.Update(updtCompont);
