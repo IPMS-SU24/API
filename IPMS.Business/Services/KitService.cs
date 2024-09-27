@@ -132,10 +132,10 @@ namespace IPMS.Business.Services
 
             Guid currentSemesterId = (await CurrentSemesterUtils.GetCurrentSemester(_unitOfWork)).CurrentSemester!.Id;
 
-            var isKitUsing = await _commonServices.GetKitProjectSemester(currentSemesterId, request.Id);
-            if (isKitUsing.Count > 0)
+            var isKitBorrowed = await _unitOfWork.KitProjectRepository.Get().FirstOrDefaultAsync(kp => kp.KitId.Equals(request.Id));
+            if (isKitBorrowed != null)
             {
-                throw new DataNotFoundException("Cannot update kit is using");
+                throw new DataNotFoundException("Cannot update kit is borrowed");
 
             }
 
