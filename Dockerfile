@@ -9,6 +9,9 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["IPMS.API/IPMS.API.csproj", "IPMS.API/"]
+COPY ["IPMS.Business/IPMS.Business.csproj", "IPMS.Business/"]
+COPY ["IPMS.DataAccess/IPMS.DataAccess.csproj", "IPMS.DataAccess/"]
+COPY ["IPMS.NotificationStorage/IPMS.NotificationStorage.csproj", "IPMS.NotificationStorage/"]
 RUN dotnet restore "./IPMS.API/IPMS.API.csproj"
 COPY . .
 WORKDIR "/src/IPMS.API"
