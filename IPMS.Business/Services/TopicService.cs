@@ -208,7 +208,7 @@ namespace IPMS.Business.Services
             });
             foreach (var item in componentMasters)
             {
-                item.Status = BorrowedStatus.Approved;
+                item.Status = null;
             }
             await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters);
 
