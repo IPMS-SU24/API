@@ -13,14 +13,11 @@ using IPMS.Business.Models;
 using IPMS.Business.Requests.Class;
 using IPMS.Business.Responses.Class;
 using IPMS.DataAccess.Models;
-using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver.Linq;
-using NPOI.Util;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Globalization;
 

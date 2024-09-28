@@ -8,12 +8,9 @@ using IPMS.Business.Requests.Group;
 using IPMS.Business.Responses.Group;
 using IPMS.DataAccess.Common.Enums;
 using IPMS.DataAccess.Models;
-using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
 
 namespace IPMS.Business.Services
 {
