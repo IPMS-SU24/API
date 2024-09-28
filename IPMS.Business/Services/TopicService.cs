@@ -206,6 +206,10 @@ namespace IPMS.Business.Services
                 opts.Items[nameof(ComponentsMaster.MasterId)] = newTopic.Id;
                 opts.Items[nameof(ComponentsMaster.MasterType)] = ComponentsMasterType.Topic;
             });
+            foreach (var item in componentMasters)
+            {
+                item.Status = BorrowedStatus.Approved;
+            }
             await _unitOfWork.ComponentsMasterRepository.InsertRangeAsync(componentMasters);
 
             await _unitOfWork.SaveChangesAsync();
