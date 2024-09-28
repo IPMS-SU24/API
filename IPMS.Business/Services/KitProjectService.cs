@@ -111,8 +111,10 @@ namespace IPMS.Business.Services
                 BorrowerId = kp.BorrowerId,
                 BorrowerName = kp.Borrower.Information.FullName,
                 BorrowerEmail = kp.Borrower.Information.Email,
+                BorrowerCode = kp.Borrower.Information.UserName,
                 ReturnerName = kp.ReturnerId != null ? kp.Returner.Information.FullName : null,
-                ReturnerEmail = kp.ReturnerId != null ? kp.Returner.Information.Email : null
+                ReturnerEmail = kp.ReturnerId != null ? kp.Returner.Information.Email : null,
+                ReturnerCode = kp.ReturnerId != null ? kp.Returner.Information.UserName : null
                 
             }).ToListAsync();
         }
