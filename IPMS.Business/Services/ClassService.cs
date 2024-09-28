@@ -649,10 +649,13 @@ namespace IPMS.Business.Services
             if (response.IsDone)
             {
                 var jobData = jobConnection.GetJobData(newestJobId);
-                var filePath = jobData.Job.Args[1].ToString()!;
+                var filePath = jobData?.Job.Args[1].ToString();
                 try
                 {
-                    FileUtils.DeleteFile(filePath);
+                    if(filePath != null)
+                    {
+                        FileUtils.DeleteFile(filePath);
+                    }
                 }
                 catch (Exception ex)
                 {

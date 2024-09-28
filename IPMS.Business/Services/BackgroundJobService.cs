@@ -255,7 +255,7 @@ namespace IPMS.Business.Services
                     });
                 }
 
-                if (!_env.IsDevelopment() || _env.IsEnvironment("Dev / Test"))
+                if (!(_env.IsDevelopment() || _env.IsEnvironment("Dev / Test")))
                 {
                     for (int i = 0; i < mailMessageList.Count; i += _maxMailPerHours)
                     {
