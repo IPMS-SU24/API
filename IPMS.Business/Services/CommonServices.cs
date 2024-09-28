@@ -102,8 +102,10 @@ namespace IPMS.Business.Services
                                                                     x.First().SubmissionModule.AssessmentId,
                                                                 })
                                                                 .FirstOrDefaultAsync(x=>x.StartDate < now && x.EndDate > now);
-
-                return result.First(x=>x.AssessmentId!.Value == currentAssessment!.AssessmentId).Topic;
+                if(currentAssessment != null)
+                {
+                    return result.FirstOrDefault(x => x.AssessmentId!.Value == currentAssessment!.AssessmentId)?.Topic;
+                }
             }
             return null;
         }
