@@ -15,7 +15,10 @@
         public Guid BorrowerId { get; set; }
         public string BorrowerName { get; set; } 
         public string BorrowerEmail { get; set; }
+        public string BorrowerCode { get; set; }
         public string? ReturnerName { get; set; }
         public string? ReturnerEmail { get; set; }
+        public string? ReturnerCode { get; set; }
+
     }
 }
