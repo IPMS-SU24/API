@@ -204,25 +204,36 @@ namespace IPMS.Business.Services
                 return projectsOverview;
             }
 
-            List<ClassTopic> classTopics = await _unitOfWork.ClassTopicRepository.Get()
-                                                    .Where(ct => ct.ClassId.Equals(request.ClassId) && ct.ProjectId != null)
+            var classTopicsQuery = _unitOfWork.ClassTopicRepository.Get()
                                                     .Include(ct => ct.Topic)
                                                     .Include(ct => ct.Project).ThenInclude(p => p.Students).ThenInclude(s => s.Information)
-                                                    .ToListAsync();
+                                                    .Where(ct => ct.ClassId.Equals(request.ClassId) && ct.ProjectId != null);
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.Id == @class.SemesterId);
+            if (semester.IsMultipleTopic)
+            {
+                classTopicsQuery = classTopicsQuery.Where(x => x.AssessmentId.HasValue);
+            }
+            if (semester.IsMultipleTopic)
+            {
+                classTopicsQuery = classTopicsQuery.Where(x => !x.AssessmentId.HasValue);
+            }
+            List<ClassTopic> classTopics = await classTopicsQuery.ToListAsync();
 
             var allLeaders = (await _userManager.GetUsersInRoleAsync(UserRole.Leader.ToString())).Select(x => x.Id).ToList(); // Find leader of project
-
-            foreach (var classTopic in classTopics) // picked topic
+            if(classTopics != null && classTopics.Count > 0)
             {
-                GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
+                foreach (var classTopic in classTopics.GroupBy(x => x.ProjectId)) // picked topic
                 {
-                    Id = (Guid)classTopic.ProjectId!,
-                    GroupName = $"Group {classTopic.Project!.GroupNum}",
-                    Members = classTopic.Project.Students.Count(),
-                    LeaderName = classTopic.Project.Students.FirstOrDefault(s => allLeaders.Contains(s.InformationId))!.Information.FullName,
-                    TopicName = classTopic.Topic!.Name
-                };
-                projectsOverview.Add(prjOverview);
+                    GetProjectsOverviewResponse prjOverview = new GetProjectsOverviewResponse
+                    {
+                        Id = (Guid)classTopic.Key!,
+                        GroupName = $"Group {classTopic.First().Project!.GroupNum}",
+                        Members = classTopic.First().Project.Students.Count(),
+                        LeaderName = classTopic.First().Project.Students.FirstOrDefault(s => allLeaders.Contains(s.InformationId))!.Information.FullName,
+                        TopicName = classTopic.First().Topic!.Name
+                    };
+                    projectsOverview.Add(prjOverview);
+                }
             }
 
             var projectNotPick = await GetProjectNotPickedTopic(request.ClassId); // not picked topic
@@ -244,10 +255,20 @@ namespace IPMS.Business.Services
         private async Task<IEnumerable<Project>> GetProjectNotPickedTopic(Guid classId)
         {
             List<Project> projects = new List<Project>();
-            var prjPickedTopic = await _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(classId) // get project picked topic 
-                                                        && (ct.ProjectId != null))
-                                                .Select(ct => ct.ProjectId)
-                                                .ToListAsync();
+            var @class = await _unitOfWork.IPMSClassRepository.Get().FirstOrDefaultAsync(x => x.Id == classId);
+            var semester = await _unitOfWork.SemesterRepository.Get().FirstOrDefaultAsync(x => x.Id == @class.SemesterId);
+            var prjPickedTopicQuery = _unitOfWork.ClassTopicRepository.Get().Where(ct => ct.ClassId.Equals(classId) // get project picked topic 
+                                                        && (ct.ProjectId != null));
+            if (semester.IsMultipleTopic)
+            {
+                prjPickedTopicQuery = prjPickedTopicQuery.Where(x => x.AssessmentId.HasValue);
+            }
+            if (semester.IsMultipleTopic)
+            {
+                prjPickedTopicQuery = prjPickedTopicQuery.Where(x => !x.AssessmentId.HasValue);
+            }
+            var prjPickedTopic = await prjPickedTopicQuery
+                                                .Select(ct => ct.ProjectId).Distinct().ToListAsync();
 
             var projectsId = await _unitOfWork.StudentRepository.Get().Where(s => s.ClassId.Equals(classId) // get through project not in project picked topic
                                                     && prjPickedTopic.Contains(s.ProjectId) == false)
