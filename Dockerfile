@@ -24,4 +24,8 @@ RUN dotnet publish "./IPMS.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+
+# Set environment variable to run in development mode
+ENV ASPNETCORE_ENVIRONMENT=Development
 ENTRYPOINT ["dotnet", "IPMS.API.dll"]
