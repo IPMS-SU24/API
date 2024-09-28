@@ -33,7 +33,7 @@ namespace IPMS.Business.Services
         private readonly IMessageService _messageService;
         private readonly IHttpContextAccessor _httpContext;
         private readonly string _mailHost;
-        private readonly string? _mailDev;
+        private readonly string[]? _mailDev;
         private readonly int _maxMailPerHours;
         private readonly IHostEnvironment _env;
 
@@ -53,7 +53,10 @@ namespace IPMS.Business.Services
             _messageService = messageService;
             _httpContext = httpContext;
             _mailHost = configuration["MailFrom"];
-            _mailDev = configuration["MailDev"];
+            if(env.IsDevelopment() || env.IsEnvironment("Dev / Test"))
+            {
+                _mailDev = configuration.GetSection("MailDev").Get<string[]>();
+            }
             _maxMailPerHours = configuration.GetSection("MaxMailPerHours").Get<int>();
             _roleManager = roleManager;
             _logger = logger;
@@ -137,7 +140,7 @@ namespace IPMS.Business.Services
                             MailTo = new List<string> { student.Email }
                         };
 
-                        if((_env.IsDevelopment() || _env.IsEnvironment("Dev / Test")) && student.Email == _mailDev)
+                        if((_env.IsDevelopment() || _env.IsEnvironment("Dev / Test")) && _mailDev!.Contains(student.Email))
                         {
                             await ProcessSendMail(new List<IPMSMailMessage> { mailMessage });
                         }
