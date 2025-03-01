@@ -14,5 +14,6 @@ namespace IPMS.NotificationStorage
         public IMongoCollection<UserToken> UserTokens => _database.GetCollection<UserToken>("UserToken");
         public IMongoCollection<NotificationMessage> NotificationMessages => _database.GetCollection<NotificationMessage>("NotificationMessage");
 
+
     }
 }
